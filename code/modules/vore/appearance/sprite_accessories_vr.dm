@@ -278,6 +278,17 @@
 	icon_state = "bunny"
 	do_colouration = 1
 
+/datum/sprite_accessory/tail/mothc
+	name = "moth wings, colorable"
+	desc = ""
+	icon_state = "moth"
+	do_colouration = 1
+
+/datum/sprite_accessory/tail/moth
+	name = "moth wings"
+	desc = ""
+	icon_state = "moth"
+
 /datum/sprite_accessory/tail/bear_brown
 	name = "bear, brown"
 	desc = ""
@@ -621,3 +632,9 @@
 /datum/sprite_accessory/tail/taur/spider
 	name = "Spider"
 	icon_state = "spider_s"
+
+/datum/sprite_accessory/tail/taur/tents
+	name = "Tentacles"
+	icon_state = "tent_s"
+
+
