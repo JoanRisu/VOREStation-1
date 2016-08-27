@@ -13,10 +13,10 @@
 	name_language = null // Use the first-name last-name generator rather than a language scrambler
 	min_age = 17
 	max_age = 110
+	health_hud_intensity = 1.5
 
 	spawn_flags = SPECIES_CAN_JOIN
 	appearance_flags = HAS_HAIR_COLOR | HAS_SKIN_TONE | HAS_LIPS | HAS_UNDERWEAR | HAS_EYE_COLOR
-//	appearance_flags = HAS_HAIR_COLOR | HAS_SKIN_COLOR | HAS_LIPS | HAS_UNDERWEAR | HAS_EYE_COLOR //VOREStation Edit - Skin Color // NEED SPRITES. CAN'T USE IT UNTIL WE HAVE SPRITES.
 
 
 /datum/species/human/get_bodytype(var/mob/living/carbon/human/H)
@@ -32,12 +32,13 @@
 	unarmed_types = list(/datum/unarmed_attack/stomp, /datum/unarmed_attack/kick, /datum/unarmed_attack/claws, /datum/unarmed_attack/bite/sharp)
 	primitive_form = "Stok"
 	darksight = 3
-	gluttonous = 1
+//	gluttonous = 1 // Vorestation edit. Redundant feature.
 	slowdown = 0.5
 	brute_mod = 0.8
 	num_alternate_languages = 2
 	secondary_langs = list("Sinta'unathi")
 	name_language = "Sinta'unathi"
+	health_hud_intensity = 2.5
 
 	min_age = 18
 	max_age = 60
@@ -94,10 +95,11 @@
 	slowdown = -0.5
 	brute_mod = 1.15
 	burn_mod =  1.15
-	gluttonous = 1
+//	gluttonous = 1 // Vorestation edit. Redundant feature.
 	num_alternate_languages = 2
 	secondary_langs = list("Siik'tajr")
 	name_language = "Siik'tajr"
+	health_hud_intensity = 2.5
 
 	min_age = 17
 	max_age = 80
@@ -108,6 +110,11 @@
 	of family and politics. They prefer colder environments, and speak a variety of languages, mostly Siik'Maas, \
 	using unique inflections their mouths form."
 /* VOREStation Removal
+	blurb = "The Tajaran are a mammalian species resembling roughly felines, hailing from Meralar in the Rarkajar system. \
+	While reaching to the stars independently from outside influences, the humans engaged them in peaceful trade contact \
+	and have accelerated the fledgling culture into the interstellar age. Their history is full of war and highly fractious \
+	governments, something that permeates even to today's times. They prefer colder, tundra-like climates, much like their \
+	home worlds and speak a variety of languages, especially Siik and Akhani."
 	cold_level_1 = 200 //Default 260
 	cold_level_2 = 140 //Default 200
 	cold_level_3 = 80  //Default 120
@@ -153,6 +160,7 @@
 	num_alternate_languages = 2
 	secondary_langs = list("Skrellian", "Schechi")
 	name_language = "Skrellian"
+	health_hud_intensity = 2
 
 	min_age = 19
 	max_age = 80
@@ -195,6 +203,7 @@
 	show_ssd = "completely quiescent"
 	num_alternate_languages = 1
 	name_language = "Rootspeak"
+	health_hud_intensity = 2.5
 
 	min_age = 1
 	max_age = 300

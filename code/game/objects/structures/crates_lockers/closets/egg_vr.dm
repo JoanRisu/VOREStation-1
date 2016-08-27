@@ -58,7 +58,7 @@
 /obj/structure/closet/secure_closet/egg/shark
 	name = "akula egg"
 	desc = "Its soft and slimy to the touch"
-	icon = 'icons/obj/closet.dmi'
+	icon_state  = "egg_akula"
 	icon_closed = "egg_akula"
 	icon_opened = "egg_akula_open"
 
@@ -89,6 +89,14 @@
 	icon_state = "egg_scree"
 	icon_closed = "egg_scree"
 	icon_opened = "egg_scree_open"
+
+/obj/structure/closet/secure_closet/egg/xenomorph
+	name = "Xenomorph egg"
+	desc = "Some type of pitch black egg. It has a slimy exterior coating."
+	icon_state = "egg_xenomorph"
+	icon_closed = "egg_xenomorph"
+	icon_opened = "egg_xenomorph_open"
+
 
 //In case anyone stumbles upon this, MAJOR thanks to Vorrakul and Nightwing. Without them, this wouldn't be a reality.
 //Also, huge thanks for Ace for helping me through with this and getting me to work at my full potential instead of tapping out early, along with coding advice.

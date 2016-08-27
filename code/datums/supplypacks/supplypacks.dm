@@ -7,12 +7,14 @@
 
 //var/list/all_supply_groups = list("Operations","Security","Hospitality","Engineering","Atmospherics","Medical","Reagents","Reagent Cartridges","Science","Hydroponics", "Supply", "Miscellaneous")
 var/list/all_supply_groups = list("Atmospherics",
-								  "Costumes & Clothes",
+								  "Costumes",
 								  "Engineering",
 								  "Hospitality",
+								  "Hydroponics",
 								  "Materials",
 								  "Medical",
 								  "Miscellaneous",
+								  "Munitions",
 								  "Reagents",
 								  "Reagent Cartridges",
 								  "Recreation",
@@ -26,7 +28,6 @@ var/list/all_supply_groups = list("Atmospherics",
 	var/name = null
 	var/list/contains = list()
 	var/manifest = ""
-	var/amount = null
 	var/cost = null
 	var/containertype = null
 	var/containername = null

@@ -7,6 +7,9 @@
 	var/weight = 137					// Weight for mobs for weightgain system
 	var/weight_gain = 1 				// How fast you gain weight
 	var/weight_loss = 0.5 				// How fast you lose weight
+	var/egg_type = "egg" 					// Default egg type.
+	var/feral = 0 						// If the mob is feral or not. Does nothing for non xenochimera at the moment.
+	var/metabolism = 0.0015
 
 //
 // Hook for generic creation of stuff on new creatures

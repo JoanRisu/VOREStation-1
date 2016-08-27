@@ -23,11 +23,12 @@ var/datum/species/shapeshifter/promethean/prometheans
 	flags =            NO_SCAN | NO_SLIP | NO_MINOR_CUT
 	appearance_flags = HAS_SKIN_COLOR | HAS_EYE_COLOR | HAS_HAIR_COLOR | RADIATION_GLOWS
 	spawn_flags =      SPECIES_CAN_JOIN | SPECIES_IS_WHITELISTED //VOREStation Edit
+	health_hud_intensity = 2
 
 	breath_type = null
 	poison_type = null
 
-	gluttonous =            2
+//	gluttonous =            2 // Vorestation edit. Redundant feature.
 	virus_immune =          1
 	blood_volume =          600
 	min_age =               1
