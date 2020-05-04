@@ -1,5 +1,5 @@
 /obj/machinery/robotic_fabricator
-	name = "Robotic Fabricator"
+	name = "robotic fabricator"
 	icon = 'icons/obj/robotics.dmi'
 	icon_state = "fab-idle"
 	density = 1
@@ -7,7 +7,7 @@
 	var/metal_amount = 0
 	var/operating = 0
 	var/obj/item/robot_parts/being_built = null
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 40
 	active_power_usage = 10000
 
@@ -26,11 +26,11 @@
 						M.use(1)
 						count++
 
-					user << "You insert [count] metal sheet\s into the fabricator."
+					to_chat(user, "You insert [count] metal sheet\s into the fabricator.")
 					overlays -= "fab-load-metal"
 					updateDialog()
 		else
-			user << "The robot part maker is full. Please remove metal from the robot part maker in order to insert more."
+			to_chat(user, "The robot part maker is full. Please remove metal from the robot part maker in order to insert more.")
 
 /obj/machinery/robotic_fabricator/attack_hand(user as mob)
 	var/dat
@@ -115,7 +115,7 @@ Please wait until completion...</TT><BR>
 			if(!isnull(building))
 				if(metal_amount >= build_cost)
 					operating = 1
-					update_use_power(2)
+					update_use_power(USE_POWER_ACTIVE)
 
 					metal_amount = max(0, metal_amount - build_cost)
 
@@ -128,7 +128,7 @@ Please wait until completion...</TT><BR>
 						if(!isnull(being_built))
 							being_built.loc = get_turf(src)
 							being_built = null
-						update_use_power(1)
+						update_use_power(USE_POWER_IDLE)
 						operating = 0
 						overlays -= "fab-active"
 		return

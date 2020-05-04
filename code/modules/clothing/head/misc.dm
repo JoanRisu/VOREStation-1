@@ -10,33 +10,85 @@
 	desc = "A formal hat for SolGov Customs Officers."
 	icon_state = "customshat"
 
-/obj/item/clothing/head/hairflower
-	name = "hair flower pin"
-	icon_state = "hairflower"
-	desc = "Smells nice."
+/obj/item/clothing/head/pin
+	icon_state = "pin"
+	addblends = "pin_a"
+	name = "hair pin"
+	desc = "A nice hair pin."
 	slot_flags = SLOT_HEAD | SLOT_EARS
 	body_parts_covered = 0
+	drop_sound = 'sound/items/drop/ring.ogg'
 
-/obj/item/clothing/head/hairflower/blue
+/obj/item/clothing/head/pin/pink
+	icon_state = "pinkpin"
+	addblends = null
+	name = "pink hair hat"
+
+/obj/item/clothing/head/pin/clover
+	icon_state = "cloverpin"
+	name = "clover pin"
+	addblends = null
+	desc = "A hair pin in the shape of a clover leaf."
+
+/obj/item/clothing/head/pin/butterfly
+	icon_state = "butterflypin"
+	name = "butterfly pin"
+	addblends = null
+	desc = "A hair pin in the shape of a bright blue butterfly."
+
+/obj/item/clothing/head/pin/magnetic
+	icon_state = "magnetpin"
+	name = "magnetic 'pin'"
+	addblends = null
+	desc = "Finally, a hair pin even a Morpheus chassis can use."
+	matter = list(DEFAULT_WALL_MATERIAL = 10)
+
+/obj/item/clothing/head/pin/flower
+	name = "red flower pin"
+	icon_state = "hairflower"
+	addblends = null
+	desc = "Smells nice."
+
+/obj/item/clothing/head/pin/flower/blue
 	icon_state = "hairflower_blue"
+	name = "blue flower pin"
 
-/obj/item/clothing/head/hairflower/pink
+/obj/item/clothing/head/pin/flower/pink
 	icon_state = "hairflower_pink"
+	name = "pink flower pin"
 
-/obj/item/clothing/head/hairflower/yellow
+/obj/item/clothing/head/pin/flower/yellow
 	icon_state = "hairflower_yellow"
+	name = "yellow flower pin"
 
-/obj/item/clothing/head/hairflower/violet
+/obj/item/clothing/head/pin/flower/violet
 	icon_state = "hairflower_violet"
+	name = "violet flower pin"
 
-/obj/item/clothing/head/hairflower/orange
+/obj/item/clothing/head/pin/flower/orange
 	icon_state = "hairflower_orange"
+	name = "orange flower pin"
 
-/obj/item/clothing/head/hairflower/bow
+/obj/item/clothing/head/pin/flower/white
+	icon_state = "hairflower_white"
+	addblends = "hairflower_white_a"
+	name = "flower pin"
+
+/obj/item/clothing/head/pin/bow
 	icon_state = "bow"
+	addblends = "bow_a"
 	name = "hair bow"
 	desc = "A ribbon tied into a bow with a clip on the back to attach to hair."
 	item_state_slots = list(slot_r_hand_str = "pill", slot_l_hand_str = "pill")
+
+/obj/item/clothing/head/pin/bow/big
+	icon_state = "whiteribbon"
+	name = "ribbon"
+
+/obj/item/clothing/head/pin/bow/big/red
+	icon_state = "redribbon"
+	name = "red ribbon"
+	addblends = null
 
 /obj/item/clothing/head/powdered_wig
 	name = "powdered wig"
@@ -117,6 +169,7 @@
 	icon_state = "cardborg_h"
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE
 	body_parts_covered = HEAD|FACE|EYES
+	drop_sound = 'sound/items/drop/box.ogg'
 
 /obj/item/clothing/head/justice
 	name = "justice hat"
@@ -151,7 +204,8 @@
 	siemens_coefficient = 0.9 //...what?
 
 /obj/item/clothing/head/flatcap/grey
-	icon_state = "flat_capg"
+	icon_state = "flat_capw"
+	addblends = "flat_capw_a"
 	item_state_slots = list(slot_r_hand_str = "greysoft", slot_l_hand_str = "greysoft")
 
 /obj/item/clothing/head/pirate
@@ -207,6 +261,18 @@
 	item_state_slots = list(slot_r_hand_str = "detective", slot_l_hand_str = "detective")
 	desc = "A sharp, stylish hat."
 
+/obj/item/clothing/head/fedora/brown
+	name = "fedora"
+	desc = "A brown fedora - either the cornerstone of a reporter's style or a poor attempt at looking cool, depending on the person wearing it."
+	icon_state = "detective"
+	allowed = list(/obj/item/weapon/reagent_containers/food/snacks/candy_corn, /obj/item/weapon/pen)
+
+/obj/item/clothing/head/fedora/grey
+	icon_state = "detective2"
+	item_state_slots = list(slot_r_hand_str = "detective", slot_l_hand_str = "detective")
+	desc = "A grey fedora - either the cornerstone of a reporter's style or a poor attempt at looking cool, depending on the person wearing it."
+
+
 /obj/item/clothing/head/feathertrilby
 	name = "feather trilby"
 	icon_state = "feather_trilby"
@@ -223,6 +289,21 @@
 	desc = "For those that have spurs that go jingle jangle jingle."
 	icon_state = "cowboyhat"
 	body_parts_covered = 0
+
+/obj/item/clothing/head/cowboy_hat/black
+	name = "black cowboy hat"
+	desc = "You can almost hear the old western music."
+	icon_state = "cowboy_black"
+
+/obj/item/clothing/head/cowboy_hat/wide
+	name = "wide-brimmed cowboy hat"
+	desc = "Because justice isn't going to dispense itself."
+	icon_state = "cowboy_wide"
+
+/obj/item/clothing/head/cowboy_hat/small
+	name = "small cowboy hat"
+	desc = "For the tiniest of cowboys."
+	icon_state = "cowboy_small"
 
 /obj/item/clothing/head/witchwig
 	name = "witch costume wig"
@@ -275,6 +356,7 @@
 	name = "hijab"
 	desc = "A veil that is wrapped to cover the head and chest"
 	icon_state = "hijab"
+	addblends = "hijab_a"
 	item_state_slots = list(slot_r_hand_str = "beret_white", slot_l_hand_str = "beret_white")
 	body_parts_covered = 0
 	flags_inv = BLOCKHAIR
@@ -283,36 +365,80 @@
 	name = "kippa"
 	desc = "A small, brimless cap."
 	icon_state = "kippa"
+	addblends = "kippa_a"
 	body_parts_covered = 0
 
 /obj/item/clothing/head/turban
 	name = "turban"
 	desc = "A cloth used to wind around the head"
 	icon_state = "turban"
+	addblends = "turban_a"
 	item_state_slots = list(slot_r_hand_str = "beret_white", slot_l_hand_str = "beret_white")
 	body_parts_covered = 0
-	flags_inv = BLOCKHAIR
+	flags_inv = BLOCKHEADHAIR
+
+/obj/item/clothing/head/taqiyah
+	name = "taqiyah"
+	desc = "A short, rounded skullcap usually worn for religious purposes."
+	icon_state = "taqiyah"
+	addblends = "taqiyah_a"
+	item_state_slots = list(slot_r_hand_str = "taq", slot_l_hand_str = "taq")
 
 /obj/item/clothing/head/beanie
 	name = "beanie"
 	desc = "A head-hugging brimless winter cap. This one is tight."
 	icon_state = "beanie"
+	addblends = "beanie_a"
 	body_parts_covered = 0
 
 /obj/item/clothing/head/beanie_loose
 	name = "loose beanie"
 	desc = "A head-hugging brimless winter cap. This one is loose."
 	icon_state = "beanie_hang"
+	addblends = "beanie_hang_a"
 	body_parts_covered = 0
 
 /obj/item/clothing/head/beretg
 	name = "beret"
 	desc = "A beret, an artists favorite headwear."
 	icon_state = "beret_g"
+	addblends = "beret_g_a"
 	body_parts_covered = 0
 
 /obj/item/clothing/head/sombrero
 	name = "sombrero"
 	desc = "A wide-brimmed hat popularly worn in Mexico."
 	icon_state = "sombrero"
+	body_parts_covered = 0
+
+/obj/item/clothing/head/headband/maid
+	name = "maid headband"
+	desc = "Keeps hair out of the way for important... jobs."
+	icon_state = "maid"
+	body_parts_covered = 0
+
+/obj/item/clothing/head/maangtikka
+	name = "maang tikka"
+	desc = "A jeweled headpiece originating in India."
+	icon_state = "maangtikka"
+	body_parts_covered = 0
+	drop_sound = 'sound/items/drop/accessory.ogg'
+
+/obj/item/clothing/head/jingasa
+	name = "jingasa"
+	desc = "A wide, flat rain hat originally from Japan."
+	icon_state = "jingasa"
+	body_parts_covered = 0
+	item_state_slots = list(slot_r_hand_str = "taq", slot_l_hand_str = "taq")
+
+/obj/item/clothing/head/cowl
+	name = "black cowl"
+	desc = "A gold-lined black cowl. It gives off uncomfortable cult vibes, but fancy."
+	icon_state = "cowl"
+	body_parts_covered = 0
+
+/obj/item/clothing/head/cowl
+	name = "white cowl"
+	desc = "A gold-lined white cowl. It gives off uncomfortable cult vibes, but fancy."
+	icon_state = "whitecowl"
 	body_parts_covered = 0

@@ -10,7 +10,8 @@ var/datum/antagonist/technomancer/technomancers
 	welcome_text = "You will need to purchase <b>functions</b> and perhaps some <b>equipment</b> from the various machines around your \
 	base. Choose your technological arsenal carefully.  Remember that without the <b>core</b> on your back, your functions are \
 	powerless, and therefore you will be as well.<br>\
-	In your pockets you will find a one-time use teleport device. Use it to leave the base and go to the colony, when you are ready."
+	In your pockets you will find a one-time use teleport device. Use it to leave the base and go to the station, when you are ready."
+	antag_sound = 'sound/effects/antag_notice/technomancer_alert.ogg'
 	flags = ANTAG_OVERRIDE_JOB | ANTAG_CLEAR_EQUIPMENT | ANTAG_CHOOSE_NAME | ANTAG_SET_APPEARANCE | ANTAG_VOTABLE
 	antaghud_indicator = "hudwizard"
 
@@ -47,7 +48,6 @@ var/datum/antagonist/technomancer/technomancers
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/device/flashlight(technomancer_mob), slot_belt)
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/clothing/shoes/laceup(technomancer_mob), slot_shoes)
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/clothing/head/technomancer/master(technomancer_mob), slot_head)
-	technomancer_mob.update_icons()
 	return 1
 
 /datum/antagonist/technomancer/proc/equip_apprentice(var/mob/living/carbon/human/technomancer_mob)
@@ -67,7 +67,6 @@ var/datum/antagonist/technomancer/technomancers
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/device/flashlight(technomancer_mob), slot_belt)
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/clothing/shoes/laceup(technomancer_mob), slot_shoes)
 	technomancer_mob.equip_to_slot_or_del(new /obj/item/clothing/head/technomancer/apprentice(technomancer_mob), slot_head)
-	technomancer_mob.update_icons()
 	return 1
 
 /datum/antagonist/technomancer/check_victory()
@@ -79,5 +78,26 @@ var/datum/antagonist/technomancer/technomancers
 		break
 	if(!survivor)
 		feedback_set_details("round_end_result","loss - technomancer killed")
-		world << "<span class='danger'><font size = 3>The [(current_antagonists.len>1)?"[role_text_plural] have":"[role_text] has"] been \
-		killed!</font></span>"
+		to_world("<span class='danger'><font size = 3>The [(current_antagonists.len>1)?"[role_text_plural] have":"[role_text] has"] been killed!</font></span>")
+
+/datum/antagonist/technomancer/print_player_summary()
+	..()
+	for(var/obj/item/weapon/technomancer_core/core in technomancer_belongings)
+		if(core.wearer)
+			continue // Only want abandoned cores.
+		if(!core.spells.len)
+			continue // Cores containing spells only.
+		to_world("Abandoned [core] had [english_list(core.spells)].<br>")
+
+/datum/antagonist/technomancer/print_player_full(var/datum/mind/player)
+	var/text = print_player_lite(player)
+
+	var/obj/item/weapon/technomancer_core/core
+	if(player.original)
+		core = locate() in player.original
+		if(core)
+			text += "<br>Bought [english_list(core.spells)], and used \a [core]."
+		else
+			text += "<br>They've lost their core."
+
+	return text

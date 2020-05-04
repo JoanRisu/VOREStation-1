@@ -1,5 +1,5 @@
 //wrapper
-/proc/do_teleport(ateleatom, adestination, aprecision=0, afteleport=1, aeffectin=null, aeffectout=null, asoundin=null, asoundout=null)
+/proc/do_teleport(ateleatom, adestination, aprecision=0, afteleport=1, aeffectin=null, aeffectout=null, asoundin=null, asoundout=null, local=TRUE) //VOREStation Edit
 	new /datum/teleport/instant/science(arglist(args))
 	return
 
@@ -12,15 +12,16 @@
 	var/soundin //soundfile to play before teleportation
 	var/soundout //soundfile to play after teleportation
 	var/force_teleport = 1 //if false, teleport will use Move() proc (dense objects will prevent teleportation)
+	var/local = TRUE //VOREStation Add - If false, can teleport from/to any z-level
 
 
-/datum/teleport/New(ateleatom, adestination, aprecision=0, afteleport=1, aeffectin=null, aeffectout=null, asoundin=null, asoundout=null)
+/datum/teleport/New(ateleatom, adestination, aprecision=0, afteleport=1, aeffectin=null, aeffectout=null, asoundin=null, asoundout=null, local=TRUE) //VOREStation Edit
 	..()
 	if(!initTeleport(arglist(args)))
 		return 0
 	return 1
 
-/datum/teleport/proc/initTeleport(ateleatom,adestination,aprecision,afteleport,aeffectin,aeffectout,asoundin,asoundout)
+/datum/teleport/proc/initTeleport(ateleatom,adestination,aprecision,afteleport,aeffectin,aeffectout,asoundin,asoundout,local) //VOREStation Edit
 	if(!setTeleatom(ateleatom))
 		return 0
 	if(!setDestination(adestination))
@@ -30,6 +31,7 @@
 	setEffects(aeffectin,aeffectout)
 	setForceTeleport(afteleport)
 	setSounds(asoundin,asoundout)
+	src.local = local // VOREStation Add
 	return 1
 
 //must succeed
@@ -96,7 +98,6 @@
 
 	var/turf/destturf
 	var/turf/curturf = get_turf(teleatom)
-	var/area/destarea = get_area(destination)
 	if(precision)
 		var/list/posturfs = circlerangeturfs(destination,precision)
 		destturf = safepick(posturfs)
@@ -113,7 +114,7 @@
 		var/mob/living/L = teleatom
 		if(L.buckled)
 			C = L.buckled
-	if(attempt_vr(src,"try_televore",args)) return
+	if(attempt_vr(src,"try_televore",args)) return //VOREStation Edit - Telenoms.
 	if(force_teleport)
 		teleatom.forceMove(destturf)
 		playSpecials(destturf,effectout,soundout)
@@ -122,8 +123,6 @@
 			playSpecials(destturf,effectout,soundout)
 	if(C)
 		C.forceMove(destturf)
-
-	destarea.Entered(teleatom)
 
 	return 1
 
@@ -156,11 +155,18 @@
 		precision = rand(1,100)
 
 	var/list/bagholding = teleatom.search_contents_for(/obj/item/weapon/storage/backpack/holding)
+	//VOREStation Addition Start: Prevent taurriding abuse
+	if(istype(teleatom, /mob/living))
+		var/mob/living/L = teleatom
+		if(LAZYLEN(L.buckled_mobs))
+			for(var/mob/rider in L.buckled_mobs)
+				bagholding += rider.search_contents_for(/obj/item/weapon/storage/backpack/holding)
+	//VOREStation Addition End: Prevent taurriding abuse
 	if(bagholding.len)
 		precision = max(rand(1,100)*bagholding.len,100)
 		if(istype(teleatom, /mob/living))
 			var/mob/living/MM = teleatom
-			MM << "<span class='danger'>The Bluespace interface on your [teleatom] interferes with the teleport!</span>"
+			to_chat(MM, "<span class='danger'>The Bluespace interface on your [teleatom] interferes with the teleport!</span>")
 	return 1
 
 /datum/teleport/instant/science/teleportChecks()
@@ -175,17 +181,39 @@
 		else
 			teleatom.visible_message("<span class='danger'>\The [teleatom] bounces off of the portal!</span>")
 		return 0
-
-	if(destination.z in config.admin_levels) //centcomm z-level
+	/* VOREStation Removal
+	if(destination.z in using_map.admin_levels) //CentCom z-level
 		if(istype(teleatom, /obj/mecha))
 			var/obj/mecha/MM = teleatom
-			MM.occupant << "<span class='danger'>\The [MM] would not survive the jump to a location so far away!</span>"
+			to_chat(MM.occupant, "<span class='danger'>\The [MM] would not survive the jump to a location so far away!</span>")
 			return 0
 		if(!isemptylist(teleatom.search_contents_for(/obj/item/weapon/storage/backpack/holding)))
 			teleatom.visible_message("<span class='danger'>\The [teleatom] bounces off of the portal!</span>")
 			return 0
-
-
-	if(destination.z > max_default_z_level()) //Away mission z-levels
+	*/ //VOREStation Removal End
+	//VOREStation Edit Start
+	var/obstructed = 0
+	var/turf/dest_turf = get_turf(destination)
+	if(local && !(dest_turf.z in using_map.player_levels))
+		if(istype(teleatom, /mob/living))
+			to_chat(teleatom, "<span class='warning'>The portal refuses to carry you that far away!</span>")
 		return 0
-	return 1
+	else if(istype(destination.loc, /obj/belly))
+		var/obj/belly/destination_belly = destination.loc
+		var/mob/living/telenommer = destination_belly.owner
+		if(istype(telenommer))
+			if(!isliving(teleatom))
+				return 1
+			else
+				var/mob/living/telemob = teleatom
+				if(telemob.can_be_drop_prey && telenommer.can_be_drop_pred)
+					return 1
+		obstructed = 1
+	else if(!((isturf(destination) && !destination.density) || (isturf(destination.loc) && !destination.loc.density)) || !destination.x || !destination.y || !destination.z)	//If we're inside something or outside universe
+		obstructed = 1
+		to_chat(teleatom, "<span class='warning'>Something is blocking way on the other side!</span>")
+	if(obstructed)
+		return 0
+	else
+		return 1
+	//VOREStation Edit End

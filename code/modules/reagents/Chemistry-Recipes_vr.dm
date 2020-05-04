@@ -47,6 +47,31 @@
 	s.start()
 	holder.clear_reagents()
 
+/datum/chemical_reaction/xenolazarus
+	name = "Discount Lazarus"
+	id = "discountlazarus"
+	result = null
+	required_reagents = list("monstertamer" = 5, "clonexadone" = 5)
+
+/datum/chemical_reaction/xenolazarus/on_reaction(var/datum/reagents/holder, var/created_volume) //literally all this does is mash the regenerate button
+	if(ishuman(holder.my_atom))
+		var/mob/living/carbon/human/H = holder.my_atom
+		if(H.stat == DEAD && (/mob/living/carbon/human/proc/reconstitute_form in H.verbs)) //no magical regen for non-regenners, and can't force the reaction on live ones
+			if(H.hasnutriment()) // make sure it actually has the conditions to revive
+				if(H.revive_ready >= 1) // if it's not reviving, start doing so
+					H.revive_ready = REVIVING_READY // overrides the normal cooldown
+					H.visible_message("<span class='info'>[H] shudders briefly, then relaxes, faint movements stirring within.</span>")
+					H.chimera_regenerate()
+				else if (/mob/living/carbon/human/proc/hatch in H.verbs)// already reviving, check if they're ready to hatch
+					H.chimera_hatch()
+					H.visible_message("<span class='danger'><p><font size=4>[H] violently convulses and then bursts open, revealing a new, intact copy in the pool of viscera.</font></p></span>") // Hope you were wearing waterproofs, doc...
+					H.adjustBrainLoss(10) // they're reviving from dead, so take 10 brainloss
+				else //they're already reviving but haven't hatched. Give a little message to tell them to wait.
+					H.visible_message("<span class='info'>[H] stirs faintly, but doesn't appear to be ready to wake up yet.</span>")
+			else
+				H.visible_message("<span class='info'>[H] twitches for a moment, but remains still.</span>") // no nutriment
+
+
 ///////////////////////////////////////////////////////////////////////////////////
 /// Vore Drugs
 
@@ -64,11 +89,61 @@
 	required_reagents = list("mutagen" = 3, "lipozine" = 2)
 	result_amount = 5
 
+///////////////////////////////////////////////////////////////////////////////////
+/// Other Drugs
+/datum/chemical_reaction/adranol
+	name = "Adranol"
+	id = "adranol"
+	result = "adranol"
+	required_reagents = list("milk" = 2, "hydrogen" = 1, "potassium" = 1)
+	result_amount = 3
 
+/datum/chemical_reaction/vermicetol
+	name = "Vermicetol"
+	id = "vermicetol"
+	result = "vermicetol"
+	required_reagents = list("bicaridine" = 2, "shockchem" = 1, "phoron" = 0.1)
+	catalysts = list("phoron" = 5)
+	result_amount = 3
 
+///////////////////////////////////////////////////////////////////////////////////
+/// Special drinks
+/datum/chemical_reaction/drinks/grubshake
+	name = "Grub protein drink"
+	id = "grubshake"
+	result = "grubshake"
+	required_reagents = list("shockchem" = 5, "water" = 25)
+	result_amount = 30
 
+/datum/chemical_reaction/drinks/deathbell
+	name = "Deathbell"
+	id = "deathbell"
+	result = "deathbell"
+	required_reagents = list("antifreeze" = 1, "gargleblaster" = 1, "syndicatebomb" =1)
+	result_amount = 3
 
+/datum/chemical_reaction/drinks/monstertamer
+	name = "Monster Tamer"
+	id = "monstertamer"
+	result = "monstertamer"
+	required_reagents = list("whiskey" = 1, "protein" = 1)
+	result_amount = 2
 
+///////////////////////////////////////////////////////////////////////////////////
+/// Reagent colonies.
+/datum/chemical_reaction/meatcolony
+	name = "protein"
+	id = "meatcolony"
+	result = "protein"
+	required_reagents = list("meatcolony" = 5, "virusfood" = 5)
+	result_amount = 60
+
+/datum/chemical_reaction/plantcolony
+	name = "nutriment"
+	id = "plantcolony"
+	result = "nutriment"
+	required_reagents = list("plantcolony" = 5, "virusfood" = 5)
+	result_amount = 60
 
 ///////////////////////////////
 //SLIME CORES BELOW HERE///////
@@ -80,7 +155,7 @@
 	name = "Slime Bork"
 	id = "m_tele2"
 	result = null
-	required_reagents = list("phoron" = 10, "slimejelly" = 10, "nutriment" = 10)
+	required_reagents = list("phoron" = 10, "slimejelly" = 5, "nutriment" = 20)
 	result_amount = 1
 	on_reaction(var/datum/reagents/holder)
 
@@ -130,7 +205,20 @@
 				O.show_message(text("<span class='warning'>The slime core fizzles disappointingly.</span>"), 1)
 			return
 
-		var/blocked = list(/obj/item/stack/material, /obj/item/stack/material/cyborg, /obj/item/stack/material/cyborg/plastic, /obj/item/stack/material/cyborg/plasteel, /obj/item/stack/material/cyborg/glass/reinforced, /obj/item/stack/material/cyborg/wood, /obj/item/stack/material/animalhide/human, /obj/item/stack/material/animalhide/corgi, /obj/item/stack/material/animalhide/cat, /obj/item/stack/material/animalhide/monkey, /obj/item/stack/material/animalhide/lizard , /obj/item/stack/material/animalhide/xeno, /obj/item/stack/material/cyborg, /obj/item/stack/material/cyborg/glass/reinforced)
+		var/blocked = list(
+							/obj/item/stack/material,					//Technical stacks
+							/obj/item/stack/material/hairlesshide,		//Useless leather production steps
+							/obj/item/stack/material/wetleather,
+							/obj/item/stack/material/algae/ten)			//Why is this one even a separate thing
+		blocked += typesof(/obj/item/stack/material/cyborg)				//Borg matter synths, should only exist in borgs
+		blocked += typesof(/obj/item/stack/material/animalhide)			//Hides which are only used for leather production anyway
+
+		var/rare_types = list(
+							/obj/item/stack/material/morphium,			//Complex materials requiring Particle Smasher to create
+							/obj/item/stack/material/morphium/hull,
+							/obj/item/stack/material/valhollide,
+							/obj/item/stack/material/supermatter)
+
 		var/list/material = typesof(/obj/item/stack/material) - blocked
 
 		playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
@@ -141,6 +229,8 @@
 */
 		var/spawn_amount = rand(1,50)
 		var/chosen = pick(material)
+		if(chosen in rare_types)
+			spawn_amount = rand(1,15)
 		var/obj/item/stack/material/C = new chosen
 		C.amount = spawn_amount
 		C.loc = get_turf(holder.my_atom)
@@ -183,7 +273,7 @@
 		playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 		for(var/mob/living/M in range (get_turf(holder.my_atom), 7))
 			M.bodytemperature -= 140
-			M << "<span class='notice'> You suddenly feel a chill!</span>"
+			to_chat(M, "<span class='notice'> You suddenly feel a chill!</span>")
 
 
 
@@ -232,7 +322,7 @@
 	required_reagents = list("phoron" = 10, "bicaridine" = 10, "kelotane" = 10, "inaprovaline" = 10, "slimejelly" = 10)
 	on_reaction(var/datum/reagents/holder, var/created_volume)
 		for (var/mob/living/carbon/C in viewers(get_turf(holder.my_atom), null))
-			C << "<span class='notice'>A wave of energy suddenly invigorates you.</span>"
+			to_chat(C, "<span class='notice'>A wave of energy suddenly invigorates you.</span>")
 			C.adjustBruteLoss(-25)
 			C.adjustFireLoss(-25)
 			C.adjustToxLoss(-25)
@@ -248,10 +338,6 @@
 	required_reagents = list("phoron" = 20, "sugar" = 50, "lithium" = 50) //In case a xenobiologist is impatient and is willing to drain their dispenser resources, along with plasma!
 	result_amount = 5
 
-
-
-
-
 /datum/chemical_reaction/slimevore
 	name = "Slime Vore" // Hostile vore mobs only
 	id = "m_tele"
@@ -259,14 +345,45 @@
 	required_reagents = list("phoron" = 20, "nutriment" = 20, "sugar" = 20, "mutationtoxin" = 20) //Can't do slime jelly as it'll conflict with another, but mutation toxin will do.
 	result_amount = 1
 	on_reaction(var/datum/reagents/holder)
-		var/mob_path = /mob/living/simple_animal/hostile/vore
-		var/blocked = list(
-			/mob/living/simple_animal/hostile/vore/mimic,
-			/mob/living/simple_animal/hostile/vore/mimic/copy,
-			/mob/living/simple_animal/hostile/vore/mimic/crate,
-			/mob/living/simple_animal/hostile/vore/alien/queen/large
+		var/mob_path = /mob/living/simple_mob
+		var/blocked = list(														//List of things we do NOT want to spawn
+			/mob/living/simple_mob,												//Technical parent mobs
+			/mob/living/simple_mob/animal,
+			/mob/living/simple_mob/animal/passive,
+			/mob/living/simple_mob/animal/space,
+			/mob/living/simple_mob/blob,
+			/mob/living/simple_mob/mechanical,
+			/mob/living/simple_mob/mechanical/mecha,
+			/mob/living/simple_mob/slime,
+			/mob/living/simple_mob/vore,
+			/mob/living/simple_mob/vore/aggressive,
+			/mob/living/simple_mob/illusion,									//Other technical mobs
+			/mob/living/simple_mob/animal/passive/crab/Coffee,					//Unique pets/named mobs
+			/mob/living/simple_mob/animal/passive/cat/runtime,
+			/mob/living/simple_mob/animal/passive/cat/bones,
+			/mob/living/simple_mob/animal/passive/cat/tabiranth,
+			/mob/living/simple_mob/animal/passive/dog/corgi/puppy/Bockscar,
+			/mob/living/simple_mob/animal/passive/dog/corgi/Ian,
+			/mob/living/simple_mob/animal/passive/dog/corgi/Lisa,
+			/mob/living/simple_mob/animal/passive/dog/tamaskan/Spice,
+			/mob/living/simple_mob/animal/passive/fox/renault,
+			/mob/living/simple_mob/animal/passive/bird/azure_tit/tweeter,
+			/mob/living/simple_mob/animal/passive/bird/parrot/poly,
+			/mob/living/simple_mob/animal/sif/fluffy,
+			/mob/living/simple_mob/animal/sif/fluffy/silky,
+			/mob/living/simple_mob/animal/passive/snake/noodle,
+			/mob/living/simple_mob/slime/xenobio/rainbow/kendrick,
+			/mob/living/simple_mob/animal/space/space_worm,						//Space Worm parts that aren't proper heads
+			/mob/living/simple_mob/animal/space/space_worm/head/severed,
+			/mob/living/simple_mob/animal/borer,								//Event/player-control-only mobs
+			/mob/living/simple_mob/vore/hostile/morph
 			)//exclusion list for things you don't want the reaction to create.
-		var/list/voremobs = typesof(mob_path) - mob_path - blocked // list of possible hostile mobs
+		blocked += typesof(/mob/living/simple_mob/mechanical/ward)				//Wards that should be created with ward items, are mobs mostly on technicalities
+		blocked += typesof(/mob/living/simple_mob/construct)					//Should only exist
+		blocked += typesof(/mob/living/simple_mob/vore/demon)					//as player-controlled
+		blocked += typesof(/mob/living/simple_mob/shadekin)						//and/or event things
+		blocked += typesof(/mob/living/simple_mob/horror)
+		var/list/voremobs = typesof(mob_path) - blocked // list of possible hostile mobs
 
 		playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 /* Removed at some point, unsure what to replace with
@@ -277,9 +394,16 @@
 		var/spawn_count = rand(1,3)
 		for(var/i = 1, i <= spawn_count, i++)
 			var/chosen = pick(voremobs)
-			var/mob/living/simple_animal/hostile/C = new chosen
+			var/mob/living/simple_mob/C = new chosen
 			C.faction = "slimesummon"
 			C.loc = get_turf(holder.my_atom)
 			if(prob(50))
 				for(var/j = 1, j <= rand(1, 3), j++)
 					step(C, pick(NORTH,SOUTH,EAST,WEST))
+
+
+/datum/chemical_reaction/food/syntiflesh
+	required_reagents = list("blood" = 5, "clonexadone" = 1)
+
+/datum/chemical_reaction/biomass
+	result_amount = 6	// Roughly 120u per phoron sheet

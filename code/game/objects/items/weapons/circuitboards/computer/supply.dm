@@ -3,10 +3,15 @@
 #endif
 
 /obj/item/weapon/circuitboard/supplycomp
-	name = T_BOARD("supply control console")
+	name = T_BOARD("supply ordering console")
 	build_path = /obj/machinery/computer/supplycomp
-	origin_tech = list(TECH_DATA = 3)
+	origin_tech = list(TECH_DATA = 2)
 	var/contraband_enabled = 0
+
+/obj/item/weapon/circuitboard/supplycomp/control
+	name = T_BOARD("supply ordering console")
+	build_path = /obj/machinery/computer/supplycomp/control
+	origin_tech = list(TECH_DATA = 3)
 
 /obj/item/weapon/circuitboard/supplycomp/construct(var/obj/machinery/computer/supplycomp/SC)
 	if (..(SC))
@@ -34,5 +39,5 @@
 			if("Cancel")
 				return
 			else
-				user << "DERP! BUG! Report this (And what you were doing to cause it) to Agouri"
+				to_chat(user, "DERP! BUG! Report this (And what you were doing to cause it) to Agouri")
 	return

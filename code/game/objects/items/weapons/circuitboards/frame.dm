@@ -37,7 +37,7 @@
 	matter = list(DEFAULT_WALL_MATERIAL = 50, "glass" = 50)
 
 /obj/item/weapon/circuitboard/request
-	name = T_BOARD("reques console")
+	name = T_BOARD("request console")
 	build_path = /obj/machinery/requests_console
 	board_type = new /datum/frame/frame_types/supply_request_console
 	matter = list(DEFAULT_WALL_MATERIAL = 50, "glass" = 50)
@@ -144,6 +144,14 @@
 	build_path = /obj/machinery/recharger/wallcharger
 	board_type = new /datum/frame/frame_types/wall_charger
 
+/obj/item/weapon/circuitboard/cell_charger
+	name = T_BOARD("heavy-duty cell charger")
+	build_path = /obj/machinery/cell_charger
+	board_type = new /datum/frame/frame_types/cell_charger
+	req_components = list(
+							/obj/item/weapon/stock_parts/capacitor = 1,
+							/obj/item/stack/cable_coil = 5)
+
 /obj/item/weapon/circuitboard/washing
 	name = T_BOARD("washing machine")
 	build_path = /obj/machinery/washing_machine
@@ -161,6 +169,15 @@
 							/obj/item/weapon/stock_parts/motor = 1,
 							/obj/item/weapon/stock_parts/gear = 1,
 							/obj/item/weapon/reagent_containers/glass/beaker/large = 1)
+
+/obj/item/weapon/circuitboard/distiller
+	build_path = /obj/machinery/portable_atmospherics/powered/reagent_distillery
+	board_type = new /datum/frame/frame_types/reagent_distillery
+	req_components = list(
+							/obj/item/weapon/stock_parts/capacitor = 1,
+							/obj/item/weapon/stock_parts/micro_laser = 1,
+							/obj/item/weapon/stock_parts/motor = 2,
+							/obj/item/weapon/stock_parts/gear = 1)
 
 /obj/item/weapon/circuitboard/teleporter_hub
 	name = T_BOARD("teleporter hub")
@@ -197,9 +214,19 @@
 	board_type = new /datum/frame/frame_types/medical_pod
 	origin_tech = list(TECH_MAGNET = 2, TECH_BIO = 2)
 	req_components = list(
+							/obj/item/weapon/stock_parts/manipulator = 1,
 							/obj/item/weapon/stock_parts/scanning_module = 1,
 							/obj/item/weapon/reagent_containers/glass/beaker = 3,
 							/obj/item/weapon/reagent_containers/syringe = 3,
+							/obj/item/stack/material/glass/reinforced = 2)
+
+/obj/item/weapon/circuitboard/vr_sleeper
+	name = T_BOARD("VR sleeper")
+	build_path = /obj/machinery/vr_sleeper
+	board_type = new /datum/frame/frame_types/medical_pod
+	origin_tech = list(TECH_MAGNET = 2, TECH_BIO = 2)
+	req_components = list(
+							/obj/item/weapon/stock_parts/scanning_module = 1,
 							/obj/item/stack/material/glass/reinforced = 2)
 
 /obj/item/weapon/circuitboard/dna_analyzer
@@ -222,3 +249,14 @@
 							/obj/item/weapon/stock_parts/capacitor = 1,
 							/obj/item/weapon/stock_parts/spring = 1,
 							/obj/item/stack/cable_coil = 5)
+
+/obj/item/weapon/circuitboard/microwave/advanced
+	name = T_BOARD("deluxe microwave")
+	build_path = /obj/machinery/microwave/advanced
+	board_type = new /datum/frame/frame_types/microwave
+	matter = list(DEFAULT_WALL_MATERIAL = 50, "glass" = 50)
+	req_components = list(
+							/obj/item/weapon/stock_parts/console_screen = 1,
+							/obj/item/weapon/stock_parts/motor = 1,
+							/obj/item/weapon/stock_parts/capacitor = 1)
+

@@ -11,6 +11,7 @@
 	icon_state = copy.icon_state
 	item_state = copy.item_state
 	body_parts_covered = copy.body_parts_covered
+	flags_inv = copy.flags_inv
 
 	item_icons = copy.item_icons.Copy()
 	if(copy.item_state_slots) //Runtime prevention for backpacks
@@ -213,6 +214,18 @@
 		var/mob/M = src.loc
 		M.update_inv_back()
 
+/obj/item/weapon/storage/backpack/chameleon/full
+	starts_with = list(
+		/obj/item/clothing/under/chameleon,
+		/obj/item/clothing/head/chameleon,
+		/obj/item/clothing/suit/chameleon,
+		/obj/item/clothing/shoes/chameleon,
+		/obj/item/clothing/gloves/chameleon,
+		/obj/item/clothing/mask/chameleon,
+		/obj/item/clothing/glasses/chameleon,
+		/obj/item/clothing/accessory/chameleon
+	)
+
 //********************
 //**Chameleon Gloves**
 //********************
@@ -326,7 +339,7 @@
 	icon = 'icons/obj/clothing/belts.dmi'
 	icon_state = "utilitybelt"
 	origin_tech = list(TECH_ILLEGAL = 3)
-	var/list/clothing_choices = list()
+	var/global/list/clothing_choices
 
 /obj/item/weapon/storage/belt/chameleon/New()
 	..()
@@ -356,6 +369,42 @@
 		var/mob/M = src.loc
 		M.update_inv_belt() //so our overlays update.
 
+//******************
+//**Chameleon Tie**
+//******************
+
+/obj/item/clothing/accessory/chameleon
+	name = "black tie"
+	desc = "Looks like a black tie, but his one also has a dial inside."
+	icon = 'icons/obj/clothing/ties.dmi'
+	icon_state = "blacktie"
+	origin_tech = list(TECH_ILLEGAL = 3)
+	var/global/list/clothing_choices
+
+/obj/item/clothing/accessory/chameleon/New()
+	..()
+	if(!clothing_choices)
+		var/blocked = list(src.type, /obj/item/clothing/accessory/storage)
+		clothing_choices = generate_chameleon_choices(/obj/item/clothing/accessory, blocked)
+
+/obj/item/clothing/accessory/chameleon/emp_act(severity) //Because we don't have psych for all slots right now but still want a downside to EMP.  In this case your cover's blown.
+	name = "black tie"
+	desc = "Looks like a black tie, but his one also has a dial inside."
+	icon_state = "blacktie"
+	update_icon()
+	update_clothing_icon()
+
+/obj/item/clothing/accessory/chameleon/verb/change(picked in clothing_choices)
+	set name = "Change Accessory Appearance"
+	set category = "Chameleon Items"
+	set src in usr
+
+	if(!ispath(clothing_choices[picked]))
+		return
+
+	disguise(clothing_choices[picked])
+	update_icon()
+
 //*****************
 //**Chameleon Gun**
 //*****************
@@ -363,15 +412,15 @@
 	name = "desert eagle"
 	desc = "A hologram projector in the shape of a gun. There is a dial on the side to change the gun's disguise."
 	icon_state = "deagle"
-	w_class = 3
-	origin_tech = list(TECH_COMBAT = 2, TECH_MATERIAL = 2, TECH_ILLEGAL = 8)
+	w_class = ITEMSIZE_NORMAL
+	origin_tech = list(TECH_COMBAT = 5, TECH_MATERIAL = 2, TECH_ILLEGAL = 4)
 	matter = list()
 
-	fire_sound = 'sound/weapons/Gunshot.ogg'
+	fire_sound = 'sound/weapons/Gunshot1.ogg'
 	projectile_type = /obj/item/projectile/chameleon
 	charge_meter = 0
-	charge_cost = 20 //uses next to no power, since it's just holograms
-	max_shots = 50
+	charge_cost = 48 //uses next to no power, since it's just holograms
+	battery_lock = 1
 
 	var/obj/item/projectile/copy_projectile
 	var/global/list/gun_choices
@@ -393,8 +442,9 @@
 		P.icon = initial(copy_projectile.icon)
 		P.icon_state = initial(copy_projectile.icon_state)
 		P.pass_flags = initial(copy_projectile.pass_flags)
+		P.fire_sound = initial(copy_projectile.fire_sound)
 		P.hitscan = initial(copy_projectile.hitscan)
-		P.step_delay = initial(copy_projectile.step_delay)
+		P.speed = initial(copy_projectile.speed)
 		P.muzzle_type = initial(copy_projectile.muzzle_type)
 		P.tracer_type = initial(copy_projectile.tracer_type)
 		P.impact_type = initial(copy_projectile.impact_type)
@@ -414,12 +464,15 @@
 	var/obj/item/weapon/gun/copy = ..()
 
 	flags_inv = copy.flags_inv
-	fire_sound = copy.fire_sound
+	if(copy.fire_sound)
+		fire_sound = copy.fire_sound
+	else
+		fire_sound = null
 	fire_sound_text = copy.fire_sound_text
 
-	var/obj/item/weapon/gun/energy/E = copy
-	if(istype(E))
-		copy_projectile = E.projectile_type
+	var/obj/item/weapon/gun/G = copy
+	if(istype(G))
+		copy_projectile = G.projectile_type
 		//charge_meter = E.charge_meter //does not work very well with icon_state changes, ATM
 	else
 		copy_projectile = null

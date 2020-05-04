@@ -6,6 +6,7 @@ var/datum/antagonist/deathsquad/deathsquad
 	role_text = "Death Commando"
 	role_text_plural = "Death Commandos"
 	welcome_text = "You work in the service of corporate Asset Protection, answering directly to the Board of Directors."
+	antag_sound = 'sound/effects/antag_notice/deathsquid_alert.ogg'
 	landmark_id = "Commando"
 	flags = ANTAG_OVERRIDE_JOB | ANTAG_OVERRIDE_MOB | ANTAG_HAS_NUKE | ANTAG_HAS_LEADER
 	default_access = list(access_cent_general, access_cent_specops, access_cent_living, access_cent_storage)
@@ -36,7 +37,7 @@ var/datum/antagonist/deathsquad/deathsquad
 	else
 		player.equip_to_slot_or_del(new /obj/item/clothing/under/color/green(player), slot_w_uniform)
 
-	player.equip_to_slot_or_del(new /obj/item/clothing/shoes/swat(player), slot_shoes)
+	player.equip_to_slot_or_del(new /obj/item/clothing/shoes/boots/swat(player), slot_shoes)
 	player.equip_to_slot_or_del(new /obj/item/clothing/gloves/swat(player), slot_gloves)
 	player.equip_to_slot_or_del(new /obj/item/clothing/glasses/thermal(player), slot_glasses)
 	player.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/swat(player), slot_wear_mask)

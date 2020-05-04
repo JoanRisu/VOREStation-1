@@ -1,8 +1,8 @@
 /datum/technomancer/spell/audible_deception
 	name = "Audible Deception"
 	desc = "Allows you to create a specific sound at a location of your choosing."
-	enhancement_desc = "An extremely loud sound that a large amount of energy and instability becomes available, which will \
-	deafen and stun all who are near the targeted tile, including yourself if unprotected."
+	enhancement_desc = "An extremely loud bike horn sound that costs  large amount of energy and instability becomes available, \
+	which will deafen and stun all who are near the targeted tile, including yourself if unprotected."
 	cost = 50
 	obj_path = /obj/item/weapon/spell/audible_deception
 	ability_icon_state = "tech_audibledeception"
@@ -31,21 +31,21 @@
 		"Shotgun Pumping"		=	'sound/weapons/shotgunpump.ogg',
 		"Flash"					=	'sound/weapons/flash.ogg',
 		"Bite"					=	'sound/weapons/bite.ogg',
-		"Gun Firing"			=	'sound/weapons/gunshot.ogg',
-		"Desert Eagle Firing"	=	'sound/weapons/deagle.ogg',
-		"Rifle Firing"			=	'sound/weapons/rifleshot.ogg',
-		"Rifle Firing 2"		=	'sound/weapons/svd_shot.ogg',
-		"Sniper Firing"			=	'sound/weapons/sniper.ogg',
-		"Shotgun Firing"		=	'sound/weapons/shotgun.ogg',
-		"Semi-automatic Firing"	=	'sound/weapons/semiauto.ogg',
-		"Machinegun Firing"		=	'sound/weapons/machinegun.ogg',
+		"Gun Firing"			=	'sound/weapons/Gunshot1.ogg',
+		"Desert Eagle Firing"	=	'sound/weapons/Gunshot_deagle.ogg',
+		"Rifle Firing"			=	'sound/weapons/Gunshot_generic_rifle.ogg',
+		"Sniper Rifle Firing"	=	'sound/weapons/Gunshot_sniper.ogg',
+		"AT Rifle Firing"		=	'sound/weapons/Gunshot_cannon.ogg',
+		"Shotgun Firing"		=	'sound/weapons/Gunshot_shotgun.ogg',
+		"Handgun Firing"		=	'sound/weapons/Gunshot2.ogg',
+		"Machinegun Firing"		=	'sound/weapons/Gunshot_machinegun.ogg',
 		"Rocket Launcher Firing"=	'sound/weapons/rpg.ogg',
 		"Taser Firing"			=	'sound/weapons/Taser.ogg',
 		"Laser Gun Firing"		=	'sound/weapons/laser.ogg',
 		"E-Luger Firing"		=	'sound/weapons/eLuger.ogg',
 		"Xray Gun Firing"		=	'sound/weapons/laser3.ogg',
 		"Pulse Gun Firing"		=	'sound/weapons/pulse.ogg',
-		"Gauss Gun Firing"		=	'sound/weapons/gauss_shoot.ogg',
+		"Energy Sniper Firing"	=	'sound/weapons/gauss_shoot.ogg',
 		"Emitter Firing"		=	'sound/weapons/emitter.ogg',
 		"Energy Blade On"		=	'sound/weapons/saberon.ogg',
 		"Energy Blade Off"		=	'sound/weapons/saberoff.ogg',
@@ -60,6 +60,7 @@
 		"Nymph Chirping"		=	'sound/misc/nymphchirp.ogg',
 		"Sad Trombone"			=	'sound/misc/sadtrombone.ogg',
 		"Honk"					=	'sound/items/bikehorn.ogg',
+		"Bone Fracture"			=	"fracture",
 		)
 	var/selected_sound = null
 
@@ -75,10 +76,10 @@
 	var/turf/T = get_turf(hit_atom)
 	if(selected_sound && pay_energy(200))
 		playsound(T, selected_sound, 80, 1, -1)
-		owner.adjust_instability(1)
+		adjust_instability(1)
 		// Air Horn time.
 		if(selected_sound == 'sound/items/AirHorn.ogg' && pay_energy(3800))
-			owner.adjust_instability(49) // Pay for your sins.
+			adjust_instability(49) // Pay for your sins.
 			for(var/mob/living/carbon/M in ohearers(6, T))
 				if(M.get_ear_protection() >= 2)
 					continue
@@ -91,4 +92,4 @@
 					M.Paralyse(4)
 				else
 					M.make_jittery(50)
-				M << "<font color='red' size='7'><b>HONK</b></font>"
+				to_chat(M, "<font color='red' size='7'><b>HONK</b></font>")

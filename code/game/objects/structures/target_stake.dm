@@ -5,15 +5,14 @@
 	icon = 'icons/obj/objects.dmi'
 	icon_state = "target_stake"
 	density = 1
-	w_class = 5
-	flags = CONDUCT
+	w_class = ITEMSIZE_HUGE
 	var/obj/item/target/pinned_target // the current pinned target
 
-	Move()
-		..()
+	Moved(atom/old_loc, direction, forced = FALSE)
+		. = ..()
 		// Move the pinned target along with the stake
 		if(pinned_target in view(3, src))
-			pinned_target.loc = loc
+			pinned_target.forceMove(loc)
 
 		else // Sanity check: if the pinned target can't be found in immediate view
 			pinned_target = null
@@ -29,9 +28,9 @@
 			W.density = 1
 			user.remove_from_mob(W)
 			W.loc = loc
-			W.layer = 3.1
+			W.layer = ABOVE_JUNK_LAYER
 			pinned_target = W
-			user << "You slide the target into the stake."
+			to_chat(user, "You slide the target into the stake.")
 		return
 
 	attack_hand(mob/user as mob)
@@ -45,9 +44,9 @@
 			if(ishuman(user))
 				if(!user.get_active_hand())
 					user.put_in_hands(pinned_target)
-					user << "You take the target out of the stake."
+					to_chat(user, "You take the target out of the stake.")
 			else
 				pinned_target.loc = get_turf(user)
-				user << "You take the target out of the stake."
+				to_chat(user, "You take the target out of the stake.")
 
 			pinned_target = null

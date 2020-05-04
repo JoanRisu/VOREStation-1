@@ -5,8 +5,10 @@
 
 	show_laws(0)
 
-	winset(src, null, "mainwindow.macro=borgmacro hotkey_toggle.is-checked=false input.focus=true input.background-color=#D3B5B5")
+	// Override the DreamSeeker macro with the borg version!
+	client.set_hotkeys_macro("borgmacro", "borghotkeymode")
 
 	// Forces synths to select an icon relevant to their module
 	if(!icon_selected)
 		choose_icon(icon_selection_tries, module_sprites)
+	plane_holder.set_vis(VIS_AUGMENTED, TRUE) //VOREStation Add - ROBOT VISION IS AUGMENTED

@@ -31,10 +31,9 @@
 	var/force_down //determines if the affecting mob will be pinned to the ground
 	var/dancing //determines if assailant and affecting keep looking at each other. Basically a wrestling position
 
-	layer = 21
 	abstract = 1
 	item_state = "nothing"
-	w_class = 5.0
+	w_class = ITEMSIZE_HUGE
 
 
 /obj/item/weapon/grab/New(mob/user, mob/victim)
@@ -48,6 +47,8 @@
 		return
 
 	affecting.grabbed_by += src
+	affecting.reveal("<span class='warning'>You are revealed as [assailant] grabs you.</span>")
+	assailant.reveal("<span class='warning'>You reveal yourself as you grab [affecting].</span>")
 
 	hud = new /obj/screen/grab(src)
 	hud.icon_state = "reinforce"
@@ -76,13 +77,16 @@
 		if(affecting.buckled)
 			return null
 		if(state >= GRAB_AGGRESSIVE)
-			animate(affecting, pixel_x = 0, pixel_y = 0, 4, 1)
+			animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y = initial(affecting.pixel_y), 4, 1)
 			return affecting
+
 	return null
 
 
 //This makes sure that the grab screen object is displayed in the correct hand.
-/obj/item/weapon/grab/proc/synch()
+/obj/item/weapon/grab/proc/synch() //why is this needed?
+	if(QDELETED(src))
+		return
 	if(affecting)
 		if(assailant.r_hand == src)
 			hud.screen_loc = ui_rhand
@@ -90,7 +94,7 @@
 			hud.screen_loc = ui_lhand
 
 /obj/item/weapon/grab/process()
-	if(gcDestroyed) // GC is trying to delete us, we'll kill our processing so we can cleanly GC
+	if(QDELETED(src)) // GC is trying to delete us, we'll kill our processing so we can cleanly GC
 		return PROCESS_KILL
 
 	confirm()
@@ -169,7 +173,13 @@
 			if(announce)
 				assailant.visible_message("<span class='warning'>[assailant] covers [affecting]'s eyes!</span>")
 			if(affecting.eye_blind < 3)
-				affecting.eye_blind = 3
+				affecting.Blind(3)
+		//TFF 12/8/19 VoreStation Addition Start
+		if(BP_HEAD)
+			if(force_down)
+				if(announce)
+					assailant.visible_message("<span class='warning'>[assailant] sits on [target]'s head!</span>")
+		//VoreStation Addition End
 
 /obj/item/weapon/grab/attack_self()
 	return s_click(hud)
@@ -178,17 +188,20 @@
 //Updating pixelshift, position and direction
 //Gets called on process, when the grab gets upgraded or the assailant moves
 /obj/item/weapon/grab/proc/adjust_position()
+	if(!affecting)
+		qdel(src)
+		return
 	if(affecting.buckled)
-		animate(affecting, pixel_x = 0, pixel_y = 0, 4, 1, LINEAR_EASING)
+		animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y = initial(affecting.pixel_y), 4, 1, LINEAR_EASING)
 		return
 	if(affecting.lying && state != GRAB_KILL)
-		animate(affecting, pixel_x = 0, pixel_y = 0, 5, 1, LINEAR_EASING)
+		animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y = initial(affecting.pixel_y), 5, 1, LINEAR_EASING)
 		if(force_down)
 			affecting.set_dir(SOUTH) //face up
 		return
 	var/shift = 0
 	var/adir = get_dir(assailant, affecting)
-	affecting.layer = 4
+	affecting.layer = MOB_LAYER
 	switch(state)
 		if(GRAB_PASSIVE)
 			shift = 8
@@ -210,27 +223,29 @@
 
 	switch(adir)
 		if(NORTH)
-			animate(affecting, pixel_x = 0, pixel_y =-shift, 5, 1, LINEAR_EASING)
-			affecting.layer = 3.9
+			animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y =-shift, 5, 1, LINEAR_EASING)
+			affecting.layer = BELOW_MOB_LAYER
 		if(SOUTH)
-			animate(affecting, pixel_x = 0, pixel_y = shift, 5, 1, LINEAR_EASING)
+			animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y = shift, 5, 1, LINEAR_EASING)
 		if(WEST)
-			animate(affecting, pixel_x = shift, pixel_y = 0, 5, 1, LINEAR_EASING)
+			animate(affecting, pixel_x = shift, pixel_y = initial(affecting.pixel_y), 5, 1, LINEAR_EASING)
 		if(EAST)
-			animate(affecting, pixel_x =-shift, pixel_y = 0, 5, 1, LINEAR_EASING)
+			animate(affecting, pixel_x =-shift, pixel_y = initial(affecting.pixel_y), 5, 1, LINEAR_EASING)
 
 /obj/item/weapon/grab/proc/s_click(obj/screen/S)
+	if(QDELETED(src))
+		return
 	if(!affecting)
 		return
 	if(state == GRAB_UPGRADING)
-		return
-	if(!assailant.canClick())
 		return
 	if(world.time < (last_action + UPGRADE_COOLDOWN))
 		return
 	if(!assailant.canmove || assailant.lying)
 		qdel(src)
 		return
+
+	var/datum/gender/TU = gender_datums[assailant.get_visible_gender()]
 
 	last_action = world.time
 
@@ -248,31 +263,26 @@
 		hud.icon_state = "reinforce1"
 	else if(state < GRAB_NECK)
 		if(isslime(affecting))
-			assailant << "<span class='notice'>You squeeze [affecting], but nothing interesting happens.</span>"
+			to_chat(assailant, "<span class='notice'>You squeeze [affecting], but nothing interesting happens.</span>")
 			return
 
-		assailant.visible_message("<span class='warning'>[assailant] has reinforced \his grip on [affecting] (now neck)!</span>")
+		assailant.visible_message("<span class='warning'>[assailant] has reinforced [TU.his] grip on [affecting] (now neck)!</span>")
 		state = GRAB_NECK
 		icon_state = "grabbed+1"
 		assailant.set_dir(get_dir(assailant, affecting))
-		affecting.attack_log += "\[[time_stamp()]\] <font color='orange'>Has had their neck grabbed by [assailant.name] ([assailant.ckey])</font>"
-		assailant.attack_log += "\[[time_stamp()]\] <font color='red'>Grabbed the neck of [affecting.name] ([affecting.ckey])</font>"
-		msg_admin_attack("[key_name(assailant)] grabbed the neck of [key_name(affecting)]")
+		add_attack_logs(assailant,affecting,"Neck grabbed")
 		hud.icon_state = "kill"
 		hud.name = "kill"
 		affecting.Stun(10) //10 ticks of ensured grab
 	else if(state < GRAB_UPGRADING)
-		assailant.visible_message("<span class='danger'>[assailant] starts to tighten \his grip on [affecting]'s neck!</span>")
+		assailant.visible_message("<span class='danger'>[assailant] starts to tighten [TU.his] grip on [affecting]'s neck!</span>")
 		hud.icon_state = "kill1"
 
 		state = GRAB_KILL
-		assailant.visible_message("<span class='danger'>[assailant] has tightened \his grip on [affecting]'s neck!</span>")
-		affecting.attack_log += "\[[time_stamp()]\] <font color='orange'>Has been strangled (kill intent) by [assailant.name] ([assailant.ckey])</font>"
-		assailant.attack_log += "\[[time_stamp()]\] <font color='red'>Strangled (kill intent) [affecting.name] ([affecting.ckey])</font>"
-		msg_admin_attack("[key_name(assailant)] strangled (kill intent) [key_name(affecting)]")
-
+		assailant.visible_message("<span class='danger'>[assailant] has tightened [TU.his] grip on [affecting]'s neck!</span>")
+		add_attack_logs(assailant,affecting,"Strangled")
 		affecting.setClickCooldown(10)
-		affecting.losebreath += 1
+		affecting.AdjustLosebreath(1)
 		affecting.set_dir(WEST)
 	adjust_position()
 
@@ -290,6 +300,8 @@
 	return 1
 
 /obj/item/weapon/grab/attack(mob/M, mob/living/user)
+	if(QDELETED(src))
+		return
 	if(!affecting)
 		return
 	if(world.time < (last_action + 20))
@@ -307,7 +319,7 @@
 			switch(assailant.a_intent)
 				if(I_HELP)
 					if(force_down)
-						assailant << "<span class='warning'>You are no longer pinning [affecting] to the ground.</span>"
+						to_chat(assailant, "<span class='warning'>You are no longer pinning [affecting] to the ground.</span>")
 						force_down = 0
 						return
 					if(state >= GRAB_AGGRESSIVE)
@@ -322,7 +334,7 @@
 					if(hit_zone == O_EYES)
 						attack_eye(affecting, assailant)
 					else if(hit_zone == BP_HEAD)
-						headbut(affecting, assailant)
+						headbutt(affecting, assailant)
 					else
 						dislocate(affecting, assailant, hit_zone)
 
@@ -335,12 +347,13 @@
 
 /obj/item/weapon/grab/dropped()
 	loc = null
-	if(!destroying)
+	if(!QDELETED(src))
 		qdel(src)
 
 /obj/item/weapon/grab/proc/reset_kill_state()
 	if(state == GRAB_KILL)
-		assailant.visible_message("<span class='warning'>[assailant] lost \his tight grip on [affecting]'s neck!</span>")
+		var/datum/gender/T = gender_datums[assailant.get_visible_gender()]
+		assailant.visible_message("<span class='warning'>[assailant] lost [T.his] tight grip on [affecting]'s neck!</span>")
 		hud.icon_state = "kill"
 		state = GRAB_NECK
 
@@ -365,12 +378,20 @@
 				break_strength++
 			break_chance_table = list(3, 18, 45, 100)
 
+
+		if(GRAB_KILL)
+			grab_name = "stranglehold"
+			break_chance_table = list(5, 20, 40, 80, 100)
+
 	//It's easier to break out of a grab by a smaller mob
 	break_strength += max(size_difference(affecting, assailant), 0)
 
-	var/break_chance = break_chance_table[Clamp(break_strength, 1, break_chance_table.len)]
+	var/break_chance = break_chance_table[CLAMP(break_strength, 1, break_chance_table.len)]
 	if(prob(break_chance))
-		if(grab_name)
+		if(state == GRAB_KILL)
+			reset_kill_state()
+			return
+		else if(grab_name)
 			affecting.visible_message("<span class='warning'>[affecting] has broken free of [assailant]'s [grab_name]!</span>")
 		qdel(src)
 
@@ -378,12 +399,9 @@
 /obj/item/weapon/grab/proc/size_difference(mob/A, mob/B)
 	return mob_size_difference(A.mob_size, B.mob_size)
 
-/obj/item/weapon/grab
-	var/destroying = 0
-
 /obj/item/weapon/grab/Destroy()
-	animate(affecting, pixel_x = 0, pixel_y = 0, 4, 1, LINEAR_EASING)
-	affecting.layer = 4
+	animate(affecting, pixel_x = initial(affecting.pixel_x), pixel_y = initial(affecting.pixel_y), 4, 1, LINEAR_EASING)
+	affecting.reset_plane_and_layer()
 	if(affecting)
 		affecting.grabbed_by -= src
 		affecting = null
@@ -393,5 +411,4 @@
 		assailant = null
 	qdel(hud)
 	hud = null
-	destroying = 1 // stops us calling qdel(src) on dropped()
-	..()
+	return ..()

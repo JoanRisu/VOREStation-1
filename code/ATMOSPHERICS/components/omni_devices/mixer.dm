@@ -4,8 +4,9 @@
 /obj/machinery/atmospherics/omni/mixer
 	name = "omni gas mixer"
 	icon_state = "map_mixer"
+	pipe_state = "omni_mixer"
 
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 150		//internal circuitry, friction losses and stuff
 	power_rating = 3700			//3700 W ~ 5 HP
 
@@ -52,7 +53,7 @@
 /obj/machinery/atmospherics/omni/mixer/Destroy()
 	inputs.Cut()
 	output = null
-	..()
+	. = ..()
 
 /obj/machinery/atmospherics/omni/mixer/sort_ports()
 	for(var/datum/omni_port/P in ports)
@@ -75,7 +76,7 @@
 	if(output)
 		output.air.volume = ATMOS_DEFAULT_VOLUME_MIXER * 0.75 * inputs.len
 		output.concentration = 1
-	
+
 	rebuild_mixing_inputs()
 
 /obj/machinery/atmospherics/omni/mixer/proc/mapper_set()
@@ -130,7 +131,7 @@
 
 	data = build_uidata()
 
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 
 	if (!ui)
 		ui = new(user, src, ui_key, "omni_mixer.tmpl", "Omni Mixer Control", 360, 330)
@@ -177,13 +178,13 @@
 	switch(href_list["command"])
 		if("power")
 			if(!configuring)
-				use_power = !use_power
+				update_use_power(!use_power)
 			else
-				use_power = 0
+				update_use_power(USE_POWER_OFF)
 		if("configure")
 			configuring = !configuring
 			if(configuring)
-				use_power = 0
+				update_use_power(USE_POWER_OFF)
 
 	//only allows config changes when in configuring mode ~otherwise you'll get weird pressure stuff going on
 	if(configuring && !use_power)
@@ -199,7 +200,7 @@
 				con_lock(dir_flag(href_list["dir"]))
 
 	update_icon()
-	nanomanager.update_uis(src)
+	SSnanoui.update_uis(src)
 	return
 
 /obj/machinery/atmospherics/omni/mixer/proc/switch_mode(var/port = NORTH, var/mode = ATM_NONE)

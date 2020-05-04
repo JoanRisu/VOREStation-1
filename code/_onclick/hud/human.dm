@@ -13,7 +13,8 @@
 
 	src.adding = list()
 	src.other = list()
-	src.hotkeybuttons = list() //These can be disabled for hotkey usersx
+	src.hotkeybuttons = list() //These can be disabled for hotkey users
+	src.slot_info = list()
 
 	var/list/hud_elements = list()
 	var/obj/screen/using
@@ -25,7 +26,6 @@
 
 		inv_box = new /obj/screen/inventory()
 		inv_box.icon = ui_style
-		inv_box.layer = 19
 		inv_box.color = ui_color
 		inv_box.alpha = ui_alpha
 
@@ -34,6 +34,7 @@
 		inv_box.screen_loc =  slot_data["loc"]
 		inv_box.slot_id =     slot_data["slot"]
 		inv_box.icon_state =  slot_data["state"]
+		slot_info["[inv_box.slot_id]"] = inv_box.screen_loc
 
 		if(slot_data["dir"])
 			inv_box.set_dir(slot_data["dir"])
@@ -50,7 +51,7 @@
 		using.icon = ui_style
 		using.icon_state = "other"
 		using.screen_loc = ui_inventory
-		using.layer = 20
+		using.hud_layerise()
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.adding += using
@@ -65,7 +66,6 @@
 		using.screen_loc = ui_acti
 		using.color = ui_color
 		using.alpha = ui_alpha
-		using.layer = 20
 		src.adding += using
 		action_intent = using
 
@@ -77,48 +77,48 @@
 		ico = new(ui_style, "black")
 		ico.MapColors(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, -1,-1,-1,-1)
 		ico.DrawBox(rgb(255,255,255,1),1,ico.Height()/2,ico.Width()/2,ico.Height())
-		using = new /obj/screen( src )
+		using = new /obj/screen()
 		using.name = I_HELP
 		using.icon = ico
 		using.screen_loc = ui_acti
 		using.alpha = ui_alpha
-		using.layer = 21
+		using.layer = LAYER_HUD_ITEM //These sit on the intent box
 		src.adding += using
 		help_intent = using
 
 		ico = new(ui_style, "black")
 		ico.MapColors(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, -1,-1,-1,-1)
 		ico.DrawBox(rgb(255,255,255,1),ico.Width()/2,ico.Height()/2,ico.Width(),ico.Height())
-		using = new /obj/screen( src )
+		using = new /obj/screen()
 		using.name = I_DISARM
 		using.icon = ico
 		using.screen_loc = ui_acti
 		using.alpha = ui_alpha
-		using.layer = 21
+		using.layer = LAYER_HUD_ITEM
 		src.adding += using
 		disarm_intent = using
 
 		ico = new(ui_style, "black")
 		ico.MapColors(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, -1,-1,-1,-1)
 		ico.DrawBox(rgb(255,255,255,1),ico.Width()/2,1,ico.Width(),ico.Height()/2)
-		using = new /obj/screen( src )
+		using = new /obj/screen()
 		using.name = I_GRAB
 		using.icon = ico
 		using.screen_loc = ui_acti
 		using.alpha = ui_alpha
-		using.layer = 21
+		using.layer = LAYER_HUD_ITEM
 		src.adding += using
 		grab_intent = using
 
 		ico = new(ui_style, "black")
 		ico.MapColors(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, -1,-1,-1,-1)
 		ico.DrawBox(rgb(255,255,255,1),1,1,ico.Width()/2,ico.Height()/2)
-		using = new /obj/screen( src )
+		using = new /obj/screen()
 		using.name = I_HURT
 		using.icon = ico
 		using.screen_loc = ui_acti
 		using.alpha = ui_alpha
-		using.layer = 21
+		using.layer = LAYER_HUD_ITEM
 		src.adding += using
 		hurt_intent = using
 		//end intent small hud objects
@@ -129,7 +129,6 @@
 		using.icon = ui_style
 		using.icon_state = (mymob.m_intent == "run" ? "running" : "walking")
 		using.screen_loc = ui_movi
-		using.layer = 20
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.adding += using
@@ -141,7 +140,6 @@
 		using.icon = ui_style
 		using.icon_state = "act_drop"
 		using.screen_loc = ui_drop_throw
-		using.layer = 19
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.hotkeybuttons += using
@@ -153,12 +151,12 @@
 		using.icon = ui_style
 		using.icon_state = "act_equip"
 		using.screen_loc = ui_equip
-		using.layer = 20
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.adding += using
 
-		inv_box = new /obj/screen/inventory()
+		inv_box = new /obj/screen/inventory/hand()
+		inv_box.hud = src
 		inv_box.name = "r_hand"
 		inv_box.icon = ui_style
 		inv_box.icon_state = "r_hand_inactive"
@@ -166,14 +164,14 @@
 			inv_box.icon_state = "r_hand_active"
 		inv_box.screen_loc = ui_rhand
 		inv_box.slot_id = slot_r_hand
-		inv_box.layer = 19
 		inv_box.color = ui_color
 		inv_box.alpha = ui_alpha
-
 		src.r_hand_hud_object = inv_box
 		src.adding += inv_box
+		slot_info["[slot_r_hand]"] = inv_box.screen_loc
 
-		inv_box = new /obj/screen/inventory()
+		inv_box = new /obj/screen/inventory/hand()
+		inv_box.hud = src
 		inv_box.name = "l_hand"
 		inv_box.icon = ui_style
 		inv_box.icon_state = "l_hand_inactive"
@@ -181,18 +179,17 @@
 			inv_box.icon_state = "l_hand_active"
 		inv_box.screen_loc = ui_lhand
 		inv_box.slot_id = slot_l_hand
-		inv_box.layer = 19
 		inv_box.color = ui_color
 		inv_box.alpha = ui_alpha
 		src.l_hand_hud_object = inv_box
 		src.adding += inv_box
+		slot_info["[slot_l_hand]"] = inv_box.screen_loc
 
 		using = new /obj/screen/inventory()
 		using.name = "hand"
 		using.icon = ui_style
 		using.icon_state = "hand1"
 		using.screen_loc = ui_swaphand1
-		using.layer = 19
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.adding += using
@@ -202,7 +199,6 @@
 		using.icon = ui_style
 		using.icon_state = "hand2"
 		using.screen_loc = ui_swaphand2
-		using.layer = 19
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.adding += using
@@ -213,7 +209,6 @@
 		using.icon = ui_style
 		using.icon_state = "act_resist"
 		using.screen_loc = ui_pull_resist
-		using.layer = 19
 		using.color = ui_color
 		using.alpha = ui_alpha
 		src.hotkeybuttons += using
@@ -241,6 +236,8 @@
 		mymob.internals = new /obj/screen()
 		mymob.internals.icon = ui_style
 		mymob.internals.icon_state = "internal0"
+		if(istype(target.internal, /obj/item/weapon/tank)) //Internals on already? Iight, prove it
+			mymob.internals.icon_state = "internal1"
 		mymob.internals.name = "internal"
 		mymob.internals.screen_loc = ui_internal
 		hud_elements |= mymob.internals
@@ -298,6 +295,23 @@
 		mymob.nutrition_icon.screen_loc = ui_nutrition
 		hud_elements |= mymob.nutrition_icon
 
+	//VOREStation Addition begin
+	mymob.shadekin_dark_display = new /obj/screen/shadekin/darkness()
+	mymob.shadekin_dark_display.screen_loc = ui_shadekin_dark_display
+	mymob.shadekin_dark_display.icon_state = "dark"
+	hud_elements |= mymob.shadekin_dark_display
+
+	mymob.shadekin_energy_display = new /obj/screen/shadekin/energy()
+	mymob.shadekin_energy_display.screen_loc = ui_shadekin_energy_display
+	mymob.shadekin_energy_display.icon_state = "energy0"
+	hud_elements |= mymob.shadekin_energy_display
+
+	mymob.xenochimera_danger_display = new /obj/screen/xenochimera/danger_level()
+	mymob.xenochimera_danger_display.screen_loc = ui_xenochimera_danger_display
+	mymob.xenochimera_danger_display.icon_state = "danger00"
+	hud_elements |= mymob.xenochimera_danger_display
+	//VOREStation Addition end
+
 	mymob.ling_chem_display = new /obj/screen/ling/chems()
 	mymob.ling_chem_display.screen_loc = ui_ling_chemical_display
 	mymob.ling_chem_display.icon_state = "ling_chems"
@@ -346,11 +360,13 @@
 	mymob.radio_use_icon.color = ui_color
 	mymob.radio_use_icon.alpha = ui_alpha
 
-	mymob.client.screen = list()
+	if(mymob.client)
+		mymob.client.screen = list()
 
-	mymob.client.screen += hud_elements
-	mymob.client.screen += src.adding + src.hotkeybuttons
-	mymob.client.screen += mymob.client.void
+		mymob.client.screen += hud_elements
+		mymob.client.screen += src.adding + src.hotkeybuttons
+		mymob.client.screen += mymob.client.void
+
 	inventory_shown = 0
 
 	return

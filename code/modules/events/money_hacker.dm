@@ -1,4 +1,6 @@
-/var/global/account_hack_attempted = 0
+//var/global/account_hack_attempted = 0
+
+GLOBAL_VAR_INIT(account_hack_attempted, 0)
 
 /datum/event/money_hacker
 	var/datum/money_account/affected_account
@@ -10,7 +12,7 @@
 	if(all_money_accounts.len)
 		affected_account = pick(all_money_accounts)
 
-		account_hack_attempted = 1
+		GLOB.account_hack_attempted = 1
 	else
 		kill()
 
@@ -20,7 +22,7 @@
 	Notifications will be sent as updates occur.<br>"
 	var/my_department = "[station_name()] firewall subroutines"
 
-	for(var/obj/machinery/message_server/MS in world)
+	for(var/obj/machinery/message_server/MS in machines)
 		if(!MS.active) continue
 		MS.send_rc_message("Head of Personnel's Desk", my_department, message, "", "", 2)
 
@@ -62,6 +64,6 @@
 
 	var/my_department = "[station_name()] firewall subroutines"
 
-	for(var/obj/machinery/message_server/MS in world)
+	for(var/obj/machinery/message_server/MS in machines)
 		if(!MS.active) continue
 		MS.send_rc_message("Head of Personnel's Desk", my_department, message, "", "", 2)

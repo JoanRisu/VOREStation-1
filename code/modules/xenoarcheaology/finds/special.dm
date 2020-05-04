@@ -5,9 +5,9 @@
 /obj/item/weapon/reagent_containers/glass/replenishing
 	var/spawning_id
 
-/obj/item/weapon/reagent_containers/glass/replenishing/New()
-	..()
-	processing_objects.Add(src)
+/obj/item/weapon/reagent_containers/glass/replenishing/Initialize()
+	. = ..()
+	START_PROCESSING(SSobj, src)
 	spawning_id = pick("blood","holywater","lube","stoxin","ethanol","ice","glycerol","fuel","cleaner")
 
 /obj/item/weapon/reagent_containers/glass/replenishing/process()
@@ -22,18 +22,18 @@
 	var/max_stored_messages = 100
 
 /obj/item/clothing/mask/gas/poltergeist/New()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/item/clothing/mask/gas/poltergeist/process()
 	if(heard_talk.len && istype(src.loc, /mob/living) && prob(10))
 		var/mob/living/M = src.loc
 		M.say(pick(heard_talk))
 
-/obj/item/clothing/mask/gas/poltergeist/hear_talk(mob/M as mob, text)
+/obj/item/clothing/mask/gas/poltergeist/hear_talk(mob/M, list/message_pieces, verb)
 	..()
 	if(heard_talk.len > max_stored_messages)
 		heard_talk.Remove(pick(heard_talk))
-	heard_talk.Add(text)
+	heard_talk.Add(multilingual_to_message(message_pieces))
 	if(istype(src.loc, /mob/living) && world.time - last_twitch > 50)
 		last_twitch = world.time
 
@@ -56,7 +56,7 @@
 
 /obj/item/weapon/vampiric/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/vampiric/process()
 	//see if we've identified anyone nearby
@@ -87,7 +87,7 @@
 	if(charges >= 3)
 		if(prob(5))
 			charges -= 1
-			var/spawn_type = pick(/mob/living/simple_animal/hostile/vore/creature)  // Vorestation Edit
+			var/spawn_type = pick(/mob/living/simple_mob/creature)
 			new spawn_type(pick(view(1,src)))
 			playsound(src.loc, pick('sound/hallucinations/growl1.ogg','sound/hallucinations/growl2.ogg','sound/hallucinations/growl3.ogg'), 50, 1, -3)
 
@@ -99,7 +99,7 @@
 
 	if(charges >= 0.1)
 		if(prob(5))
-			src.visible_message("\red \icon[src] [src]'s eyes glow ruby red for a moment!")
+			src.visible_message("<font color='red'>[bicon(src)] [src]'s eyes glow ruby red for a moment!</font>")
 			charges -= 0.1
 
 	//check on our shadow wights
@@ -116,7 +116,7 @@
 		else if(get_dist(W, src) > 10)
 			shadow_wights.Remove(wight_check_index)
 
-/obj/item/weapon/vampiric/hear_talk(mob/M as mob, text)
+/obj/item/weapon/vampiric/hear_talk(mob/M, list/message_pieces, verb)
 	..()
 	if(world.time - last_bloodcall >= bloodcall_interval && M in view(7, src))
 		bloodcall(M)
@@ -129,7 +129,7 @@
 
 		var/target = pick(M.organs_by_name)
 		M.apply_damage(rand(5, 10), BRUTE, target)
-		M << "\red The skin on your [parse_zone(target)] feels like it's ripping apart, and a stream of blood flies out."
+		to_chat(M, "<font color='red'>The skin on your [parse_zone(target)] feels like it's ripping apart, and a stream of blood flies out.</font>")
 		var/obj/effect/decal/cleanable/blood/splatter/animated/B = new(M.loc)
 		B.target_turf = pick(range(1, src))
 		B.blood_DNA = list()
@@ -143,7 +143,7 @@
 
 /obj/effect/decal/cleanable/blood/splatter/animated/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 	loc_last_process = src.loc
 
 /obj/effect/decal/cleanable/blood/splatter/animated/process()
@@ -173,7 +173,7 @@
 	density = 1
 
 /obj/effect/shadow_wight/New()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/effect/shadow_wight/process()
 	if(src.loc)
@@ -197,7 +197,7 @@
 			M.sleeping = max(M.sleeping,rand(5,10))
 			src.loc = null
 	else
-		processing_objects.Remove(src)
+		STOP_PROCESSING(SSobj, src)
 
 /obj/effect/shadow_wight/Bump(var/atom/obstacle)
-	obstacle << "\red You feel a chill run down your spine!"
+	to_chat(obstacle, "<font color='red'>You feel a chill run down your spine!</font>")

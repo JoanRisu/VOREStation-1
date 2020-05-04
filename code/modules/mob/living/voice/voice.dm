@@ -8,11 +8,8 @@
 	emote_type = 2 //This lets them emote through containers.  The communicator has a image feed of the person calling them so...
 
 /mob/living/voice/New(loc)
-	add_language("Galactic Common")
-	for(var/datum/language/L in languages) //This is needed to get around some saycode problems.
-		if(L.name == "Galactic Common")
-			set_default_language(L)
-			break
+	add_language(LANGUAGE_GALCOM)
+	set_default_language(GLOB.all_languages[LANGUAGE_GALCOM])
 
 	if(istype(loc, /obj/item/device/communicator))
 		comm = loc
@@ -51,7 +48,7 @@
 // Description: Removes reference to the communicator, so it can qdel() successfully.
 /mob/living/voice/Destroy()
 	comm = null
-	..()
+	return ..()
 
 // Proc: ghostize()
 // Parameters: None
@@ -72,7 +69,7 @@
 	if(comm)
 		comm.close_connection(user = src, target = src, reason = "[src] hung up")
 	else
-		src << "You appear to not be inside a communicator.  This is a bug and you should report it."
+		to_chat(src, "You appear to not be inside a communicator.  This is a bug and you should report it.")
 
 // Verb: change_name()
 // Parameters: None
@@ -86,14 +83,14 @@
 	var/new_name = sanitizeSafe(input(src, "Who would you like to be now?", "Communicator", src.client.prefs.real_name)  as text, MAX_NAME_LEN)
 	if(new_name)
 		if(comm)
-			comm.visible_message("<span class='notice'>\icon[comm] [src.name] has left, and now you see [new_name].</span>")
+			comm.visible_message("<span class='notice'>[bicon(comm)] [src.name] has left, and now you see [new_name].</span>")
 		//Do a bit of logging in-case anyone tries to impersonate other characters for whatever reason.
 		var/msg = "[src.client.key] ([src]) has changed their communicator identity's name to [new_name]."
 		message_admins(msg)
 		log_game(msg)
 		src.name = new_name
 	else
-		src << "<span class='warning'>Invalid name.  Rejected.</span>"
+		to_chat(src, "<span class='warning'>Invalid name.  Rejected.</span>")
 
 // Proc: Life()
 // Parameters: None
@@ -107,11 +104,13 @@
 // Proc: say()
 // Parameters: 4 (generic say() arguments)
 // Description: Adds a speech bubble to the communicator device, then calls ..() to do the real work.
-/mob/living/voice/say(var/message, var/datum/language/speaking = null, var/verb="says", var/alt_name="", var/whispering=0)
+/mob/living/voice/say(var/message, var/datum/language/speaking = null, var/whispering = 0)
 	//Speech bubbles.
 	if(comm)
 		var/speech_bubble_test = say_test(message)
-		var/image/speech_bubble = image('icons/mob/talk.dmi',comm,"h[speech_bubble_test]")
+		//var/image/speech_bubble = image('icons/mob/talk_vr.dmi',comm,"h[speech_bubble_test]") //VOREStation Edit - Commented out in case of needed reenable.
+		var/speech_type = speech_bubble_appearance()
+		var/image/speech_bubble = image('icons/mob/talk_vr.dmi',comm,"[speech_type][speech_bubble_test]") //VOREStation Edit - talk_vr.dmi instead of talk.dmi for right-side icons
 		spawn(30)
 			qdel(speech_bubble)
 
@@ -119,7 +118,24 @@
 			M << speech_bubble
 		src << speech_bubble
 
-	..(message, speaking, verb, alt_name, whispering) //mob/living/say() can do the actual talking.
+	..() //mob/living/say() can do the actual talking.
+
+// Proc: speech_bubble_appearance()
+// Parameters: 0
+// Description: Gets the correct icon_state information for chat bubbles to work.
+/mob/living/voice/speech_bubble_appearance()
+	return "comm"
+
+/mob/living/voice/say_understands(var/other, var/datum/language/speaking = null)
+	//These only pertain to common. Languages are handled by mob/say_understands()
+	if(!speaking)
+		if(iscarbon(other))
+			return TRUE
+		if(issilicon(other))
+			return TRUE
+		if(isbrain(other))
+			return TRUE
+	return ..()
 
 /mob/living/voice/custom_emote(var/m_type=1,var/message = null,var/range=world.view)
 	if(!comm) return

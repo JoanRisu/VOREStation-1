@@ -2,6 +2,7 @@
 
 /obj/machinery/computer/operating
 	name = "patient monitoring console"
+	desc = "Used to monitor the vitals of a patient."
 	density = 1
 	anchored = 1.0
 	icon_keyboard = "med_key"
@@ -12,8 +13,8 @@
 
 /obj/machinery/computer/operating/New()
 	..()
-	for(dir in list(NORTH,EAST,SOUTH,WEST))
-		table = locate(/obj/machinery/optable, get_step(src, dir))
+	for(var/direction in list(NORTH,EAST,SOUTH,WEST))
+		table = locate(/obj/machinery/optable, get_step(src, direction))
 		if (table)
 			table.computer = src
 			break
@@ -55,7 +56,7 @@
 	data["table"] = table
 	data["victim"] = victim_ui
 
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		ui = new(user, src, ui_key, "operating.tmpl", src.name, 380, 400)
 		ui.set_initial_data(data)
@@ -69,4 +70,4 @@
 		usr.set_machine(src)
 
 	src.add_fingerprint(usr)
-	nanomanager.update_uis(src)
+	SSnanoui.update_uis(src)

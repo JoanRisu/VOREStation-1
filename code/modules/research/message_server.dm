@@ -51,9 +51,10 @@ var/global/list/obj/machinery/message_server/message_servers = list()
 	icon = 'icons/obj/machines/research.dmi'
 	icon_state = "server"
 	name = "Messaging Server"
+	desc = "Facilitates both PDA messages and request console functions."
 	density = 1
 	anchored = 1.0
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 10
 	active_power_usage = 100
 
@@ -79,6 +80,10 @@ var/global/list/obj/machinery/message_server/message_servers = list()
 	message_servers -= src
 	..()
 	return
+
+/obj/machinery/message_server/examine(mob/user, distance, infix, suffix)
+	. = ..()
+	. += "It appears to be [active ? "online" : "offline"]."	
 
 /obj/machinery/message_server/proc/GenerateKey()
 	//Feel free to move to Helpers.
@@ -125,19 +130,19 @@ var/global/list/obj/machinery/message_server/message_servers = list()
 				if(2)
 					if(!Console.silent)
 						playsound(Console.loc, 'sound/machines/twobeep.ogg', 50, 1)
-						Console.audible_message(text("\icon[Console] *The Requests Console beeps: 'PRIORITY Alert in [sender]'"),,5)
+						Console.audible_message(text("[bicon(Console)] *The Requests Console beeps: 'PRIORITY Alert in [sender]'"),,5)
 					Console.message_log += "<B><FONT color='red'>High Priority message from <A href='?src=\ref[Console];write=[sender]'>[sender]</A></FONT></B><BR>[authmsg]"
 				else
 					if(!Console.silent)
 						playsound(Console.loc, 'sound/machines/twobeep.ogg', 50, 1)
-						Console.audible_message(text("\icon[Console] *The Requests Console beeps: 'Message from [sender]'"),,4)
+						Console.audible_message(text("[bicon(Console)] *The Requests Console beeps: 'Message from [sender]'"),,4)
 					Console.message_log += "<B>Message from <A href='?src=\ref[Console];write=[sender]'>[sender]</A></B><BR>[authmsg]"
 			Console.set_light(2)
 
 
 /obj/machinery/message_server/attack_hand(user as mob)
-//	user << "\blue There seem to be some parts missing from this server. They should arrive on the station in a few days, give or take a few CentCom delays."
-	user << "You toggle PDA message passing from [active ? "On" : "Off"] to [active ? "Off" : "On"]"
+//	to_chat(user, "<font color='blue'>There seem to be some parts missing from this server. They should arrive on the station in a few days, give or take a few CentCom delays.</font>")
+	to_chat(user, "You toggle PDA message passing from [active ? "On" : "Off"] to [active ? "Off" : "On"]")
 	active = !active
 	update_icon()
 
@@ -149,7 +154,7 @@ var/global/list/obj/machinery/message_server/message_servers = list()
 		spamfilter_limit += round(MESSAGE_SERVER_DEFAULT_SPAM_LIMIT / 2)
 		user.drop_item()
 		qdel(O)
-		user << "You install additional memory and processors into message server. Its filtering capabilities been enhanced."
+		to_chat(user, "You install additional memory and processors into message server. Its filtering capabilities been enhanced.")
 	else
 		..(O, user)
 
@@ -168,6 +173,11 @@ var/global/list/obj/machinery/message_server/message_servers = list()
 	var/variable
 	var/value
 	var/details
+
+/datum/feedback_variable/vv_edit_var(var_name, var_value)
+	if(var_name == NAMEOF(src, variable) || var_name == NAMEOF(src, value) || var_name == NAMEOF(src, details))
+		return FALSE
+	return ..()
 
 /datum/feedback_variable/New(var/param_variable,var/param_value = 0)
 	variable = param_variable
@@ -226,9 +236,10 @@ var/obj/machinery/blackbox_recorder/blackbox
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "blackbox"
 	name = "Blackbox Recorder"
+	desc = "Records all radio communications, as well as various other information in case of the worst."
 	density = 1
 	anchored = 1.0
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 10
 	active_power_usage = 100
 	var/list/messages = list()		//Stores messages of non-standard frequencies
@@ -242,8 +253,10 @@ var/obj/machinery/blackbox_recorder/blackbox
 	var/list/msg_security = list()
 	var/list/msg_deathsquad = list()
 	var/list/msg_syndicate = list()
+	var/list/msg_raider = list()
 	var/list/msg_cargo = list()
 	var/list/msg_service = list()
+	var/list/msg_explorer = list()
 
 	var/list/datum/feedback_variable/feedback = new()
 
@@ -317,6 +330,15 @@ var/obj/machinery/blackbox_recorder/blackbox
 
 	feedback_set_details("round_end","[time2text(world.realtime)]") //This one MUST be the last one that gets set.
 
+/obj/machinery/blackbox_recorder/vv_edit_var(var_name, var_value)
+	var/static/list/blocked_vars		//hacky as fuck kill me
+	if(!blocked_vars)
+		var/obj/machinery/M = new
+		var/list/parent_vars = M.vars.Copy()
+		blocked_vars = vars.Copy() - parent_vars
+	if(var_name in blocked_vars)
+		return FALSE
+	return ..()
 
 //This proc is only to be called at round end.
 /obj/machinery/blackbox_recorder/proc/save_all_data_to_sql()

@@ -2,7 +2,7 @@
 	name = "Lightning Strike"
 	desc = "This uses a hidden electrolaser, which creates a laser beam to ionize the enviroment, allowing for ideal conditions \
 	for a directed lightning strike to occur.  The lightning is very strong, however it requires a few seconds to prepare a \
-	strike."
+	strike.  Lightning functions cannot miss due to distance."
 	cost = 150
 	obj_path = /obj/item/weapon/spell/projectile/lightning
 	category = OFFENSIVE_SPELLS
@@ -26,9 +26,9 @@
 	nodamage = 1
 	damage_type = HALLOSS
 
-	muzzle_type = /obj/effect/projectile/lightning/muzzle
-	tracer_type = /obj/effect/projectile/lightning/tracer
-	impact_type = /obj/effect/projectile/lightning/impact
+	muzzle_type = /obj/effect/projectile/muzzle/lightning
+	tracer_type = /obj/effect/projectile/tracer/lightning
+	impact_type = /obj/effect/projectile/impact/lightning
 
 	var/power = 60				//How hard it will hit for with electrocute_act().
 
@@ -36,7 +36,7 @@
 	if(ishuman(target_mob))
 		var/mob/living/carbon/human/H = target_mob
 		var/obj/item/organ/external/affected = H.get_organ(check_zone(BP_TORSO))
-		H.electrocute_act(power, src, H.get_siemens_coefficient_organ(affected), affected)
+		H.electrocute_act(power, src, H.get_siemens_coefficient_organ(affected), affected, 0)
 	else
-		target_mob.electrocute_act(power, src, 1.0, BP_TORSO)
+		target_mob.electrocute_act(power, src, 0.75, BP_TORSO)
 	return 1

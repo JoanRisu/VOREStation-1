@@ -5,7 +5,7 @@
 	singular_name = "telecrystal"
 	icon = 'icons/obj/stock_parts.dmi'
 	icon_state = "telecrystal"
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 	max_amount = 240
 	origin_tech = list(TECH_MATERIAL = 6, TECH_BLUESPACE = 4)
 	force = 1 //Needs a token force to ensure you can attack because for some reason you can't attack with 0 force things
@@ -16,11 +16,11 @@
 		safe_blink(target, 14)
 		use(5)
 	else
-		user << "<span class='warning'>There are not enough telecrystals to do that.</span>"
+		to_chat(user, "<span class='warning'>There are not enough telecrystals to do that.</span>")
 
 /obj/item/stack/telecrystal/attack_self(mob/user as mob)
 	if(user.mind.accept_tcrystals) //Checks to see if antag type allows for tcrystals
-		user << "<span class='notice'>You use \the [src], adding [src.amount] to your balance.</span>"
+		to_chat(user, "<span class='notice'>You use \the [src], adding [src.amount] to your balance.</span>")
 		user.mind.tcrystals += amount
 		use(amount)
 	return

@@ -1,21 +1,11 @@
-/obj/item/device/gps
-	name = "relay positioning device"
-	desc = "Triangulates the approximate co-ordinates using a nearby satellite network."
-	icon = 'icons/obj/device.dmi'
-	icon_state = "locator"
-	item_state = "locator"
-	w_class = 2
-
-/obj/item/device/gps/attack_self(var/mob/user as mob)
-	var/turf/T = get_turf(src)
-	user << "<span class='notice'>\icon[src] \The [src] flashes <i>[T.x]:[T.y]:[T.z]</i>.</span>"
-
 /obj/item/device/measuring_tape
 	name = "measuring tape"
 	desc = "A coiled metallic tape used to check dimensions and lengths."
 	icon = 'icons/obj/xenoarchaeology.dmi'
 	icon_state = "measuring"
-	w_class = 2
+	origin_tech = list(TECH_MATERIAL = 1)
+	matter = list(DEFAULT_WALL_MATERIAL = 100)
+	w_class = ITEMSIZE_SMALL
 
 /obj/item/weapon/storage/bag/fossils
 	name = "Fossil Satchel"
@@ -23,10 +13,10 @@
 	icon = 'icons/obj/mining.dmi'
 	icon_state = "satchel"
 	slot_flags = SLOT_BELT | SLOT_POCKET
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	storage_slots = 50
-	max_storage_space = 200
-	max_w_class = 3
+	max_storage_space = ITEMSIZE_COST_NORMAL * 50
+	max_w_class = ITEMSIZE_NORMAL
 	can_hold = list(/obj/item/weapon/fossil)
 
 /obj/item/weapon/storage/box/samplebags
@@ -46,7 +36,9 @@
 	icon = 'icons/obj/xenoarchaeology.dmi'
 	icon_state = "flashgun"
 	item_state = "lampgreen"
-	w_class = 2.0
+	origin_tech = list(TECH_BLUESPACE = 3, TECH_MAGNET = 3)
+	matter = list(DEFAULT_WALL_MATERIAL = 10000,"glass" = 5000)
+	w_class = ITEMSIZE_SMALL
 	slot_flags = SLOT_BELT
 
 	var/last_scan_time = 0
@@ -65,8 +57,8 @@
 		var/nearestSimpleTargetDist = -1
 		var/turf/cur_turf = get_turf(src)
 
-		if(master_controller) //Sanity check due to runtimes ~Z
-			for(var/A in master_controller.artifact_spawning_turfs)
+		if(SSxenoarch) //Sanity check due to runtimes ~Z
+			for(var/A in SSxenoarch.artifact_spawning_turfs)
 				var/turf/simulated/mineral/T = A
 				if(T.density && T.artifact_find)
 					if(T.z == cur_turf.z)
@@ -75,9 +67,9 @@
 							nearestTargetDist = cur_dist + rand() * 2 - 1
 							nearestTargetId = T.artifact_find.artifact_id
 				else
-					master_controller.artifact_spawning_turfs.Remove(T)
+					SSxenoarch.artifact_spawning_turfs.Remove(T)
 
-			for(var/A in master_controller.digsite_spawning_turfs)
+			for(var/A in SSxenoarch.digsite_spawning_turfs)
 				var/turf/simulated/mineral/T = A
 				if(T.density && T.finds && T.finds.len)
 					if(T.z == cur_turf.z)
@@ -85,24 +77,26 @@
 						if(nearestSimpleTargetDist < 0 || cur_dist < nearestSimpleTargetDist)
 							nearestSimpleTargetDist = cur_dist + rand() * 2 - 1
 				else
-					master_controller.digsite_spawning_turfs.Remove(T)
+					SSxenoarch.digsite_spawning_turfs.Remove(T)
 
 		if(nearestTargetDist >= 0)
-			user << "Exotic energy detected on wavelength '[nearestTargetId]' in a radius of [nearestTargetDist]m[nearestSimpleTargetDist > 0 ? "; small anomaly detected in a radius of [nearestSimpleTargetDist]m" : ""]"
+			to_chat(user, "Exotic energy detected on wavelength '[nearestTargetId]' in a radius of [nearestTargetDist]m[nearestSimpleTargetDist > 0 ? "; small anomaly detected in a radius of [nearestSimpleTargetDist]m" : ""]")
 		else if(nearestSimpleTargetDist >= 0)
-			user << "Small anomaly detected in a radius of [nearestSimpleTargetDist]m."
+			to_chat(user, "Small anomaly detected in a radius of [nearestSimpleTargetDist]m.")
 		else
-			user << "Background radiation levels detected."
+			to_chat(user, "Background radiation levels detected.")
 	else
-		user << "Scanning array is recharging."
+		to_chat(user, "Scanning array is recharging.")
 
 /obj/item/device/depth_scanner
 	name = "depth analysis scanner"
 	desc = "Used to check spatial depth and density of rock outcroppings."
-	icon = 'icons/obj/pda.dmi'
-	icon_state = "crap"
+	icon = 'icons/obj/xenoarchaeology.dmi'
+	icon_state = "depth_scanner"
 	item_state = "analyzer"
-	w_class = 2
+	origin_tech = list(TECH_MAGNET = 2, TECH_ENGINEERING = 2, TECH_BLUESPACE = 2)
+	matter = list(DEFAULT_WALL_MATERIAL = 1000,"glass" = 1000)
+	w_class = ITEMSIZE_SMALL
 	slot_flags = SLOT_BELT
 	var/list/positive_locations = list()
 	var/datum/depth_scan/current
@@ -139,7 +133,7 @@
 
 			positive_locations.Add(D)
 
-			user << "<span class='notice'>\icon[src] [src] pings.</span>"
+			to_chat(user, "<span class='notice'>[bicon(src)] [src] pings.</span>")
 
 	else if(istype(A, /obj/structure/boulder))
 		var/obj/structure/boulder/B = A
@@ -157,7 +151,7 @@
 
 			positive_locations.Add(D)
 
-			user << "<span class='notice'>\icon[src] [src] pings [pick("madly","wildly","excitedly","crazily")]!</span>"
+			to_chat(user, "<span class='notice'>[bicon(src)] [src] pings [pick("madly","wildly","excitedly","crazily")]!</span>")
 
 /obj/item/device/depth_scanner/attack_self(var/mob/living/user)
 	interact(user)
@@ -227,16 +221,18 @@
 	icon = 'icons/obj/device.dmi'
 	icon_state = "pinoff"	//pinonfar, pinonmedium, pinonclose, pinondirect, pinonnull
 	item_state = "electronic"
+	origin_tech = list(TECH_MAGNET = 3, TECH_ENGINEERING = 2, TECH_BLUESPACE = 3)
+	matter = list(DEFAULT_WALL_MATERIAL = 1000,"glass" = 500)
 	var/frequency = PUB_FREQ
 	var/scan_ticks = 0
 	var/obj/item/device/radio/target_radio
 
 /obj/item/device/beacon_locator/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/item/device/beacon_locator/Destroy()
-	processing_objects.Remove(src)
+	STOP_PROCESSING(SSobj, src)
 	..()
 
 /obj/item/device/beacon_locator/process()
@@ -258,10 +254,10 @@
 			if(prob(scan_ticks * 10))
 				spawn(0)
 					set background = 1
-					if(processing_objects.Find(src))
+					if(datum_flags & DF_ISPROCESSING)
 						//scan radios in the world to try and find one
 						var/cur_dist = 999
-						for(var/obj/item/device/radio/beacon/R in world)
+						for(var/obj/item/device/radio/beacon/R in all_beacons)
 							if(R.z == src.z && R.frequency == src.frequency)
 								var/check_dist = get_dist(src,R)
 								if(check_dist < cur_dist)
@@ -271,9 +267,9 @@
 						scan_ticks = 0
 						var/turf/T = get_turf(src)
 						if(target_radio)
-							T.visible_message("\icon[src] [src] [pick("chirps","chirrups","cheeps")] happily.")
+							T.visible_message("[bicon(src)] [src] [pick("chirps","chirrups","cheeps")] happily.")
 						else
-							T.visible_message("\icon[src] [src] [pick("chirps","chirrups","cheeps")] sadly.")
+							T.visible_message("[bicon(src)] [src] [pick("chirps","chirrups","cheeps")] sadly.")
 		else
 			icon_state = "pinoff"
 
@@ -314,3 +310,39 @@
 		usr << browse(null, "window=locater")
 
 	updateSelfDialog()
+
+/obj/item/device/xenoarch_multi_tool
+	name = "xenoarcheology multitool"
+	desc = "Has the features of the Alden-Saraspova counter, a measuring tape, and a depth analysis scanner all in one!"
+	icon_state = "ano_scanner2"
+	item_state = "lampgreen"
+	icon = 'icons/obj/xenoarchaeology.dmi'
+	origin_tech = list(TECH_MAGNET = 3, TECH_ENGINEERING = 3, TECH_BLUESPACE = 2)
+	matter = list(DEFAULT_WALL_MATERIAL = 10000,"glass" = 5000)
+	w_class = ITEMSIZE_SMALL
+	slot_flags = SLOT_BELT
+	var/mode = 1 //Start off scanning. 1 = scanning, 0 = measuring
+	var/obj/item/device/ano_scanner/anomaly_scanner = null
+	var/obj/item/device/depth_scanner/depth_scanner = null
+
+/obj/item/device/xenoarch_multi_tool/New()
+	anomaly_scanner = new/obj/item/device/ano_scanner(src)
+	depth_scanner = new/obj/item/device/depth_scanner(src)
+
+/obj/item/device/xenoarch_multi_tool/attack_self(var/mob/living/user)
+	depth_scanner.interact(user)
+
+/obj/item/device/xenoarch_multi_tool/verb/swap_settings(var/mob/living/user)
+	set name = "Swap Functionality"
+	set desc = "Swap between the scanning and measuring functionality.."
+	mode = !mode
+	if(mode)
+		to_chat(user, "The device will now scan for artifacts.")
+	else
+		to_chat(user, "The device will now measure depth dug.")
+
+/obj/item/device/xenoarch_multi_tool/verb/scan_for_anomalies(var/mob/living/user)
+	set name = "Scan for Anomalies"
+	set desc = "Scan for artifacts and anomalies within your vicinity."
+	anomaly_scanner.interact(user)
+

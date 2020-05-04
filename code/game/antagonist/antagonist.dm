@@ -3,9 +3,11 @@
 	// Text shown when becoming this antagonist.
 	var/list/restricted_jobs =     list()   // Jobs that cannot be this antagonist (depending on config)
 	var/list/protected_jobs =      list()   // As above.
+	var/list/roundstart_restricted =      list()	//Jobs that can be this antag, but not at roundstart
 
 	// Strings.
 	var/welcome_text = "Cry havoc and let slip the dogs of war!"
+	var/antag_sound = 'sound/effects/antag_notice/general_baddie_alert.ogg' // The sound file to play when someone gets this role. Only they can hear it.
 	var/leader_welcome_text                 // Text shown to the leader, if any.
 	var/victory_text                        // World output at roundend for victory.
 	var/loss_text                           // As above for loss.
@@ -46,11 +48,12 @@
 	var/mob_path = /mob/living/carbon/human // Mobtype this antag will use if none is provided.
 	var/feedback_tag = "traitor_objective"  // End of round
 	var/bantype = "Syndicate"               // Ban to check when spawning this antag.
+	var/minimum_player_age = 7            	// Players need to be at least minimum_player_age days old before they are eligable for auto-spawning
 	var/suspicion_chance = 50               // Prob of being on the initial Command report
 	var/flags = 0                           // Various runtime options.
 
 	// Used for setting appearance.
-	var/list/valid_species =       list("Unathi","Tajara","Skrell","Human","Diona","Teshari")
+	var/list/valid_species =       list(SPECIES_UNATHI,SPECIES_TAJ,SPECIES_SKRELL,SPECIES_HUMAN,SPECIES_DIONA,SPECIES_TESHARI)
 
 	// Runtime vars.
 	var/datum/mind/leader                   // Current leader, if any.
@@ -76,6 +79,10 @@
 		and before taking extreme actions, please try to also contact the administration! \
 		Think through your actions and make the roleplay immersive! <b>Please remember all \
 		rules aside from those without explicit exceptions apply to antagonists.</b>"
+
+//	var/can_use_aooc = TRUE                // If true, will be given the AOOC verb, along with the ability to use it.
+	var/can_hear_aooc = TRUE		// If FALSE, the antag can neither speak nor hear AOOC. If TRUE, they can at least hear it.
+	var/can_speak_aooc = TRUE		// If TRUE, the antag can freely spean in AOOC.
 
 /datum/antagonist/New()
 	..()
@@ -104,9 +111,9 @@
 		if(ghosts_only && !istype(player.current, /mob/observer/dead))
 			candidates -= player
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: Only ghosts may join as this role! They have been removed from the draft.")
-		else if(istype(player.current, /mob/living/voice))
+		else if(config.use_age_restriction_for_antags && player.current.client.player_age < minimum_player_age)
 			candidates -= player
-			log_debug("[key_name(player)] is not eligible to become a [role_text]: They are only a communicator voice. They have been removed from the draft.")
+			log_debug("[key_name(player)] is not eligible to become a [role_text]: Is only [player.current.client.player_age] day\s old, has to be [minimum_player_age] day\s!")
 		else if(player.special_role)
 			candidates -= player
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: They already have a special role ([player.special_role])! They have been removed from the draft.")
@@ -137,7 +144,7 @@
 	if(!istype(player))
 		message_admins("[uppertext(ticker.mode.name)]: Failed to find a candidate for [role_text].")
 		return 0
-	player.current << "<span class='danger'><i>You have been selected this round as an antagonist!</i></span>"
+	to_chat(player.current, "<span class='danger'><i>You have been selected this round as an antagonist!</i></span>")
 	message_admins("[uppertext(ticker.mode.name)]: Selected [player] as a [role_text].")
 	if(istype(player.current, /mob/observer/dead))
 		create_default(player.current)
@@ -171,7 +178,7 @@
 
 /datum/antagonist/proc/draft_antagonist(var/datum/mind/player)
 	//Check if the player can join in this antag role, or if the player has already been given an antag role.
-	if(!can_become_antag(player))
+	if(!can_become_antag(player) || player.assigned_role in roundstart_restricted)
 		log_debug("[player.key] was selected for [role_text] by lottery, but is not allowed to be that role.")
 		return 0
 	if(player.special_role)

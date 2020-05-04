@@ -1,6 +1,6 @@
 /datum/category_item/autolathe/tools/crowbar
 	name = "crowbar"
-	path =/obj/item/weapon/crowbar
+	path =/obj/item/weapon/tool/crowbar
 
 /datum/category_item/autolathe/tools/multitool
 	name = "multitool"
@@ -14,21 +14,26 @@
 	name = "welding tool"
 	path =/obj/item/weapon/weldingtool
 
+/datum/category_item/autolathe/tools/electric_welder
+	name = "electric welding tool"
+	path =/obj/item/weapon/weldingtool/electric/unloaded
+	hidden = 1
+
 /datum/category_item/autolathe/tools/screwdriver
 	name = "screwdriver"
-	path =/obj/item/weapon/screwdriver
+	path =/obj/item/weapon/tool/screwdriver
 
 /datum/category_item/autolathe/tools/wirecutters
 	name = "wirecutters"
-	path =/obj/item/weapon/wirecutters
+	path =/obj/item/weapon/tool/wirecutters
 
 /datum/category_item/autolathe/tools/wrench
 	name = "wrench"
-	path =/obj/item/weapon/wrench
+	path =/obj/item/weapon/tool/wrench
 
 /datum/category_item/autolathe/tools/hatchet
 	name = "hatchet"
-	path =/obj/item/weapon/material/hatchet
+	path =/obj/item/weapon/material/knife/machete/hatchet
 
 /datum/category_item/autolathe/tools/minihoe
 	name = "mini hoe"

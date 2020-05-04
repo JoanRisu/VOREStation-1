@@ -5,7 +5,7 @@
 	icon = 'icons/obj/technomancer.dmi'
 	icon_state = "technomancer_core"
 	item_state = "technomancer_core"
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 	slot_flags = SLOT_BACK
 	unacidable = 1
 	origin_tech = list(
@@ -20,7 +20,10 @@
 	var/regen_rate = 50				// 200 seconds to full
 	var/energy_delta = 0			// How much we're gaining (or perhaps losing) every process().
 	var/mob/living/wearer = null	// Reference to the mob wearing the core.
-	var/instability_modifer = 0.8	// Multiplier on how much instability is added.
+	var/instability_modifier = 0.8	// Multiplier on how much instability is added.
+	var/energy_cost_modifier = 1.0	// Multiplier on how much spells will cost.
+	var/spell_power_modifier = 1.0	// Multiplier on how strong spells are.
+	var/cooldown_modifier 	 = 1.0	// Multiplier on cooldowns for spells.
 	var/list/spells = list()		// This contains the buttons used to make spells in the user's hand.
 	var/list/appearances = list(	// Assoc list containing possible icon_states that the wiz can change the core to.
 		"default"			= "technomancer_core",
@@ -32,15 +35,16 @@
 	var/list/summoned_mobs = list()	// Maintained horribly with maintain_summon_list().
 	var/list/wards_in_use = list()	// Wards don't count against the cap for other summons.
 	var/max_summons = 10			// Maximum allowed summoned entities.  Some cores will have different caps.
+	var/universal = FALSE			// Allows non-technomancers to use the core - VOREStation Add
 
 /obj/item/weapon/technomancer_core/New()
 	..()
-	processing_objects |= src
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/technomancer_core/Destroy()
 	dismiss_all_summons()
-	processing_objects.Remove(src)
-	..()
+	STOP_PROCESSING(SSobj, src)
+	return ..()
 
 // Add the spell buttons to the HUD.
 /obj/item/weapon/technomancer_core/equipped(mob/user)
@@ -67,6 +71,7 @@
 	return 0
 
 /obj/item/weapon/technomancer_core/proc/pay_energy(amount)
+	amount = round(amount * energy_cost_modifier, 0.1)
 	if(amount <= energy)
 		energy = max(energy - amount, 0)
 		return 1
@@ -84,8 +89,10 @@
 	if(world.time % 5 == 0) // Maintaining fat lists is expensive, I imagine.
 		maintain_summon_list()
 	if(wearer && wearer.mind)
-		if(!(technomancers.is_antagonist(wearer.mind))) // In case someone tries to wear a stolen core.
+		if(!(technomancers.is_antagonist(wearer.mind)) && !universal) // In case someone tries to wear a stolen core. //VOREStation Edit - Add universal cores
 			wearer.adjust_instability(20)
+	if(!wearer || wearer.stat == DEAD) // Unlock if we're dead or not worn.
+		canremove = TRUE
 
 /obj/item/weapon/technomancer_core/proc/regenerate()
 	energy = min(max(energy + regen_rate, 0), max_energy)
@@ -113,14 +120,18 @@
 			var/mob/living/L = A
 			if(L.stat == DEAD)
 				summoned_mobs -= L
-				qdel(L)
+				spawn(1)
+					L.visible_message("<span class='notice'>\The [L] begins to fade away...</span>")
+					animate(L, alpha = 255, alpha = 0, time = 30) // Makes them fade into nothingness.
+					sleep(30)
+					qdel(L)
 
 // Deletes all the summons and wards from the core, so that Destroy() won't have issues.
 /obj/item/weapon/technomancer_core/proc/dismiss_all_summons()
 	for(var/mob/living/L in summoned_mobs)
 		summoned_mobs -= L
 		qdel(L)
-	for(var/mob/living/simple_animal/ward/ward in wards_in_use)
+	for(var/mob/living/ward in wards_in_use)
 		wards_in_use -= ward
 		qdel(ward)
 
@@ -129,7 +140,6 @@
 	name = "generic spellbutton"
 	var/spellpath = null
 	var/obj/item/weapon/technomancer_core/core = null
-	var/was_bought_by_preset = 0 // Relevant for refunding via the spellbook.  Presets may be priced differently.
 	var/ability_icon_state = null
 
 /obj/spellbutton/New(loc, var/path, var/new_name, var/new_icon_state)
@@ -161,7 +171,8 @@
 	if(core && statpanel("Spell Core"))
 		var/charge_status = "[core.energy]/[core.max_energy] ([round( (core.energy / core.max_energy) * 100)]%) \
 		([round(core.energy_delta)]/s)"
-		var/instability_status = "[src.instability]"
+		var/instability_delta = instability - last_instability
+		var/instability_status = "[src.instability] ([round(instability_delta, 0.1)]/s)"
 		stat("Core charge", charge_status)
 		stat("User instability", instability_status)
 		for(var/obj/spellbutton/button in core.spells)
@@ -220,7 +231,9 @@
 	energy = 13000
 	max_energy = 13000
 	regen_rate = 35 //~371 seconds to full, 118 seconds to full at 50 instability (rate of 110)
-	instability_modifer = 1.2
+	instability_modifier = 1.2
+	energy_cost_modifier = 0.7
+	spell_power_modifier = 1.1
 
 /obj/item/weapon/technomancer_core/unstable/regenerate()
 	var/instability_bonus = 0
@@ -241,19 +254,22 @@
 	max_energy = 7000
 	regen_rate = 70 //100 seconds to full
 	slowdown = -1
-	instability_modifer = 0.9
+	instability_modifier = 0.9
+	cooldown_modifier = 0.9
 
 //Big batteries but slow regen, buying energy spells is highly recommended.
 /obj/item/weapon/technomancer_core/bulky
 	name = "bulky core"
 	desc = "A bewilderingly complex 'black box' that allows the wearer to accomplish amazing feats.  This variant is more \
-	cumbersome and bulky, due to the additional energy capacitors installed.  It also comes at a price of a subpar fractal \
+	cumbersome and bulky, due to the additional energy capacitors installed, which allows for a massive energy storage, as well \
+	as stronger function usage.  It also comes at a price of a subpar fractal \
 	reactor."
 	energy = 20000
 	max_energy = 20000
 	regen_rate = 25 //800 seconds to full
 	slowdown = 1
-	instability_modifer = 1.0
+	instability_modifier = 1.0
+	spell_power_modifier = 1.4
 
 // Using this can result in abilities costing less energy.  If you're lucky.
 /obj/item/weapon/technomancer_core/recycling
@@ -263,15 +279,17 @@
 	energy = 12000
 	max_energy = 12000
 	regen_rate = 40 //300 seconds to full
-	instability_modifer = 0.6
+	instability_modifier = 0.6
+	energy_cost_modifier = 0.8
 
 /obj/item/weapon/technomancer_core/recycling/pay_energy(amount)
-	..()
-	if(.)
+	var/success = ..()
+	if(success)
 		if(prob(30))
 			give_energy(round(amount / 2))
-			if(amount >= 100) // Managing to recover less than half of this isn't worth telling the user about.
-				wearer << "<span class='notice'>\The [src] has recovered [amount/2 >= 1000 ? "a lot of" : "some"] energy.</span>"
+			if(amount >= 50) // Managing to recover less than half of this isn't worth telling the user about.
+				to_chat(wearer, "<span class='notice'>\The [src] has recovered [amount/2 >= 1000 ? "a lot of" : "some"] energy.</span>")
+	return success
 
 // For those dedicated to summoning hoards of things.
 /obj/item/weapon/technomancer_core/summoner
@@ -283,8 +301,68 @@
 	max_energy = 8000
 	regen_rate = 35 //228 seconds to full
 	max_summons = 40
-	instability_modifer = 1.0
+	instability_modifier = 1.2
+	spell_power_modifier = 1.2
 
 /obj/item/weapon/technomancer_core/summoner/pay_dues()
 	if(summoned_mobs.len)
 		pay_energy( round(summoned_mobs.len) )
+
+// For those who hate instability.
+/obj/item/weapon/technomancer_core/safety
+	name = "safety core"
+	desc = "A bewilderingly complex 'black box' that allows the wearer to accomplish amazing feats.  This type is designed to be \
+	the closest thing you can get to 'safe' for a Core.  Instability from this is significantly reduced.  You can even dance if \
+	you want to, and leave your apprentice behind."
+	energy = 7000
+	max_energy = 7000
+	regen_rate = 30 //233 seconds to full
+	instability_modifier = 0.3
+	spell_power_modifier = 0.7
+
+// For those who want to blow everything on a few spells.
+/obj/item/weapon/technomancer_core/overcharged
+	name = "overcharged core"
+	desc = "A bewilderingly complex 'black box' that allows the wearer to accomplish amazing feats.  This type will use as much \
+	energy as it can in order to pump up the strength of functions used to insane levels."
+	energy = 15000
+	max_energy = 15000
+	regen_rate = 40 //375 seconds to full
+	instability_modifier = 1.1
+	spell_power_modifier = 1.75
+	energy_cost_modifier = 2.0
+
+// For use only for the GOLEM.
+/obj/item/weapon/technomancer_core/golem
+	name = "integrated core"
+	desc = "A bewilderingly complex 'black box' that allows the wearer to accomplish amazing feats.  This type is not meant \
+	to be worn on the back like other cores.  Instead it is meant to be installed inside a synthetic shell.  As a result, it's \
+	a lot more robust."
+	energy = 25000
+	max_energy = 25000
+	regen_rate = 100 //250 seconds to full
+	instability_modifier = 0.75
+
+
+/obj/item/weapon/technomancer_core/verb/toggle_lock()
+	set name = "Toggle Core Lock"
+	set category = "Object"
+	set desc = "Toggles the locking mechanism on your manipulation core."
+
+	canremove = !canremove
+	to_chat(usr, "<span class='notice'>You [canremove ? "de" : ""]activate the locking mechanism on \the [src].</span>")
+
+//For the adminbuse! VOREStation Add
+/obj/item/weapon/technomancer_core/universal
+	name = "universal core"
+	desc = "A bewilderingly complex 'black box' that allows the wearer to accomplish amazing feats. \
+	This one is a copy of a 'technomancer' core, shamelessly ripped off by a Kitsuhana pattern designer \
+	for fun, so that he could perform impressive 'magic'. The pack sloshes slightly if you shake it.<br>\
+	Under the straps, <i>'Export Edition'</i> is printed."
+	energy = 7000
+	max_energy = 7000
+	regen_rate = 30 //233 seconds to full
+	instability_modifier = 0.3
+	spell_power_modifier = 0.7
+	universal = TRUE
+//VOREStation Add End

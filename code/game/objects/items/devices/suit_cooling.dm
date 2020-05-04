@@ -1,13 +1,12 @@
 /obj/item/device/suit_cooling_unit
 	name = "portable suit cooling unit"
 	desc = "A portable heat sink and liquid cooled radiator that can be hooked up to a space suit's existing temperature controls to provide industrial levels of cooling."
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	icon = 'icons/obj/device.dmi'
 	icon_state = "suitcooler0"
 	slot_flags = SLOT_BACK
 
 	//copied from tank.dm
-	flags = CONDUCT
 	force = 5.0
 	throwforce = 10.0
 	throw_speed = 1
@@ -30,7 +29,7 @@
 	toggle(usr)
 
 /obj/item/device/suit_cooling_unit/New()
-	processing_objects |= src
+	START_PROCESSING(SSobj, src)
 	cell = new/obj/item/weapon/cell/high()	//comes not with the crappy default power cell - because this is dedicated EVA equipment
 	cell.loc = src
 
@@ -46,9 +45,17 @@
 
 	var/mob/living/carbon/human/H = loc
 
-	var/efficiency = 1 - H.get_pressure_weakness()		//you need to have a good seal for effective cooling
-	var/env_temp = get_environment_temperature()		//wont save you from a fire
-	var/temp_adj = min(H.bodytemperature - max(thermostat, env_temp), max_cooling)
+	var/turf/T = get_turf(src)
+	var/datum/gas_mixture/environment = T.return_air()
+	var/efficiency = 1 - H.get_pressure_weakness(environment.return_pressure())	// You need to have a good seal for effective cooling
+	var/temp_adj = 0										// How much the unit cools you. Adjusted later on.
+	var/env_temp = get_environment_temperature()			// This won't save you from a fire
+	var/thermal_protection = H.get_heat_protection(env_temp)	// ... unless you've got a good suit.
+
+	if(thermal_protection < 0.99)		//For some reason, < 1 returns false if the value is 1.
+		temp_adj = min(H.bodytemperature - max(thermostat, env_temp), max_cooling)
+	else
+		temp_adj = min(H.bodytemperature - thermostat, max_cooling)
 
 	if (temp_adj < 0.5)	//only cools, doesn't heat, also we don't need extreme precision
 		return
@@ -116,7 +123,7 @@
 		cell.add_fingerprint(user)
 		cell.update_icon()
 
-		user << "You remove \the [src.cell]."
+		to_chat(user, "You remove \the [src.cell].")
 		src.cell = null
 		updateicon()
 		return
@@ -128,28 +135,29 @@
 		turn_off()
 	else
 		turn_on()
-	user << "<span class='notice'>You switch \the [src] [on ? "on" : "off"].</span>"
+	to_chat(user, "<span class='notice'>You switch \the [src] [on ? "on" : "off"].</span>")
 
 /obj/item/device/suit_cooling_unit/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if (istype(W, /obj/item/weapon/screwdriver))
+	if (W.is_screwdriver())
 		if(cover_open)
 			cover_open = 0
-			user << "You screw the panel into place."
+			to_chat(user, "You screw the panel into place.")
 		else
 			cover_open = 1
-			user << "You unscrew the panel."
+			to_chat(user, "You unscrew the panel.")
+		playsound(src, W.usesound, 50, 1)
 		updateicon()
 		return
 
 	if (istype(W, /obj/item/weapon/cell))
 		if(cover_open)
 			if(cell)
-				user << "There is a [cell] already installed here."
+				to_chat(user, "There is a [cell] already installed here.")
 			else
 				user.drop_item()
 				W.loc = src
 				cell = W
-				user << "You insert the [cell]."
+				to_chat(user, "You insert the [cell].")
 		updateicon()
 		return
 
@@ -165,24 +173,25 @@
 		icon_state = "suitcooler0"
 
 /obj/item/device/suit_cooling_unit/examine(mob/user)
-	if(!..(user, 1))
-		return
+	. = ..()
 
-	if (on)
-		if (attached_to_suit(src.loc))
-			user << "It's switched on and running."
+	if(Adjacent(user))
+
+		if (on)
+			if (attached_to_suit(src.loc))
+				. += "It's switched on and running."
+			else
+				. += "It's switched on, but not attached to anything."
 		else
-			user << "It's switched on, but not attached to anything."
-	else
-		user << "It is switched off."
+			. += "It is switched off."
 
-	if (cover_open)
-		if(cell)
-			user << "The panel is open, exposing the [cell]."
+		if (cover_open)
+			if(cell)
+				. += "The panel is open, exposing the [cell]."
+			else
+				. += "The panel is open."
+
+		if (cell)
+			. += "The charge meter reads [round(cell.percent())]%."
 		else
-			user << "The panel is open."
-
-	if (cell)
-		user << "The charge meter reads [round(cell.percent())]%."
-	else
-		user << "It doesn't have a power cell installed."
+			. += "It doesn't have a power cell installed."

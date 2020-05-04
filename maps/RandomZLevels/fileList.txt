@@ -7,7 +7,11 @@
 
 #maps/RandomZLevels/labyrinth.dmm #Broken still.
 #maps/RandomZLevels/snowfield.dmm #Broken.
-maps/RandomZLevels/carpfarm.dmm
-maps/RandomZLevels/listeningpost.dmm
-maps/RandomZLevels/blackmarketpackers.dmm
-maps/RandomZLevels/beach.dmm
+#maps/RandomZLevels/carpfarm.dmm
+#maps/RandomZLevels/listeningpost.dmm
+#maps/RandomZLevels/blackmarketpackers.dmm
+#maps/RandomZLevels/beach.dmm
+#maps/RandomZLevels/zoo.dmm
+
+#This one works with the Tether, uncomment when gateway code is unfucked
+#maps/RandomZLevels/snow_outpost.dmm

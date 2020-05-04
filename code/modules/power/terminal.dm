@@ -8,10 +8,10 @@
 	icon_state = "term"
 	desc = "It's an underfloor wiring terminal for power equipment."
 	level = 1
-	layer = TURF_LAYER
 	var/obj/machinery/power/master = null
 	anchored = 1
-	layer = 2.6 // a bit above wires
+	plane = PLATING_PLANE
+	layer = WIRES_LAYER+0.01
 
 
 /obj/machinery/power/terminal/New()
@@ -22,7 +22,7 @@
 
 /obj/machinery/power/terminal/Destroy()
 	if(master)
-		master.disconnect_terminal()
+		master.disconnect_terminal(src)
 		master = null
 	return ..()
 
@@ -33,7 +33,6 @@
 /obj/machinery/power/terminal/hides_under_flooring()
 	return 1
 
-// Needed so terminals are not removed from machines list.
-// Powernet rebuilds need this to work properly.
-/obj/machinery/power/terminal/process()
-	return 1
+/obj/machinery/power/terminal/overload(var/obj/machinery/power/source)
+	if(master)
+		master.overload(source)

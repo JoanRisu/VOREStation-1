@@ -10,7 +10,7 @@
 	if(species == new_species)
 		return
 
-	if(!(new_species in all_species))
+	if(!(new_species in GLOB.all_species))
 		return
 
 	set_species(new_species)
@@ -22,8 +22,8 @@
 		return
 
 	src.gender = gender
-	reset_hair()
-	update_body()
+	//reset_hair() //VOREStation Remove - Don't just randomize hair on gender swaps for prometheans.
+	update_icons_body()
 	update_dna()
 	return 1
 
@@ -91,19 +91,17 @@
 	b_eyes = blue
 
 	update_eyes()
-	update_body()
+	update_icons_body()
 	return 1
 
 /mob/living/carbon/human/proc/change_hair_color(var/red, var/green, var/blue)
-	if(red == r_eyes && green == g_eyes && blue == b_eyes)
+	if(red == r_hair && green == g_hair && blue == b_hair)
 		return
 
 	r_hair = red
 	g_hair = green
 	b_hair = blue
 
-	force_update_limbs()
-	update_body()
 	update_hair()
 	return 1
 
@@ -127,7 +125,7 @@
 	b_skin = blue
 
 	force_update_limbs()
-	update_body()
+	update_icons_body()
 	return 1
 
 /mob/living/carbon/human/proc/change_skin_tone(var/tone)
@@ -137,7 +135,7 @@
 	s_tone = tone
 
 	force_update_limbs()
-	update_body()
+	update_icons_body()
 	return 1
 
 /mob/living/carbon/human/proc/update_dna()
@@ -146,10 +144,10 @@
 
 /mob/living/carbon/human/proc/generate_valid_species(var/check_whitelist = 1, var/list/whitelist = list(), var/list/blacklist = list())
 	var/list/valid_species = new()
-	for(var/current_species_name in all_species)
-		var/datum/species/current_species = all_species[current_species_name]
+	for(var/current_species_name in GLOB.all_species)
+		var/datum/species/current_species = GLOB.all_species[current_species_name]
 
-		if(check_whitelist && config.usealienwhitelist && !check_rights(R_ADMIN, 0, src)) //If we're using the whitelist, make sure to check it!
+		if(check_whitelist && config.usealienwhitelist && !check_rights(R_ADMIN|R_EVENT, 0, src)) //If we're using the whitelist, make sure to check it!
 			if(!(current_species.spawn_flags & SPECIES_CAN_JOIN))
 				continue
 			if(whitelist.len && !(current_species_name in whitelist))
@@ -181,6 +179,10 @@
 
 		if(!(use_species in S.species_allowed))
 			continue
+
+		if(S.ckeys_allowed && !(ckey in S.ckeys_allowed)) //VOREStation add - ckey whitelist check
+			continue //VOREStation add - ckey whitelist check
+
 		valid_hairstyles += hairstyle
 
 	return valid_hairstyles
@@ -204,6 +206,9 @@
 		if(!(use_species in S.species_allowed))
 			continue
 
+		if(S.ckeys_allowed && !(ckey in S.ckeys_allowed)) //VOREStation add - ckey whitelist check
+			continue //VOREStation add - ckey whitelist check
+
 		valid_facial_hairstyles += facialhairstyle
 
 	return valid_facial_hairstyles
@@ -211,4 +216,4 @@
 /mob/living/carbon/human/proc/force_update_limbs()
 	for(var/obj/item/organ/external/O in organs)
 		O.sync_colour_to_human(src)
-	update_body(0)
+	update_icons_body(FALSE)

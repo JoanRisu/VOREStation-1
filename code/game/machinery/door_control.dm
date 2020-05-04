@@ -4,6 +4,7 @@
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "doorctrl0"
 	power_channel = ENVIRON
+	layer = ABOVE_WINDOW_LAYER
 	var/desiredstate = 0
 	var/exposedwires = 0
 	var/wires = 3
@@ -13,7 +14,7 @@
 	*/
 
 	anchored = 1.0
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 2
 	active_power_usage = 4
 
@@ -21,7 +22,7 @@
 	if(wires & 2)
 		return attack_hand(user)
 	else
-		user << "Error, no route to host."
+		to_chat(user, "Error, no route to host.")
 
 /obj/machinery/button/remote/attackby(obj/item/weapon/W, mob/user as mob)
 	return attack_hand(user)
@@ -42,7 +43,7 @@
 		return
 
 	if(!allowed(user) && (wires & 1))
-		user << "<span class='warning'>Access Denied</span>"
+		to_chat(user, "<span class='warning'>Access Denied</span>")
 		flick("doorctrl-denied",src)
 		return
 
@@ -78,6 +79,7 @@
 #define SAFE   0x10
 
 /obj/machinery/button/remote/airlock
+	icon = 'icons/obj/stationobjs_vr.dmi' // VOREStation Edit
 	name = "remote door-control"
 	desc = "It controls doors, remotely."
 
@@ -91,7 +93,7 @@
 	*/
 
 /obj/machinery/button/remote/airlock/trigger()
-	for(var/obj/machinery/door/airlock/D in world)
+	for(var/obj/machinery/door/airlock/D in machines)
 		if(D.id_tag == id)
 			if(specialfunctions & OPEN)
 				if(D.density)
@@ -131,11 +133,12 @@
 	Blast door remote control
 */
 /obj/machinery/button/remote/blast_door
+	icon = 'icons/obj/stationobjs_vr.dmi'
 	name = "remote blast door-control"
 	desc = "It controls blast doors, remotely."
 
 /obj/machinery/button/remote/blast_door/trigger()
-	for(var/obj/machinery/door/blast/M in world)
+	for(var/obj/machinery/door/blast/M in machines)
 		if(M.id == id)
 			if(M.density)
 				spawn(0)
@@ -154,7 +157,7 @@
 	desc = "It controls emitters, remotely."
 
 /obj/machinery/button/remote/emitter/trigger(mob/user as mob)
-	for(var/obj/machinery/power/emitter/E in world)
+	for(var/obj/machinery/power/emitter/E in machines)
 		if(E.id == id)
 			spawn(0)
 				E.activate(user)
@@ -203,3 +206,18 @@
 		icon_state = "launcherbtt"
 	else
 		icon_state = "launcheract"
+
+/*
+	Shieldgen remote control
+*/
+/obj/machinery/button/remote/shields
+	name = "remote shield control"
+	desc = "It controls shields, remotely."
+	icon = 'icons/obj/stationobjs_vr.dmi' // VOREStation Edit
+
+/obj/machinery/button/remote/shields/trigger(var/mob/user)
+	for(var/obj/machinery/shield_gen/SG in machines)
+		if(SG.id == id)
+			spawn(0)
+				if(SG?.anchored)
+					SG.toggle()

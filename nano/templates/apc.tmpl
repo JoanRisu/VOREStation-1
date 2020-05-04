@@ -1,3 +1,24 @@
+{{if data.gridCheck}}
+<div class='notice'>
+	<b><h3>SYSTEM FAILURE</h3></b>
+	<i>Power surge detected, grid check in effect...</i><br>
+</div>
+{{else data.failTime}}
+<div class='notice'>
+	<b><h3>SYSTEM FAILURE</h3></b>
+	<i>I/O regulators malfunction detected! Waiting for system reboot...</i><br>
+	Automatic reboot in {{:data.failTime}} seconds...<br>
+	{{if !data.siliconUser}}
+		{{if data.locked}}
+			Swipe an ID card for manual reboot.<br><br><br>
+		{{else}}
+			{{:helper.link('Reboot Now', 'refresh', {'reboot' : 1})}}<br><br><br>
+		{{/if}}		
+	{{else}}
+		{{:helper.link('Reboot Now', 'refresh', {'reboot' : 1})}}<br><br><br>
+	{{/if}}
+</div>
+{{else}}
 <div class='notice'>
 	{{if data.siliconUser}}
 		<div class="itemContentSmall">
@@ -8,7 +29,10 @@
 		</div>
 		<div class="clearBoth"></div>
 	{{else}}
-		{{if data.locked}}
+		{{if data.emagged}}
+			<b><h3>Fault in ID authenticator</h3></b>
+			Please contact maintenance for service.
+		{{else data.locked}}
 			Swipe an ID card to unlock this interface
 		{{else}}
 			Swipe an ID card to lock this interface
@@ -164,6 +188,28 @@
 		</div>
 	</div>
 
+	<div class="item">
+		<div class="itemLabel">
+			Emergency Lighting:
+		</div>
+		<div class="itemContent">
+			{{if data.locked && !data.siliconUser}}
+				{{:data.emergencyLights ? "<span class='good'>Enabled</span>" : "<span class='bad'>Disabled</span>"}}
+			{{else}}
+				{{:helper.link(data.emergencyLights ? 'Enabled' : 'Disabled', data.emergencyLights ? 'power' : 'close', {'emergency_lighting' : 1}, null)}}
+			{{/if}}
+		</div>
+	</div>
+
+	<div class="item">
+		<div class="itemLabel">
+			Night Lighting:
+		</div>
+		<div class="itemContent">
+			{{:helper.link(data.nightshiftLights ? 'Enabled' : 'Disabled', data.nightshiftLights ? 'power' : 'close', {'nightshift' : 1}, null)}}
+		</div>
+	</div>
+
 	{{if data.siliconUser}}
 		<h3>System Overrides</h3>
 
@@ -178,4 +224,4 @@
 	{{/if}}
 
 </div>
-		
+{{/if}}

@@ -19,7 +19,7 @@
 	if(istype(W, /obj/item/weapon/spell))
 		var/obj/item/weapon/spell/spell = W
 		if(!spell.aspect || spell.aspect == ASPECT_CHROMATIC)
-			user << "<span class='warning'>You cannot combine \the [spell] with \the [src], as the aspects are incompatable.</span>"
+			to_chat(user, "<span class='warning'>You cannot combine \the [spell] with \the [src], as the aspects are incompatable.</span>")
 			return
 		user.drop_item(src)
 		src.loc = null
@@ -44,10 +44,10 @@
 /obj/item/weapon/spell/aura/New()
 	..()
 	set_light(7, 4, l_color = glow_color)
-	processing_objects |= src
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/spell/aura/Destroy()
-	processing_objects -= src
+	STOP_PROCESSING(SSobj, src)
 	..()
 
 /obj/item/weapon/spell/aura/process()
@@ -73,7 +73,7 @@
 		var/turf/location = get_turf(H)
 		location.hotspot_expose(1000, 50, 1)
 
-	owner.adjust_instability(1)
+	adjust_instability(1)
 
 /obj/item/weapon/spell/aura/frost
 	name = "chilling aura"
@@ -95,7 +95,7 @@
 		var/turf/location = get_turf(H)
 		location.hotspot_expose(1, 50, 1)
 
-	owner.adjust_instability(1)
+	adjust_instability(1)
 
 
 
@@ -120,7 +120,7 @@
 			for(var/mob/living/carbon/human/H in nearby_mobs) //Heal our apprentices
 				if(H.mind && technomancers.is_antagonist(H.mind))
 					mobs_to_heal |= H
-			for(var/mob/living/simple_animal/hostile/SAH in nearby_mobs) //Heal our controlled mobs
+			for(var/mob/living/simple_mob/hostile/SAH in nearby_mobs) //Heal our controlled mobs
 				if(owner in SAH.friends)
 					mobs_to_heal |= SAH
 		else
@@ -128,8 +128,8 @@
 		for(var/mob/living/L in mobs_to_heal)
 			L.adjustBruteLoss(-5)
 			L.adjustFireLoss(-5)
-		owner.adjust_instability(2)
+		adjust_instability(2)
 
 /obj/item/weapon/spell/aura/biomed/on_use_cast(mob/living/user)
 	heal_allies_only = !heal_allies_only
-	user << "Your aura will now heal [heal_allies_only ? "your allies" : "everyone"] near you."
+	to_chat(user, "Your aura will now heal [heal_allies_only ? "your allies" : "everyone"] near you.")

@@ -8,6 +8,7 @@ var/datum/antagonist/renegade/renegades
 	bantype = "renegade"
 	restricted_jobs = list("AI", "Cyborg")
 	welcome_text = "Something's going to go wrong today, you can just feel it. You're paranoid, you've got a gun, and you're going to survive."
+	antag_sound = 'sound/effects/antag_notice/general_goodie_alert.ogg'
 	antag_text = "You are a <b>minor</b> antagonist! Within the rules, \
 		try to protect yourself and what's important to you. You aren't here to cause trouble, \
 		you're just more willing (and equipped) to go to extremes to stop it than others are. \
@@ -17,6 +18,7 @@ var/datum/antagonist/renegade/renegades
 		Think through your actions and make the roleplay immersive! <b>Please remember all \
 		rules aside from those without explicit exceptions apply to antagonists.</b>"
 	flags = ANTAG_SUSPICIOUS | ANTAG_IMPLANT_IMMUNE | ANTAG_RANDSPAWN | ANTAG_VOTABLE
+	can_speak_aooc = FALSE	// They aren't 'true' antags, but they still need to hear blanket antag instructions
 
 	hard_cap = 8
 	hard_cap_round = 12
@@ -37,7 +39,7 @@ var/datum/antagonist/renegade/renegades
 		/obj/item/weapon/gun/projectile/automatic/mini_uzi,
 		/obj/item/weapon/gun/projectile/automatic/c20r,
 		/obj/item/weapon/gun/projectile/automatic/sts35,
-		/obj/item/weapon/gun/projectile/automatic/carbine,
+		/obj/item/weapon/gun/projectile/automatic/bullpup,
 		/obj/item/weapon/gun/projectile/automatic/wt550,
 		/obj/item/weapon/gun/projectile/automatic/z8,
 		/obj/item/weapon/gun/projectile/automatic/tommygun,
@@ -45,13 +47,15 @@ var/datum/antagonist/renegade/renegades
 		/obj/item/weapon/gun/projectile/sec/wood,
 		/obj/item/weapon/gun/projectile/silenced,
 		/obj/item/weapon/gun/projectile/pistol,
+		/obj/item/weapon/gun/projectile/p92x,
 		/obj/item/weapon/gun/projectile/revolver,
 		/obj/item/weapon/gun/projectile/derringer,
 		/obj/item/weapon/gun/projectile/shotgun/pump,
-		/obj/item/weapon/gun/projectile/shotgun/pump/rifle/mosin,
+		/obj/item/weapon/gun/projectile/shotgun/pump/rifle,
 		/obj/item/weapon/gun/projectile/shotgun/pump/combat,
 		/obj/item/weapon/gun/projectile/shotgun/doublebarrel,
 		/obj/item/weapon/gun/projectile/revolver/judge,
+		/obj/item/weapon/gun/projectile/revolver/lemat,
 		list(/obj/item/weapon/gun/projectile/shotgun/doublebarrel/pellet, /obj/item/weapon/gun/projectile/shotgun/doublebarrel/sawn),
 		list(/obj/item/weapon/gun/projectile/deagle, /obj/item/weapon/gun/projectile/deagle/gold, /obj/item/weapon/gun/projectile/deagle/camo),
 		list(/obj/item/weapon/gun/projectile/revolver/detective, /obj/item/weapon/gun/projectile/revolver/deckard),
@@ -94,7 +98,7 @@ var/datum/antagonist/renegade/renegades
 
 
 /proc/rightandwrong()
-	usr << "<B>You summoned guns!</B>"
+	to_chat(usr, "<B>You summoned guns!</B>")
 	message_admins("[key_name_admin(usr, 1)] summoned guns!")
 	for(var/mob/living/carbon/human/H in player_list)
 		if(H.stat == 2 || !(H.client)) continue

@@ -11,10 +11,13 @@
 
 /hook/human_new
 
-/hook/simple_animal_new
+/hook/simple_mob_new
 
 //Hooks for interactions
 /hook/living_attackby
+
+// Hook for when a mob de-spawns!
+/hook/despawn
 
 //
 //Hook helpers to expand hooks to others

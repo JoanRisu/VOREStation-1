@@ -3,7 +3,7 @@
 	//Multikey checks and logging
 	lastKnownIP	= client.address
 	computer_id	= client.computer_id
-	log_access("Login: [key_name(src)] from [lastKnownIP ? lastKnownIP : "localhost"]-[computer_id] || BYOND v[client.byond_version]")
+	log_access_in(client)
 	if(config.log_access)
 		for(var/mob/M in player_list)
 			if(M == src)	continue
@@ -14,14 +14,15 @@
 				if( (client.connection != "web") && (M.computer_id == client.computer_id) )
 					if(matches)	matches += " and "
 					matches += "ID ([client.computer_id])"
-					spawn() alert("You have logged in already with another key this round, please log out of this one NOW or risk being banned!")
+					if(!config.disable_cid_warn_popup)
+						spawn() alert("You have logged in already with another key this round, please log out of this one NOW or risk being banned!")
 				if(matches)
 					if(M.client)
-						message_admins("<font color='red'><B>Notice: </B></font><font color='blue'><A href='?src=\ref[usr];priv_msg=\ref[src]'>[key_name_admin(src)]</A> has the same [matches] as <A href='?src=\ref[usr];priv_msg=\ref[M]'>[key_name_admin(M)]</A>.</font>", 1)
-						log_access("Notice: [key_name(src)] has the same [matches] as [key_name(M)].")
+						message_admins("<font color='red'><B>Notice: </B></font><font color='blue'>[key_name_admin(src)] has the same [matches] as [key_name_admin(M)].</font>", 1)
+						log_adminwarn("Notice: [key_name(src)] has the same [matches] as [key_name(M)].")
 					else
-						message_admins("<font color='red'><B>Notice: </B></font><font color='blue'><A href='?src=\ref[usr];priv_msg=\ref[src]'>[key_name_admin(src)]</A> has the same [matches] as [key_name_admin(M)] (no longer logged in). </font>", 1)
-						log_access("Notice: [key_name(src)] has the same [matches] as [key_name(M)] (no longer logged in).")
+						message_admins("<font color='red'><B>Notice: </B></font><font color='blue'>[key_name_admin(src)] has the same [matches] as [key_name_admin(M)] (no longer logged in). </font>", 1)
+						log_adminwarn("Notice: [key_name(src)] has the same [matches] as [key_name(M)] (no longer logged in).")
 
 /mob/Login()
 
@@ -34,8 +35,13 @@
 	if(hud_used)	qdel(hud_used)		//remove the hud objects
 	hud_used = new /datum/hud(src)
 
+	if(client.prefs && client.prefs.client_fps)
+		client.fps = client.prefs.client_fps
+	else
+		client.fps = 0 // Results in using the server FPS
+
 	next_move = 1
-	disconnect_time = null				//clear the disconnect time
+	disconnect_time = null				//VOREStation Addition: clear the disconnect time
 	sight |= SEE_SELF
 	..()
 
@@ -47,5 +53,29 @@
 		client.perspective = MOB_PERSPECTIVE
 	reload_fullscreen() // Reload any fullscreen overlays this mob has.
 	add_click_catcher()
+	update_client_color()
+
+	if(!plane_holder) //Lazy
+		plane_holder = new(src) //Not a location, it takes it and saves it.
+	if(!vis_enabled)
+		vis_enabled = list()
+	client.screen += plane_holder.plane_masters
+	recalculate_vis()
+
+	// AO support
+	var/ao_enabled = client.is_preference_enabled(/datum/client_preference/ambient_occlusion)
+	plane_holder.set_ao(VIS_OBJS, ao_enabled)
+	plane_holder.set_ao(VIS_MOBS, ao_enabled)
+
 	//set macro to normal incase it was overriden (like cyborg currently does)
-	winset(src, null, "mainwindow.macro=macro hotkey_toggle.is-checked=false input.focus=true input.background-color=#D3B5B5")
+	client.set_hotkeys_macro("macro", "hotkeymode")
+
+	if(!client.tooltips)
+		client.tooltips = new(client)
+
+	var/turf/T = get_turf(src)
+	if(isturf(T))
+		update_client_z(T.z)
+
+	if(cloaked && cloaked_selfimage)
+		client.images += cloaked_selfimage

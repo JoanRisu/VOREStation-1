@@ -15,15 +15,16 @@
 
 /obj/item/weapon/spell/spawner/darkness/on_ranged_cast(atom/hit_atom, mob/user)
 	if(pay_energy(500))
-		owner.adjust_instability(4)
+		adjust_instability(4)
 		..()
 
 /obj/item/weapon/spell/spawner/darkness/New()
 	..()
-	set_light(6, -5, l_color = "#FFFFFF")
+	set_light(6, -20, l_color = "#FFFFFF")
 
 /obj/effect/temporary_effect/darkness
 	name = "darkness"
 	time_to_die = 2 MINUTES
-	new_light_range = 6
-	new_light_power = -5
+	invisibility = 101
+	light_range = 6
+	light_power = -20

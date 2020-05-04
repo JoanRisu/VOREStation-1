@@ -3,11 +3,12 @@
 /obj/structure/closet/crate
 	name = "crate"
 	desc = "A rectangular steel crate."
-	icon = 'icons/obj/storage.dmi'
+	icon = 'icons/obj/storage_vr.dmi'	//VOREStation edit
 	icon_state = "crate"
 	icon_opened = "crateopen"
 	icon_closed = "crate"
 	climbable = 1
+	var/points_per_crate = 5
 //	mouse_drag_pointer = MOUSE_ACTIVE_POINTER	//???
 	var/rigged = 0
 
@@ -58,7 +59,7 @@
 			continue
 		if(istype(O, /obj/structure/bed)) //This is only necessary because of rollerbeds and swivel chairs.
 			var/obj/structure/bed/B = O
-			if(B.buckled_mob)
+			if(B.has_buckled_mobs())
 				continue
 		O.forceMove(src)
 		itemcount++
@@ -81,22 +82,22 @@
 	else if(istype(W, /obj/item/stack/cable_coil))
 		var/obj/item/stack/cable_coil/C = W
 		if(rigged)
-			user << "<span class='notice'>[src] is already rigged!</span>"
+			to_chat(user, "<span class='notice'>[src] is already rigged!</span>")
 			return
 		if (C.use(1))
-			user  << "<span class='notice'>You rig [src].</span>"
+			to_chat(user , "<span class='notice'>You rig [src].</span>")
 			rigged = 1
 			return
 	else if(istype(W, /obj/item/device/radio/electropack))
 		if(rigged)
-			user  << "<span class='notice'>You attach [W] to [src].</span>"
+			to_chat(user , "<span class='notice'>You attach [W] to [src].</span>")
 			user.drop_item()
 			W.forceMove(src)
 			return
-	else if(istype(W, /obj/item/weapon/wirecutters))
+	else if(W.is_wirecutter())
 		if(rigged)
-			user  << "<span class='notice'>You cut away the wiring.</span>"
-			playsound(loc, 'sound/items/Wirecutter.ogg', 100, 1)
+			to_chat(user , "<span class='notice'>You cut away the wiring.</span>")
+			playsound(src.loc, W.usesound, 100, 1)
 			rigged = 0
 			return
 	else return attack_hand(user)
@@ -148,15 +149,15 @@
 
 /obj/structure/closet/crate/secure/proc/togglelock(mob/user as mob)
 	if(src.opened)
-		user << "<span class='notice'>Close the crate first.</span>"
+		to_chat(user, "<span class='notice'>Close the crate first.</span>")
 		return
 	if(src.broken)
-		user << "<span class='warning'>The crate appears to be broken.</span>"
+		to_chat(user, "<span class='warning'>The crate appears to be broken.</span>")
 		return
 	if(src.allowed(user))
 		set_locked(!locked, user)
 	else
-		user << "<span class='notice'>Access Denied</span>"
+		to_chat(user, "<span class='notice'>Access Denied</span>")
 
 /obj/structure/closet/crate/secure/proc/set_locked(var/newlocked, mob/user = null)
 	if(locked == newlocked) return
@@ -176,11 +177,11 @@
 	if(!usr.canmove || usr.stat || usr.restrained()) // Don't use it if you're not able to! Checks for stuns, ghost and restrain
 		return
 
-	if(ishuman(usr))
+	if(ishuman(usr) || isrobot(usr))
 		src.add_fingerprint(usr)
 		src.togglelock(usr)
 	else
-		usr << "<span class='warning'>This mob type can't use this verb.</span>"
+		to_chat(usr, "<span class='warning'>This mob type can't use this verb.</span>")
 
 /obj/structure/closet/crate/secure/attack_hand(mob/user as mob)
 	src.add_fingerprint(user)
@@ -190,7 +191,7 @@
 		src.toggle(user)
 
 /obj/structure/closet/crate/secure/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(is_type_in_list(W, list(/obj/item/weapon/packageWrap, /obj/item/stack/cable_coil, /obj/item/device/radio/electropack, /obj/item/weapon/wirecutters)))
+	if(is_type_in_list(W, list(/obj/item/weapon/packageWrap, /obj/item/stack/cable_coil, /obj/item/device/radio/electropack, /obj/item/weapon/tool/wirecutters)))
 		return ..()
 	if(istype(W, /obj/item/weapon/melee/energy/blade))
 		emag_act(INFINITY, user)
@@ -208,7 +209,7 @@
 		playsound(src.loc, "sparks", 60, 1)
 		src.locked = 0
 		src.broken = 1
-		user << "<span class='notice'>You unlock \the [src].</span>"
+		to_chat(user, "<span class='notice'>You unlock \the [src].</span>")
 		return 1
 
 /obj/structure/closet/crate/secure/emp_act(severity)
@@ -240,6 +241,7 @@
 	icon_state = "plasticcrate"
 	icon_opened = "plasticcrateopen"
 	icon_closed = "plasticcrate"
+	points_per_crate = 1	//5 crates per ordered crate, +5 for the crate it comes in.
 
 /obj/structure/closet/crate/internals
 	name = "internals crate"
@@ -281,46 +283,25 @@
 /obj/structure/closet/crate/rcd
 	name = "\improper RCD crate"
 	desc = "A crate with rapid construction device."
-	icon_state = "crate"
-	icon_opened = "crateopen"
-	icon_closed = "crate"
+	icon_state = "engi_crate"
+	icon_opened = "engi_crateopen"
+	icon_closed = "engi_crate"
 
-/obj/structure/closet/crate/rcd/New()
-	..()
-	new /obj/item/weapon/rcd_ammo(src)
-	new /obj/item/weapon/rcd_ammo(src)
-	new /obj/item/weapon/rcd_ammo(src)
-	new /obj/item/weapon/rcd(src)
+	starts_with = list(
+		/obj/item/weapon/rcd_ammo = 3,
+		/obj/item/weapon/rcd)
 
 /obj/structure/closet/crate/solar
 	name = "solar pack crate"
+	icon_state = "engi_crate"		//VOREStation Edit
+	icon_opened = "engi_crateopen"	//VOREStation Edit
+	icon_closed = "engi_crate"		//VOREStation Edit
 
-/obj/structure/closet/crate/solar/New()
-	..()
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/solar_assembly(src)
-	new /obj/item/weapon/circuitboard/solar_control(src)
-	new /obj/item/weapon/tracker_electronics(src)
-	new /obj/item/weapon/paper/solar(src)
+	starts_with = list(
+		/obj/item/solar_assembly = 21,
+		/obj/item/weapon/circuitboard/solar_control,
+		/obj/item/weapon/tracker_electronics,
+		/obj/item/weapon/paper/solar)
 
 /obj/structure/closet/crate/freezer
 	name = "freezer"
@@ -364,20 +345,18 @@
 	name = "emergency rations"
 	desc = "A crate of emergency rations."
 
+	starts_with = list(
+		/obj/random/mre = 6)
 
-/obj/structure/closet/crate/freezer/rations/New()
-	..()
-	new /obj/item/weapon/reagent_containers/food/snacks/liquidfood(src)
-	new /obj/item/weapon/reagent_containers/food/snacks/liquidfood(src)
-	new /obj/item/weapon/reagent_containers/food/snacks/liquidfood(src)
-	new /obj/item/weapon/reagent_containers/food/snacks/liquidfood(src)
 
 /obj/structure/closet/crate/bin
 	name = "large bin"
 	desc = "A large bin."
+	icon = 'icons/obj/storage.dmi'	//VOREStation edit
 	icon_state = "largebin"
 	icon_opened = "largebinopen"
 	icon_closed = "largebin"
+
 
 /obj/structure/closet/crate/radiation
 	name = "radioactive gear crate"
@@ -386,16 +365,10 @@
 	icon_opened = "radiationopen"
 	icon_closed = "radiation"
 
-/obj/structure/closet/crate/radiation/New()
-	..()
-	new /obj/item/clothing/suit/radiation(src)
-	new /obj/item/clothing/head/radiation(src)
-	new /obj/item/clothing/suit/radiation(src)
-	new /obj/item/clothing/head/radiation(src)
-	new /obj/item/clothing/suit/radiation(src)
-	new /obj/item/clothing/head/radiation(src)
-	new /obj/item/clothing/suit/radiation(src)
-	new /obj/item/clothing/head/radiation(src)
+	starts_with = list(
+		/obj/item/clothing/suit/radiation = 4,
+		/obj/item/clothing/head/radiation = 4)
+
 
 /obj/structure/closet/crate/secure/weapon
 	name = "weapons crate"
@@ -404,12 +377,14 @@
 	icon_opened = "weaponcrateopen"
 	icon_closed = "weaponcrate"
 
+
 /obj/structure/closet/crate/secure/phoron
 	name = "phoron crate"
 	desc = "A secure phoron crate."
 	icon_state = "phoroncrate"
 	icon_opened = "phoroncrateopen"
 	icon_closed = "phoroncrate"
+
 
 /obj/structure/closet/crate/secure/gear
 	name = "gear crate"
@@ -418,6 +393,7 @@
 	icon_opened = "secgearcrateopen"
 	icon_closed = "secgearcrate"
 
+
 /obj/structure/closet/crate/secure/hydrosec
 	name = "secure hydroponics crate"
 	desc = "A crate with a lock on it, painted in the scheme of the station's botanists."
@@ -425,9 +401,27 @@
 	icon_opened = "hydrosecurecrateopen"
 	icon_closed = "hydrosecurecrate"
 
+
+/obj/structure/closet/crate/secure/engineering
+	desc = "A crate with a lock on it, painted in the scheme of the station's engineers."
+	name = "secure engineering crate"
+	icon_state = "engi_secure_crate"
+	icon_opened = "engi_secure_crateopen"
+	icon_closed = "engi_secure_crate"
+
+
+/obj/structure/closet/crate/secure/science
+	name = "secure science crate"
+	desc = "A crate with a lock on it, painted in the scheme of the station's scientists."
+	icon_state = "scisecurecrate"
+	icon_opened = "scisecurecrateopen"
+	icon_closed = "scisecurecrate"
+
+
 /obj/structure/closet/crate/secure/bin
 	name = "secure bin"
 	desc = "A secure bin."
+	icon = 'icons/obj/storage.dmi'	//VOREStation edit
 	icon_state = "largebins"
 	icon_opened = "largebinsopen"
 	icon_closed = "largebins"
@@ -436,13 +430,15 @@
 	sparks = "largebinsparks"
 	emag = "largebinemag"
 
+
 /obj/structure/closet/crate/large
 	name = "large crate"
 	desc = "A hefty metal crate."
-	icon = 'icons/obj/storage.dmi'
+	icon = 'icons/obj/storage_vr.dmi'	//VOREStation Edit
 	icon_state = "largemetal"
 	icon_opened = "largemetalopen"
 	icon_closed = "largemetal"
+
 
 /obj/structure/closet/crate/large/close()
 	. = ..()
@@ -462,15 +458,17 @@
 					break
 	return
 
+
 /obj/structure/closet/crate/secure/large
 	name = "large crate"
 	desc = "A hefty metal crate with an electronic locking system."
-	icon = 'icons/obj/storage.dmi'
-	icon_state = "largemetal"
-	icon_opened = "largemetalopen"
-	icon_closed = "largemetal"
+	icon = 'icons/obj/storage_vr.dmi'		//VOREStation Edit
+	icon_state = "largemetalsecure"			//VOREStation Edit
+	icon_opened = "largemetalsecureopen"	//VOREStation Edit
+	icon_closed = "largemetalsecure"		//VOREStation Edit
 	redlight = "largemetalr"
 	greenlight = "largemetalg"
+
 
 /obj/structure/closet/crate/secure/large/close()
 	. = ..()
@@ -490,12 +488,30 @@
 					break
 	return
 
+
 //fluff variant
 /obj/structure/closet/crate/secure/large/reinforced
 	desc = "A hefty, reinforced metal crate with an electronic locking system."
 	icon_state = "largermetal"
 	icon_opened = "largermetalopen"
 	icon_closed = "largermetal"
+
+/obj/structure/closet/crate/engineering
+	name = "engineering crate"
+	icon_state = "engi_crate"
+	icon_opened = "engi_crateopen"
+	icon_closed = "engi_crate"
+
+/obj/structure/closet/crate/engineering/electrical
+	icon_state = "engi_e_crate"
+	icon_opened = "engi_crateopen"
+	icon_closed = "engi_e_crate"
+
+/obj/structure/closet/crate/science
+	name = "science crate"
+	icon_state = "scicrate"
+	icon_opened = "scicrateopen"
+	icon_closed = "scicrate"
 
 /obj/structure/closet/crate/hydroponics
 	name = "hydroponics crate"
@@ -504,16 +520,8 @@
 	icon_opened = "hydrocrateopen"
 	icon_closed = "hydrocrate"
 
-/obj/structure/closet/crate/hydroponics/prespawned
-	//This exists so the prespawned hydro crates spawn with their contents.
 
-	New()
-		..()
-		new /obj/item/weapon/reagent_containers/spray/plantbgone(src)
-		new /obj/item/weapon/reagent_containers/spray/plantbgone(src)
-		new /obj/item/weapon/material/minihoe(src)
-//		new /obj/item/weapon/weedspray(src)
-//		new /obj/item/weapon/weedspray(src)
-//		new /obj/item/weapon/pestspray(src)
-//		new /obj/item/weapon/pestspray(src)
-//		new /obj/item/weapon/pestspray(src)
+/obj/structure/closet/crate/hydroponics/prespawned
+	starts_with = list(
+		/obj/item/weapon/reagent_containers/spray/plantbgone = 2,
+		/obj/item/weapon/material/minihoe)

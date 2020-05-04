@@ -59,7 +59,7 @@ var/global/list/Holiday = list() //Holidays are lists now, so we can have more t
 				if(14)
 					Holiday["Pi Day"] = "An unoffical holiday celebrating the mathematical constant Pi.  It is celebrated on \
 					March 14th, as the digits form 3 14, the first three significant digits of Pi.  Observance of Pi Day generally \
-					imvolve eating (or throwing) pie, due to a pun.  Pies also tend to be round, and thus relatable to Pi."
+					involve eating (or throwing) pie, due to a pun.  Pies also tend to be round, and thus relatable to Pi."
 				if(17)
 					Holiday["St. Patrick's Day"] = "An old holiday originating from Earth, Sol, celebrating the color green, \
 					shamrocks, attending parades, and drinking alcohol."
@@ -93,6 +93,12 @@ var/global/list/Holiday = list() //Holidays are lists now, so we can have more t
 			switch(DD)
 				if(1)
 					Holiday["Interstellar Workers' Day"] = "This holiday celebrates the work of laborers and the working class."
+				if(18)
+					Holiday["Remembrance Day"] = "Remembrance Day (or, as it is more informally known, Armistice Day) is a confederation-wide holiday \
+					mostly observed by its member states since late 2520. Officially, it is a day of remembering the men and women who died in various armed conflicts \
+					throughout human history. Unofficially, however, it is commonly treated as a holiday honoring the victims of the Human-Unathi war. \
+					Observance of this day varies throughout human space, but most common traditions are the act of bringing flowers to graves,\
+					attending parades, and the wearing of poppies (either paper or real) in one's clothing."
 				if(28)
 					Holiday["Jiql-tes"] = "A Skrellian holiday that translates to 'Day of Celebration', Skrell communities \
 					gather for a grand feast and give gifts to friends and close relatives."
@@ -105,6 +111,9 @@ var/global/list/Holiday = list() //Holidays are lists now, so we can have more t
 				if(14)
 					Holiday["Blood Donor Day"] = "This holiday was created to raise awareness of the need for safe blood and blood products, \
 					and to thank blood donors for their voluntary, life-saving gifts of blood."
+				if(20)
+					Holiday["Civil Servant's Day"] = "Civil Servant's Day is a holiday observed in SCG member states that honors civil servants everywhere,\
++					(especially those who are members of the armed forces and the emergency services), or have been or have been civil servants in the past."
 
 		if(7)	//Jul
 			switch(DD)
@@ -120,6 +129,12 @@ var/global/list/Holiday = list() //Holidays are lists now, so we can have more t
 //				if(10)
 //					Holiday["S'randarr's Day"] = "A Tajaran holiday that occurs on the longest day of the year in summer, \
 //					on Ahdomai. It is named after the Tajaran deity of Light, and huge celebrations are common."
+//VOREStation Add - Of course we need this.
+				if(8)
+					Holiday["Vore Day"] = "A holiday representing the innate desire in all/most/some/a few of us to devour each other or be devoured. \
+					That's probably why you're here, isn't it? Get to it, then!"
+//VOREStation Add End.
+
 				if(27)
 					Holiday["Forgiveness Day"] = "A time to forgive and be forgiven."
 
@@ -222,11 +237,11 @@ var/global/list/Holiday = list() //Holidays are lists now, so we can have more t
 			holidays.Add(p)
 			holiday_blurbs.Add("[Holiday[p]]")
 		var/holidays_string = english_list(holidays, nothing_text = "nothing", and_text = " and ", comma_text = ", ", final_comma_text = "" )
-		world << "<font color='blue'>and...</font>"
-		world << "<h4>Happy [holidays_string] Everybody!</h4>"
+		to_world("<font color='blue'>and...</font>")
+		to_world("<h4>Happy [holidays_string] Everybody!</h4>")
 		if(holiday_blurbs.len != 0)
 			for(var/blurb in holiday_blurbs)
-				world << "<div align='center'><font color='blue'>[blurb]</font></div>"
+				to_world("<div align='center'><font color='blue'>[blurb]</font></div>")
 		switch(Holiday)			//special holidays
 			if("Easter")
 				//do easter stuff

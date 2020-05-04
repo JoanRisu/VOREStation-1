@@ -26,13 +26,18 @@
 	else if(material.opacity < 0.5 && opacity)
 		set_light(0)
 
+	SSradiation.resistance_cache.Remove(src)
 	update_connections(1)
 	update_icon()
 
 
-/turf/simulated/wall/proc/set_material(var/material/newmaterial, var/material/newrmaterial)
+/turf/simulated/wall/proc/set_material(var/material/newmaterial, var/material/newrmaterial, var/material/newgmaterial)
 	material = newmaterial
 	reinf_material = newrmaterial
+	if(!newgmaterial)
+		girder_material = DEFAULT_WALL_MATERIAL
+	else
+		girder_material = newgmaterial
 	update_material()
 
 /turf/simulated/wall/update_icon()
@@ -42,36 +47,36 @@
 	if(!damage_overlays[1]) //list hasn't been populated
 		generate_overlays()
 
-	overlays.Cut()
+	cut_overlays()
 	var/image/I
 
 	if(!density)
 		I = image('icons/turf/wall_masks.dmi', "[material.icon_base]fwall_open")
 		I.color = material.icon_colour
-		overlays += I
+		add_overlay(I)
 		return
 
 	for(var/i = 1 to 4)
 		I = image('icons/turf/wall_masks.dmi', "[material.icon_base][wall_connections[i]]", dir = 1<<(i-1))
 		I.color = material.icon_colour
-		overlays += I
+		add_overlay(I)
 
 	if(reinf_material)
 		if(construction_stage != null && construction_stage < 6)
 			I = image('icons/turf/wall_masks.dmi', "reinf_construct-[construction_stage]")
 			I.color = reinf_material.icon_colour
-			overlays += I
+			add_overlay(I)
 		else
 			if("[reinf_material.icon_reinf]0" in icon_states('icons/turf/wall_masks.dmi'))
 				// Directional icon
 				for(var/i = 1 to 4)
 					I = image('icons/turf/wall_masks.dmi', "[reinf_material.icon_reinf][wall_connections[i]]", dir = 1<<(i-1))
 					I.color = reinf_material.icon_colour
-					overlays += I
+					add_overlay(I)
 			else
 				I = image('icons/turf/wall_masks.dmi', reinf_material.icon_reinf)
 				I.color = reinf_material.icon_colour
-				overlays += I
+				add_overlay(I)
 
 	if(damage != 0)
 		var/integrity = material.integrity
@@ -82,7 +87,7 @@
 		if(overlay > damage_overlays.len)
 			overlay = damage_overlays.len
 
-		overlays += damage_overlays[overlay]
+		add_overlay(damage_overlays[overlay])
 	return
 
 /turf/simulated/wall/proc/generate_overlays()
@@ -111,6 +116,15 @@
 	wall_connections = dirs_to_corner_states(dirs)
 
 /turf/simulated/wall/proc/can_join_with(var/turf/simulated/wall/W)
-	if(material && W.material && material.icon_base == W.material.icon_base)
+	//VOREStation Edit Start
+	//No blending if no material
+	if(!material || !W.material)
+		return 0
+	//We can blend if either is the same, or a subtype, of the other one
+	if(istype(W.material, material.type) || istype(material, W.material.type))
 		return 1
+	//Also blend if they have the same iconbase
+	if(material.icon_base == W.material.icon_base)
+		return 1
+	//VOREStation Edit End
 	return 0

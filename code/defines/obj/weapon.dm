@@ -3,12 +3,11 @@
 	desc = "Should anything ever go wrong..."
 	icon = 'icons/obj/items.dmi'
 	icon_state = "red_phone"
-	flags = CONDUCT
 	force = 3.0
 	throwforce = 2.0
 	throw_speed = 1
 	throw_range = 4
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	attack_verb = list("called", "rang")
 	hitsound = 'sound/weapons/ring.ogg'
 
@@ -22,7 +21,7 @@
 	anchored = 0.0
 	var/stored_matter = 0
 	var/mode = 1
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 
 /obj/item/weapon/soap
 	name = "soap"
@@ -30,10 +29,13 @@
 	gender = PLURAL
 	icon = 'icons/obj/items.dmi'
 	icon_state = "soap"
-	w_class = 2.0
+	flags = NOCONDUCT
+	w_class = ITEMSIZE_SMALL
+	slot_flags = SLOT_HOLSTER
 	throwforce = 0
 	throw_speed = 4
 	throw_range = 20
+	drop_sound = 'sound/misc/slip.ogg'
 
 /obj/item/weapon/soap/nanotrasen
 	desc = "A NanoTrasen-brand bar of soap. Smells of phoron."
@@ -57,12 +59,12 @@
 	icon_state = "bike_horn"
 	item_state = "bike_horn"
 	throwforce = 3
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
+	slot_flags = SLOT_HOLSTER
 	throw_speed = 3
 	throw_range = 15
 	attack_verb = list("HONKED")
 	var/spam_flag = 0
-
 
 /obj/item/weapon/c_tube
 	name = "cardboard tube"
@@ -70,85 +72,20 @@
 	icon = 'icons/obj/items.dmi'
 	icon_state = "c_tube"
 	throwforce = 1
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	throw_speed = 4
 	throw_range = 5
 
-/obj/item/weapon/cane
-	name = "cane"
-	desc = "A cane used by a true gentlemen. Or a clown."
-	icon = 'icons/obj/weapons.dmi'
-	icon_state = "cane"
-	item_icons = list(
-			slot_l_hand_str = 'icons/mob/items/lefthand_melee.dmi',
-			slot_r_hand_str = 'icons/mob/items/righthand_melee.dmi',
-			)
-	flags = CONDUCT
-	force = 5.0
-	throwforce = 7.0
-	w_class = 2.0
-	matter = list(DEFAULT_WALL_MATERIAL = 50)
-	attack_verb = list("bludgeoned", "whacked", "disciplined", "thrashed")
-
-/obj/item/weapon/cane/concealed
-	var/concealed_blade
-
-/obj/item/weapon/cane/concealed/New()
-	..()
-	var/obj/item/weapon/material/butterfly/switchblade/temp_blade = new(src)
-	concealed_blade = temp_blade
-	temp_blade.attack_self()
-
-/obj/item/weapon/cane/concealed/attack_self(var/mob/user)
-	if(concealed_blade)
-		user.visible_message("<span class='warning'>[user] has unsheathed \a [concealed_blade] from \his [src]!</span>", "You unsheathe \the [concealed_blade] from \the [src].")
-		// Calling drop/put in hands to properly call item drop/pickup procs
-		playsound(user.loc, 'sound/weapons/flipblade.ogg', 50, 1)
-		user.drop_from_inventory(src)
-		user.put_in_hands(concealed_blade)
-		user.put_in_hands(src)
-		user.update_inv_l_hand(0)
-		user.update_inv_r_hand()
-		concealed_blade = null
-	else
-		..()
-
-/obj/item/weapon/cane/concealed/attackby(var/obj/item/weapon/material/butterfly/W, var/mob/user)
-	if(!src.concealed_blade && istype(W))
-		user.visible_message("<span class='warning'>[user] has sheathed \a [W] into \his [src]!</span>", "You sheathe \the [W] into \the [src].")
-		user.drop_from_inventory(W)
-		W.loc = src
-		src.concealed_blade = W
-		update_icon()
-	else
-		..()
-
-/obj/item/weapon/cane/concealed/update_icon()
-	if(concealed_blade)
-		name = initial(name)
-		icon_state = initial(icon_state)
-		item_state = initial(icon_state)
-	else
-		name = "cane shaft"
-		icon_state = "nullrod"
-		item_state = "foldcane"
-
-/obj/item/weapon/cane/whitecane
-	name = "white cane"
-	desc = "A cane used by the blind."
-	icon = 'icons/obj/weapons.dmi'
-	icon_state = "whitecane"
-
 /obj/item/weapon/disk
 	name = "disk"
-	icon = 'icons/obj/items.dmi'
+	icon = 'icons/obj/discs_vr.dmi' //VOREStation Edit
 
 /obj/item/weapon/disk/nuclear
 	name = "nuclear authentication disk"
 	desc = "Better keep this safe."
 	icon_state = "nucleardisk"
 	item_state = "card-id"
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 
 /*
 /obj/item/weapon/game_kit
@@ -160,7 +97,7 @@
 	var/data = ""
 	var/base_url = "http://svn.slurm.us/public/spacestation13/misc/game_kit"
 	item_state = "sheet-metal"
-	w_class = 5.0
+	w_class = ITEMSIZE_HUGE
 */
 
 /obj/item/weapon/gift
@@ -171,20 +108,7 @@
 	var/size = 3.0
 	var/obj/item/gift = null
 	item_state = "gift"
-	w_class = 4.0
-
-/obj/item/weapon/legcuffs
-	name = "legcuffs"
-	desc = "Use this to keep prisoners in line."
-	gender = PLURAL
-	icon = 'icons/obj/items.dmi'
-	icon_state = "handcuff"
-	flags = CONDUCT
-	throwforce = 0
-	w_class = 3.0
-	origin_tech = list(TECH_MATERIAL = 1)
-	var/breakouttime = 300	//Deciseconds = 30s = 0.5 minute
-	sprite_sheets = list("Teshari" = 'icons/mob/species/seromi/handcuffs.dmi')
+	w_class = ITEMSIZE_LARGE
 
 /obj/item/weapon/caution
 	desc = "Caution! Wet Floor!"
@@ -195,13 +119,18 @@
 	throwforce = 3.0
 	throw_speed = 1
 	throw_range = 5
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	attack_verb = list("warned", "cautioned", "smashed")
 
 /obj/item/weapon/caution/cone
 	desc = "This cone is trying to warn you of something!"
 	name = "warning cone"
 	icon_state = "cone"
+
+/obj/item/weapon/caution/cone/candy
+	desc = "This cone is trying to warn you of something! It has been painted to look like candy corn."
+	name = "candy cone"
+	icon_state = "candycone"
 
 /*/obj/item/weapon/syndicate_uplink
 	name = "station bounced radio"
@@ -214,8 +143,8 @@
 	var/traitor_frequency = 0.0
 	var/mob/currentUser = null
 	var/obj/item/device/radio/origradio = null
-	flags = CONDUCT | ONBELT
-	w_class = 2.0
+	flags = ONBELT
+	w_class = ITEMSIZE_SMALL
 	item_state = "radio"
 	throw_speed = 4
 	throw_range = 20
@@ -224,7 +153,7 @@
 
 /obj/item/weapon/SWF_uplink
 	name = "station-bounced radio"
-	desc = "used to comunicate it appears."
+	desc = "Used to communicate, it appears."
 	icon = 'icons/obj/radio.dmi'
 	icon_state = "radio"
 	var/temp = null
@@ -232,11 +161,10 @@
 	var/selfdestruct = 0.0
 	var/traitor_frequency = 0.0
 	var/obj/item/device/radio/origradio = null
-	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	item_state = "radio"
 	throwforce = 5
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	throw_speed = 4
 	throw_range = 20
 	matter = list(DEFAULT_WALL_MATERIAL = 100)
@@ -255,7 +183,7 @@
 	throwforce = 5.0
 	throw_speed = 1
 	throw_range = 5
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	attack_verb = list("bludgeoned", "whacked", "disciplined")
 
 /obj/item/weapon/staff/broom
@@ -280,33 +208,27 @@
 	throwforce = 5.0
 	throw_speed = 1
 	throw_range = 5
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 
 /obj/item/weapon/module
 	icon = 'icons/obj/module.dmi'
 	icon_state = "std_module"
-	w_class = 2.0
-	item_state = "electronic"
-	flags = CONDUCT
+	item_state = "std_mod"
+	w_class = ITEMSIZE_SMALL
 	var/mtype = 1						// 1=electronic 2=hardware
 
 /obj/item/weapon/module/card_reader
 	name = "card reader module"
 	icon_state = "card_mod"
+	item_state = "std_mod"
 	desc = "An electronic module for reading data and ID cards."
 
 /obj/item/weapon/module/power_control
 	name = "power control module"
 	icon_state = "power_mod"
+	item_state = "std_mod"
 	desc = "Heavy-duty switching circuits for power control."
 	matter = list(DEFAULT_WALL_MATERIAL = 50, "glass" = 50)
-
-/obj/item/weapon/module/power_control/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (istype(W, /obj/item/device/multitool))
-		var/obj/item/weapon/circuitboard/ghettosmes/newcircuit = new/obj/item/weapon/circuitboard/ghettosmes(user.loc)
-		qdel(src)
-		user.put_in_hands(newcircuit)
-
 
 /obj/item/weapon/module/id_auth
 	name = "\improper ID authentication module"
@@ -316,11 +238,13 @@
 /obj/item/weapon/module/cell_power
 	name = "power cell regulator module"
 	icon_state = "power_mod"
+	item_state = "std_mod"
 	desc = "A converter and regulator allowing the use of power cells."
 
 /obj/item/weapon/module/cell_power
 	name = "power cell charger module"
 	icon_state = "power_mod"
+	item_state = "std_mod"
 	desc = "Charging circuits for power cells."
 
 
@@ -328,7 +252,7 @@
 	name = "camera bug"
 	icon = 'icons/obj/device.dmi'
 	icon_state = "flash"
-	w_class = 1.0
+	w_class = ITEMSIZE_TINY
 	item_state = "electronic"
 	throw_speed = 4
 	throw_range = 20
@@ -339,7 +263,7 @@
 		if (C.bugged && C.status)
 			cameras.Add(C)
 	if (length(cameras) == 0)
-		usr << "<span class='warning'>No bugged functioning cameras found.</span>"
+		to_chat(usr, "<span class='warning'>No bugged functioning cameras found.</span>")
 		return
 
 	var/list/friendly_cameras = new/list()
@@ -365,7 +289,7 @@
 	icon = 'icons/obj/cigarettes.dmi'
 	icon_state = "cigarpacket"
 	item_state = "cigarpacket"
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 	throwforce = 2
 	var/cigarcount = 6
 	flags = ONBELT
@@ -379,13 +303,17 @@
 
 	var/obj/machinery/machine
 
+/obj/item/weapon/pai_cable/Destroy()
+		machine = null
+		return ..()
+
 ///////////////////////////////////////Stock Parts /////////////////////////////////
 
 /obj/item/weapon/storage/part_replacer
 	name = "rapid part exchange device"
 	desc = "Special mechanical module made to store, sort, and apply standard machine parts."
 	icon_state = "RPED"
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 	can_hold = list(/obj/item/weapon/stock_parts)
 	storage_slots = 50
 	use_to_pickup = 1
@@ -393,16 +321,32 @@
 	allow_quick_empty = 1
 	collection_mode = 1
 	display_contents_with_number = 1
-	max_w_class = 3
+	max_w_class = ITEMSIZE_NORMAL
 	max_storage_space = 100
+
+/obj/item/weapon/storage/part_replacer/adv
+	name = "advanced rapid part exchange device"
+	desc = "Special mechanical module made to store, sort, and apply standard machine parts.  This one has a greatly upgraded storage capacity"
+	icon_state = "RPED"
+	w_class = ITEMSIZE_HUGE
+	can_hold = list(/obj/item/weapon/stock_parts)
+	storage_slots = 200
+	use_to_pickup = 1
+	allow_quick_gather = 1
+	allow_quick_empty = 1
+	collection_mode = 1
+	display_contents_with_number = 1
+	max_w_class = ITEMSIZE_NORMAL
+	max_storage_space = 400
 
 /obj/item/weapon/stock_parts
 	name = "stock part"
 	desc = "What?"
 	gender = PLURAL
 	icon = 'icons/obj/stock_parts.dmi'
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	var/rating = 1
+	drop_sound = 'sound/items/drop/glass.ogg'
 
 /obj/item/weapon/stock_parts/New()
 	src.pixel_x = rand(-5.0, 5)
@@ -424,6 +368,24 @@
 	icon_state = "capacitor"
 	origin_tech = list(TECH_POWER = 1)
 	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 50)
+
+	var/charge = 0
+	var/max_charge = 1000
+
+/obj/item/weapon/stock_parts/capacitor/New()
+	. = ..()
+	max_charge *= rating
+
+/obj/item/weapon/stock_parts/capacitor/proc/charge(var/amount)
+	charge += amount
+	if(charge > max_charge)
+		charge = max_charge
+
+/obj/item/weapon/stock_parts/capacitor/proc/use(var/amount)
+	if(charge)
+		charge -= amount
+		if(charge < 0)
+			charge = 0
 
 /obj/item/weapon/stock_parts/scanning_module
 	name = "scanning module"
@@ -458,6 +420,7 @@
 /obj/item/weapon/stock_parts/capacitor/adv
 	name = "advanced capacitor"
 	desc = "An advanced capacitor used in the construction of a variety of devices."
+	icon_state = "capacitor_adv"
 	origin_tech = list(TECH_POWER = 3)
 	rating = 2
 	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 50)
@@ -465,7 +428,7 @@
 /obj/item/weapon/stock_parts/scanning_module/adv
 	name = "advanced scanning module"
 	desc = "A compact, high resolution scanning module used in the construction of certain devices."
-	icon_state = "scan_module"
+	icon_state = "scan_module_adv"
 	origin_tech = list(TECH_MAGNET = 3)
 	rating = 2
 	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 20)
@@ -499,6 +462,7 @@
 /obj/item/weapon/stock_parts/capacitor/super
 	name = "super capacitor"
 	desc = "A super-high capacity capacitor used in the construction of a variety of devices."
+	icon_state = "capacitor_super"
 	origin_tech = list(TECH_POWER = 5, TECH_MATERIAL = 4)
 	rating = 3
 	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 50)
@@ -506,6 +470,7 @@
 /obj/item/weapon/stock_parts/scanning_module/phasic
 	name = "phasic scanning module"
 	desc = "A compact, high resolution phasic scanning module used in the construction of certain devices."
+	icon_state = "scan_module_phasic"
 	origin_tech = list(TECH_MAGNET = 5)
 	rating = 3
 	matter = list(DEFAULT_WALL_MATERIAL = 50,"glass" = 20)
@@ -534,6 +499,91 @@
 	rating = 3
 	matter = list(DEFAULT_WALL_MATERIAL = 80)
 
+// Rating 4 - Anomaly
+
+/obj/item/weapon/stock_parts/capacitor/hyper
+	name = "hyper capacitor"
+	desc = "A hyper-capacity capacitor used in the construction of a variety of devices."
+	icon_state = "capacitor_hyper"
+	origin_tech = list(TECH_POWER = 6, TECH_MATERIAL = 5, TECH_BLUESPACE = 1, TECH_ARCANE = 1)
+	rating = 4
+	matter = list(DEFAULT_WALL_MATERIAL = 80, MAT_GLASS = 40)
+
+/obj/item/weapon/stock_parts/scanning_module/hyper
+	name = "quantum scanning module"
+	desc = "A compact, near-perfect resolution quantum scanning module used in the construction of certain devices."
+	icon_state = "scan_module_hyper"
+	origin_tech = list(TECH_MAGNET = 6, TECH_BLUESPACE = 1, TECH_ARCANE = 1)
+	rating = 4
+	matter = list(DEFAULT_WALL_MATERIAL = 100,"glass" = 40)
+
+/obj/item/weapon/stock_parts/manipulator/hyper
+	name = "planck-manipulator"
+	desc = "A miniscule manipulator used in the construction of certain devices."
+	icon_state = "hyper_mani"
+	origin_tech = list(TECH_MATERIAL = 6, TECH_DATA = 3, TECH_ARCANE = 1)
+	rating = 4
+	matter = list(DEFAULT_WALL_MATERIAL = 30)
+
+/obj/item/weapon/stock_parts/micro_laser/hyper
+	name = "hyper-power micro-laser"
+	icon_state = "hyper_micro_laser"
+	desc = "A tiny laser used in certain devices."
+	origin_tech = list(TECH_MAGNET = 6, TECH_ARCANE = 1)
+	rating = 4
+	matter = list(DEFAULT_WALL_MATERIAL = 30, MAT_GLASS = 40)
+
+/obj/item/weapon/stock_parts/matter_bin/hyper
+	name = "hyper matter bin"
+	desc = "A container for holding compressed matter awaiting re-construction."
+	icon_state = "hyper_matter_bin"
+	origin_tech = list(TECH_MATERIAL = 6, TECH_ARCANE = 1)
+	rating = 4
+	matter = list(DEFAULT_WALL_MATERIAL = 100)
+
+// Rating 5 - Precursor
+
+/obj/item/weapon/stock_parts/capacitor/omni
+	name = "omni-capacitor"
+	desc = "A capacitor of immense capacity used in the construction of a variety of devices."
+	icon_state = "capacitor_omni"
+	origin_tech = list(TECH_POWER = 7, TECH_MATERIAL = 6, TECH_BLUESPACE = 3, TECH_PRECURSOR  = 1)
+	rating = 5
+	matter = list(DEFAULT_WALL_MATERIAL = 80, MAT_GLASS = 40)
+
+/obj/item/weapon/stock_parts/scanning_module/omni
+	name = "omni-scanning module"
+	desc = "A compact, perfect resolution temporospatial scanning module used in the construction of certain devices."
+	icon_state = "scan_module_omni"
+	origin_tech = list(TECH_MAGNET = 7, TECH_BLUESPACE = 3, TECH_PRECURSOR = 1)
+	rating = 5
+	matter = list(DEFAULT_WALL_MATERIAL = 100,"glass" = 40)
+
+/obj/item/weapon/stock_parts/manipulator/omni
+	name = "omni-manipulator"
+	desc = "A strange, infinitesimal manipulator used in the construction of certain devices."
+	icon_state = "omni_mani"
+	origin_tech = list(TECH_MATERIAL = 7, TECH_DATA = 4, TECH_PRECURSOR  = 1)
+	rating = 5
+	matter = list(DEFAULT_WALL_MATERIAL = 30)
+
+/obj/item/weapon/stock_parts/micro_laser/omni
+	name = "omni-power micro-laser"
+	icon_state = "omni_micro_laser"
+	desc = "A strange laser used in certain devices."
+	origin_tech = list(TECH_MAGNET = 7, TECH_PRECURSOR  = 1)
+	rating = 5
+	matter = list(DEFAULT_WALL_MATERIAL = 30, MAT_GLASS = 40)
+
+/obj/item/weapon/stock_parts/matter_bin/omni
+	name = "omni-matter bin"
+	desc = "A strange container for holding compressed matter awaiting re-construction."
+	icon_state = "omni_matter_bin"
+	origin_tech = list(TECH_MATERIAL = 7, TECH_PRECURSOR  = 1)
+	rating = 5
+	matter = list(DEFAULT_WALL_MATERIAL = 100)
+
+
 // Subspace stock parts
 
 /obj/item/weapon/stock_parts/subspace/ansible
@@ -543,7 +593,7 @@
 	origin_tech = list(TECH_DATA = 3, TECH_MAGNET = 5 ,TECH_MATERIAL = 4, TECH_BLUESPACE = 2)
 	matter = list(DEFAULT_WALL_MATERIAL = 30,"glass" = 10)
 
-/obj/item/weapon/stock_parts/subspace/filter
+/obj/item/weapon/stock_parts/subspace/sub_filter
 	name = "hyperwave filter"
 	icon_state = "hyperwave_filter"
 	desc = "A tiny device capable of filtering and converting super-intense radiowaves."
@@ -568,7 +618,7 @@
 	name = "subspace wavelength analyzer"
 	icon_state = "wavelength_analyzer"
 	desc = "A sophisticated analyzer capable of analyzing cryptic subspace wavelengths."
-	origin_tech = list(TECH_DATA = 3, TECH_MAGNETS = 4, TECH_MATERIAL = 4, TECH_BLUESPACE = 2)
+	origin_tech = list(TECH_DATA = 3, TECH_MAGNET = 4, TECH_MATERIAL = 4, TECH_BLUESPACE = 2)
 	matter = list(DEFAULT_WALL_MATERIAL = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/crystal
@@ -587,7 +637,7 @@
 
 /obj/item/weapon/ectoplasm
 	name = "ectoplasm"
-	desc = "spooky"
+	desc = "Spooky!"
 	gender = PLURAL
 	icon = 'icons/obj/wizard.dmi'
 	icon_state = "ectoplasm"
@@ -597,7 +647,7 @@
 	desc = "Instant research tool. For testing purposes only."
 	icon = 'icons/obj/stock_parts.dmi'
 	icon_state = "smes_coil"
-	origin_tech = list(TECH_MATERIAL = 19, TECH_ENGINEERING = 19, TECH_PHORON = 19, TECH_POWER = 19, TECH_BLUESPACE = 19, TECH_BIO = 19, TECH_COMBAT = 19, TECH_MAGNET = 19, TECH_DATA = 19, TECH_ILLEGAL = 19, TECH_ARCANE = 19)
+	origin_tech = list(TECH_MATERIAL = 19, TECH_ENGINEERING = 19, TECH_PHORON = 19, TECH_POWER = 19, TECH_BLUESPACE = 19, TECH_BIO = 19, TECH_COMBAT = 19, TECH_MAGNET = 19, TECH_DATA = 19, TECH_ILLEGAL = 19, TECH_ARCANE = 19, TECH_PRECURSOR = 19)
 
 // Additional construction stock parts
 

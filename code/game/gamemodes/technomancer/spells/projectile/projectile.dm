@@ -11,13 +11,20 @@
 
 /obj/item/weapon/spell/projectile/on_ranged_cast(atom/hit_atom, mob/living/user)
 	if(set_up(hit_atom, user))
-		var/obj/item/projectile/new_projectile = new spell_projectile(get_turf(user))
-		new_projectile.launch(hit_atom)
+		var/obj/item/projectile/new_projectile = make_projectile(spell_projectile, user)
+		new_projectile.old_style_target(hit_atom)
+		new_projectile.fire()
+		log_and_message_admins("has casted [src] at \the [hit_atom].")
 		if(fire_sound)
 			playsound(get_turf(src), fire_sound, 75, 1)
-		owner.adjust_instability(instability_per_shot)
+		adjust_instability(instability_per_shot)
 		return 1
 	return 0
+
+/obj/item/weapon/spell/projectile/proc/make_projectile(obj/item/projectile/projectile_type, mob/living/user)
+	var/obj/item/projectile/P = new projectile_type(get_turf(user))
+	P.damage = calculate_spell_power(P.damage)
+	return P
 
 /obj/item/weapon/spell/projectile/proc/set_up(atom/hit_atom, mob/living/user)
 	if(spell_projectile)
@@ -28,5 +35,8 @@
 				user.Stun(pre_shot_delay / 10)
 				sleep(pre_shot_delay)
 				qdel(target_image)
-			return 1
-	return 0
+				if(owner)
+					return TRUE
+				return FALSE // We got dropped before the firing occured.
+			return TRUE // No delay, no need to check.
+	return FALSE

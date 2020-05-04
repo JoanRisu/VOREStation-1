@@ -1,6 +1,7 @@
 /obj/machinery/disease2/diseaseanalyser
 	name = "disease analyser"
-	icon = 'icons/obj/virology.dmi'
+	desc = "Analyzes diseases to find out information about them!"
+	icon = 'icons/obj/virology_vr.dmi' //VOREStation Edit
 	icon_state = "analyser"
 	anchored = 1
 	density = 1
@@ -11,10 +12,13 @@
 	var/obj/item/weapon/virusdish/dish = null
 
 /obj/machinery/disease2/diseaseanalyser/attackby(var/obj/O as obj, var/mob/user as mob)
-	if(!istype(O,/obj/item/weapon/virusdish)) return
+	if(default_unfasten_wrench(user, O, 20))
+		return
+
+	else if(!istype(O,/obj/item/weapon/virusdish)) return
 
 	if(dish)
-		user << "\The [src] is already loaded."
+		to_chat(user, "\The [src] is already loaded.")
 		return
 
 	dish = O

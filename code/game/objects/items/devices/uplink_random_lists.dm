@@ -57,7 +57,7 @@ var/datum/uplink_random_selection/all_uplink_selection = new/datum/uplink_random
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/ammo/mc9mm)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/visible_weapons/revolver)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/ammo/a357)
-	items += new/datum/uplink_random_item(/datum/uplink_item/item/visible_weapons/heavysniper, 15, 0)
+	items += new/datum/uplink_random_item(/datum/uplink_item/item/visible_weapons/heavysnipermerc, 15, 0)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/ammo/sniperammo, 15, 0)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/grenades/emp, 50)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/visible_weapons/crossbow, 33)
@@ -74,7 +74,6 @@ var/datum/uplink_random_selection/all_uplink_selection = new/datum/uplink_random
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/stealth_items/chameleon_kit)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/stealth_items/chameleon_projector)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/stealth_items/voice)
-	items += new/datum/uplink_random_item(/datum/uplink_item/item/stealth_items/camera_floppy, 10, 0)
 
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/armor/heavy_vest)
 	items += new/datum/uplink_random_item(/datum/uplink_item/item/armor/combat)
@@ -115,5 +114,5 @@ var/datum/uplink_random_selection/all_uplink_selection = new/datum/uplink_random
 
 /proc/debug_uplink_item_assoc_list()
 	for(var/key in uplink.items_assoc)
-		world << "[key] - [uplink.items_assoc[key]]"
+		to_world("[key] - [uplink.items_assoc[key]]")
 #endif

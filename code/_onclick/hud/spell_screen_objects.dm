@@ -13,7 +13,7 @@
 	var/mob/spell_holder
 
 /obj/screen/movable/spell_master/Destroy()
-	..()
+	. = ..()
 	for(var/obj/screen/spell/spells in spell_objects)
 		spells.spellmaster = null
 	spell_objects.Cut()
@@ -22,10 +22,6 @@
 		if(spell_holder.client && spell_holder.client.screen)
 			spell_holder.client.screen -= src
 		spell_holder = null
-
-/obj/screen/movable/spell_master/ResetVars()
-	..("spell_objects", args)
-	spell_objects = list()
 
 /obj/screen/movable/spell_master/MouseDrop()
 	if(showing)
@@ -93,7 +89,7 @@
 	if(spell.spell_flags & NO_BUTTON) //no button to add if we don't get one
 		return
 
-	var/obj/screen/spell/newscreen = PoolOrNew(/obj/screen/spell)
+	var/obj/screen/spell/newscreen = new /obj/screen/spell()
 	newscreen.spellmaster = src
 	newscreen.spell = spell
 
@@ -134,7 +130,6 @@
 	for(var/obj/screen/spell/spell in spell_objects)
 		spell.update_charge(forced)
 
-
 /obj/screen/movable/spell_master/genetic
 	name = "Mutant Powers"
 	icon_state = "genetic_spell_ready"
@@ -143,6 +138,13 @@
 	closed_state = "genetics_closed"
 
 	screen_loc = ui_genetic_master
+
+/obj/screen/movable/spell_master/swarm
+	name = "Swarm Abilities"
+	icon_state = "nano_spell_ready"
+
+	open_state = "swarm_open"
+	closed_state = "swarm_closed"
 
 //////////////ACTUAL SPELLS//////////////
 //This is what you click to cast things//
@@ -160,7 +162,7 @@
 	var/icon/last_charged_icon
 
 /obj/screen/spell/Destroy()
-	..()
+	. = ..()
 	spell = null
 	last_charged_icon = null
 	if(spellmaster)

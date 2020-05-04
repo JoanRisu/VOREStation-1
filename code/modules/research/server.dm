@@ -1,6 +1,6 @@
 /obj/machinery/r_n_d/server
 	name = "R&D Server"
-	icon = 'icons/obj/machines/research.dmi'
+	icon = 'icons/obj/machines/research_vr.dmi' //VOREStation Edit - New Icon
 	icon_state = "server"
 	var/datum/research/files
 	var/health = 100
@@ -22,7 +22,6 @@
 	component_parts += new /obj/item/stack/cable_coil(src)
 	component_parts += new /obj/item/stack/cable_coil(src)
 	RefreshParts()
-	initialize();
 
 /obj/machinery/r_n_d/server/Destroy()
 	griefProtection()
@@ -32,9 +31,10 @@
 	var/tot_rating = 0
 	for(var/obj/item/weapon/stock_parts/SP in src)
 		tot_rating += SP.rating
-	idle_power_usage /= max(1, tot_rating)
+	update_idle_power_usage(initial(idle_power_usage) / max(1, tot_rating))
 
-/obj/machinery/r_n_d/server/initialize()
+/obj/machinery/r_n_d/server/Initialize()
+	. = ..()
 	if(!files)
 		files = new /datum/research(src)
 	var/list/temp_list
@@ -79,7 +79,7 @@
 	griefProtection()
 	..()
 
-//Backup files to centcomm to help admins recover data after greifer attacks
+//Backup files to CentCom to help admins recover data after greifer attacks
 /obj/machinery/r_n_d/server/proc/griefProtection()
 	for(var/obj/machinery/r_n_d/server/centcom/C in machines)
 		for(var/datum/tech/T in files.known_tech)
@@ -123,8 +123,7 @@
 	name = "Central R&D Database"
 	server_id = -1
 
-/obj/machinery/r_n_d/server/centcom/initialize()
-	..()
+/obj/machinery/r_n_d/server/centcom/proc/update_connections()
 	var/list/no_id_servers = list()
 	var/list/server_ids = list()
 	for(var/obj/machinery/r_n_d/server/S in machines)
@@ -151,6 +150,7 @@
 
 /obj/machinery/computer/rdservercontrol
 	name = "R&D Server Controller"
+	desc = "Manage the research designs and servers. Can also modify upload/download permissions to R&D consoles."
 	icon_keyboard = "rd_key"
 	icon_screen = "rdcomp"
 	light_color = "#a97faa"
@@ -168,7 +168,7 @@
 	add_fingerprint(usr)
 	usr.set_machine(src)
 	if(!allowed(usr) && !emagged)
-		usr << "<span class='warning'>You do not have the required access level</span>"
+		to_chat(usr, "<span class='warning'>You do not have the required access level</span>")
 		return
 
 	if(href_list["main"])
@@ -296,7 +296,7 @@
 	if(!emagged)
 		playsound(src.loc, 'sound/effects/sparks4.ogg', 75, 1)
 		emagged = 1
-		user << "<span class='notice'>You you disable the security protocols.</span>"
+		to_chat(user, "<span class='notice'>You you disable the security protocols.</span>")
 		src.updateUsrDialog()
 		return 1
 

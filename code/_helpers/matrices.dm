@@ -3,18 +3,27 @@
 	Turn(.) //BYOND handles cases such as -270, 360, 540 etc. DOES NOT HANDLE 180 TURNS WELL, THEY TWEEN AND LOOK LIKE SHIT
 
 
-/atom/proc/SpinAnimation(speed = 10, loops = -1)
-	var/matrix/m120 = matrix(transform)
-	m120.Turn(120)
-	var/matrix/m240 = matrix(transform)
-	m240.Turn(240)
-	var/matrix/m360 = matrix(transform)
-	speed /= 3      //Gives us 3 equal time segments for our three turns.
-	                //Why not one turn? Because byond will see that the start and finish are the same place and do nothing
-	                //Why not two turns? Because byond will do a flip instead of a turn
-	animate(src, transform = m120, time = speed, loops)
-	animate(transform = m240, time = speed)
-	animate(transform = m360, time = speed)
+/atom/proc/SpinAnimation(speed = 10, loops = -1, clockwise = 1, segments = 3)
+	if(!segments)
+		return
+	var/segment = 360/segments
+	if(!clockwise)
+		segment = -segment
+	var/list/matrices = list()
+	for(var/i in 1 to segments-1)
+		var/matrix/M = matrix(transform)
+		M.Turn(segment*i)
+		matrices += M
+	var/matrix/last = matrix(transform)
+	matrices += last
+
+	speed /= segments
+
+	animate(src, transform = matrices[1], time = speed, loops)
+	for(var/i in 2 to segments) //2 because 1 is covered above
+		animate(transform = matrices[i], time = speed)
+		//doesn't have an object argument because this is "Stacking" with the animate call above
+		//3 billion% intentional
 
 //The X pixel offset of this matrix
 /matrix/proc/get_x_shift()
@@ -41,7 +50,7 @@
 /proc/color_rotation(angle)
 	if(angle == 0)
 		return color_identity()
-	angle = Clamp(angle, -180, 180)
+	angle = CLAMP(angle, -180, 180)
 	var/cos = cos(angle)
 	var/sin = sin(angle)
 
@@ -56,7 +65,7 @@
 
 //Makes everything brighter or darker without regard to existing color or brightness
 /proc/color_brightness(power)
-	power = Clamp(power, -255, 255)
+	power = CLAMP(power, -255, 255)
 	power = power/255
 
 	return list(1,0,0, 0,1,0, 0,0,1, power,power,power)
@@ -76,7 +85,7 @@
 
 //Exxagerates or removes brightness
 /proc/color_contrast(value)
-	value = Clamp(value, -100, 100)
+	value = CLAMP(value, -100, 100)
 	if(value == 0)
 		return color_identity()
 
@@ -99,7 +108,7 @@
 /proc/color_saturation(value as num)
 	if(value == 0)
 		return color_identity()
-	value = Clamp(value, -100, 100)
+	value = CLAMP(value, -100, 100)
 	if(value > 0)
 		value *= 3
 	var/x = 1 + value / 100

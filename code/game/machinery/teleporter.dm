@@ -1,5 +1,5 @@
 /obj/machinery/computer/teleporter
-	name = "Teleporter Control Console"
+	name = "teleporter control console"
 	desc = "Used to control a linked teleportation Hub and Station."
 	icon_keyboard = "teleport_key"
 	icon_screen = "teleport"
@@ -14,23 +14,29 @@
 	id = "[rand(1000, 9999)]"
 	..()
 	underlays.Cut()
-	underlays += image('icons/obj/stationobjs.dmi', icon_state = "telecomp-wires")
+	underlays += image('icons/obj/stationobjs_vr.dmi', icon_state = "telecomp-wires")	//VOREStation Edit: different direction for wires to account for dirs
 	return
 
-/obj/machinery/computer/teleporter/initialize()
-	..()
-	var/obj/machinery/teleport/station/station = locate(/obj/machinery/teleport/station, get_step(src, dir))
+/obj/machinery/computer/teleporter/Initialize()
+	. = ..()
+	var/obj/machinery/teleport/station/station
 	var/obj/machinery/teleport/hub/hub
-	if(station)
-		hub = locate(/obj/machinery/teleport/hub, get_step(station, dir))
+
+	// Search surrounding turfs for the station, and then search the station's surrounding turfs for the hub.
+	for(var/direction in cardinal)
+		station = locate(/obj/machinery/teleport/station, get_step(src, direction))
+		if(station)
+			for(direction in cardinal)
+				hub = locate(/obj/machinery/teleport/hub, get_step(station, direction))
+				if(hub)
+					break
+			break
 
 	if(istype(station))
 		station.com = hub
-		station.set_dir(dir)
 
 	if(istype(hub))
 		hub.com = src
-		hub.set_dir(dir)
 
 /obj/machinery/computer/teleporter/attackby(I as obj, mob/living/user as mob)
 	if(istype(I, /obj/item/weapon/card/data/))
@@ -50,8 +56,8 @@
 			L = locate("landmark*[C.data]") // use old stype
 
 		if(istype(L, /obj/effect/landmark/) && istype(L.loc, /turf))
-			usr << "You insert the coordinates into the machine."
-			usr << "A message flashes across the screen reminding the traveller that the nuclear authentication disk is to remain on the station at all times."
+			to_chat(usr, "You insert the coordinates into the machine.")
+			to_chat(usr, "A message flashes across the screen, reminding the user that the nuclear authentication disk is not transportable via insecure means.")
 			user.drop_item()
 			qdel(I)
 
@@ -63,7 +69,7 @@
 				for(var/obj/machinery/teleport/hub/H in range(1))
 					var/amount = rand(2,5)
 					for(var/i=0;i<amount;i++)
-						new /mob/living/simple_animal/hostile/vore/carp(get_turf(H)) // Vorestation edit
+						new /mob/living/simple_mob/animal/space/carp(get_turf(H))
 				//
 			else
 				for(var/mob/O in hearers(src, null))
@@ -89,11 +95,11 @@
 	var/list/L = list()
 	var/list/areaindex = list()
 
-	for(var/obj/item/device/radio/beacon/R in world)
+	for(var/obj/item/device/radio/beacon/R in all_beacons)
 		var/turf/T = get_turf(R)
 		if(!T)
 			continue
-		if(!(T.z in config.player_levels))
+		if(!(T.z in using_map.player_levels))
 			continue
 		var/tmpname = T.loc.name
 		if(areaindex[tmpname])
@@ -102,7 +108,7 @@
 			areaindex[tmpname] = 1
 		L[tmpname] = R
 
-	for (var/obj/item/weapon/implant/tracking/I in world)
+	for (var/obj/item/weapon/implant/tracking/I in all_tracking_implants)
 		if(!I.implanted || !ismob(I.loc))
 			continue
 		else
@@ -162,10 +168,11 @@
 /obj/machinery/teleport/hub
 	name = "teleporter hub"
 	desc = "It's the hub of a teleporting machine."
+	icon = 'icons/obj/teleporter_vr.dmi' //VOREStation Add
 	icon_state = "tele0"
 	dir = 4
 	var/accurate = 0
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 10
 	active_power_usage = 2000
 	circuit = /obj/item/weapon/circuitboard/teleporter_hub
@@ -203,6 +210,14 @@
 			O.show_message("<span class='warning'>Failure: Cannot authenticate locked on coordinates. Please reinstate coordinate matrix.</span>")
 		return
 	if(istype(M, /atom/movable))
+		//VOREStation Addition Start: Prevent taurriding abuse
+		if(istype(M, /mob/living))
+			var/mob/living/L = M
+			if(LAZYLEN(L.buckled_mobs))
+				var/datum/riding/R = L.riding_datum
+				for(var/rider in L.buckled_mobs)
+					R.force_dismount(rider)
+		//VOREStation Addition End: Prevent taurriding abuse
 		if(prob(5) && !accurate) //oh dear a problem, put em in deep space
 			do_teleport(M, locate(rand((2*TRANSITIONEDGE), world.maxx - (2*TRANSITIONEDGE)), rand((2*TRANSITIONEDGE), world.maxy - (2*TRANSITIONEDGE)), 3), 2)
 		else
@@ -232,7 +247,7 @@
 	if(istype(M, /mob/living))
 		var/mob/living/MM = M
 		if(MM.check_contents_for(/obj/item/weapon/disk/nuclear))
-			MM << "<span class='warning'>Something you are carrying seems to be unable to pass through the portal. Better drop it if you want to go through.</span>"
+			to_chat(MM, "<span class='warning'>Something you are carrying seems to be unable to pass through the portal. Better drop it if you want to go through.</span>")
 			return
 	var/disky = 0
 	for (var/atom/O in M.contents) //I'm pretty sure this accounts for the maximum amount of container in container stacking. --NeoFite
@@ -259,7 +274,7 @@
 	if(istype(M, /mob/living))
 		var/mob/living/MM = M
 		if(MM.check_contents_for(/obj/item/weapon/storage/backpack/holding))
-			MM << "<span class='warning'>The Bluespace interface on your Bag of Holding interferes with the teleport!</span>"
+			to_chat(MM, "<span class='warning'>The Bluespace interface on your Bag of Holding interferes with the teleport!</span>")
 			precision = rand(1,100)
 	if(istype(M, /obj/item/weapon/storage/backpack/holding))
 		precision = rand(1,100)
@@ -309,11 +324,12 @@
 /obj/machinery/teleport/station
 	name = "station"
 	desc = "It's the station thingy of a teleport thingy." //seriously, wtf.
+	icon = 'icons/obj/teleporter_vr.dmi' //VOREStation Add
 	icon_state = "controller"
 	dir = 4
 	var/active = 0
 	var/engaged = 0
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 10
 	active_power_usage = 2000
 	circuit = /obj/item/weapon/circuitboard/teleporter_station
@@ -350,8 +366,8 @@
 	if(com)
 		com.icon_state = "tele1"
 		use_power(5000)
-		update_use_power(2)
-		com.update_use_power(2)
+		update_use_power(USE_POWER_ACTIVE)
+		com.update_use_power(USE_POWER_ACTIVE)
 		for(var/mob/O in hearers(src, null))
 			O.show_message("<span class='notice'>Teleporter engaged!</span>", 2)
 	add_fingerprint(usr)
@@ -365,8 +381,8 @@
 	if(com)
 		com.icon_state = "tele0"
 		com.accurate = 0
-		com.update_use_power(1)
-		update_use_power(1)
+		com.update_use_power(USE_POWER_IDLE)
+		update_use_power(USE_POWER_IDLE)
 		for(var/mob/O in hearers(src, null))
 			O.show_message("<span class='notice'>Teleporter disengaged!</span>", 2)
 	add_fingerprint(usr)
@@ -387,6 +403,7 @@
 			O.show_message("<span class='notice'>Test firing!</span>", 2)
 		com.teleport()
 		use_power(5000)
+		flick(src, "controller-c") //VOREStation Add
 
 		spawn(30)
 			active=0

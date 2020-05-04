@@ -15,16 +15,19 @@ Thus, the two variables affect pump operation are set in New():
 /obj/machinery/atmospherics/binary/pump
 	icon = 'icons/atmos/pump.dmi'
 	icon_state = "map_off"
+	construction_type = /obj/item/pipe/directional
+	pipe_state = "pump"
 	level = 1
+	var/base_icon = "pump"
 
 	name = "gas pump"
-	desc = "A pump"
+	desc = "A pump that moves gas from one place to another."
 
 	var/target_pressure = ONE_ATMOSPHERE
 
 	//var/max_volume_transfer = 10000
 
-	use_power = 0
+	use_power = USE_POWER_OFF
 	idle_power_usage = 150		//internal circuitry, friction losses and stuff
 	power_rating = 7500			//7500 W ~ 10 HP
 
@@ -39,16 +42,39 @@ Thus, the two variables affect pump operation are set in New():
 	air1.volume = ATMOS_DEFAULT_VOLUME_PUMP
 	air2.volume = ATMOS_DEFAULT_VOLUME_PUMP
 
+/obj/machinery/atmospherics/binary/pump/Destroy()
+	unregister_radio(src, frequency)
+	. = ..()
+
 /obj/machinery/atmospherics/binary/pump/on
 	icon_state = "map_on"
-	use_power = 1
+	use_power = USE_POWER_IDLE
 
+/obj/machinery/atmospherics/binary/pump/fuel
+	icon_state = "map_off-fuel"
+	base_icon = "pump-fuel"
+	icon_connect_type = "-fuel"
+	connect_types = CONNECT_TYPE_FUEL
+
+/obj/machinery/atmospherics/binary/pump/fuel/on
+	icon_state = "map_on-fuel"
+	use_power = USE_POWER_IDLE
+
+/obj/machinery/atmospherics/binary/pump/aux
+	icon_state = "map_off-aux"
+	base_icon = "pump-aux"
+	icon_connect_type = "-aux"
+	connect_types = CONNECT_TYPE_AUX
+
+/obj/machinery/atmospherics/binary/pump/aux/on
+	icon_state = "map_on-aux"
+	use_power = USE_POWER_IDLE
 
 /obj/machinery/atmospherics/binary/pump/update_icon()
 	if(!powered())
-		icon_state = "off"
+		icon_state = "[base_icon]-off"
 	else
-		icon_state = "[use_power ? "on" : "off"]"
+		icon_state = "[use_power ? "[base_icon]-on" : "[base_icon]-off"]"
 
 /obj/machinery/atmospherics/binary/pump/update_underlays()
 	if(..())
@@ -56,8 +82,8 @@ Thus, the two variables affect pump operation are set in New():
 		var/turf/T = get_turf(src)
 		if(!istype(T))
 			return
-		add_underlay(T, node1, turn(dir, -180))
-		add_underlay(T, node2, dir)
+		add_underlay(T, node1, turn(dir, -180), node1?.icon_connect_type)
+		add_underlay(T, node2, dir, node2?.icon_connect_type)
 
 /obj/machinery/atmospherics/binary/pump/hide(var/i)
 	update_underlays()
@@ -102,7 +128,7 @@ Thus, the two variables affect pump operation are set in New():
 		return 0
 
 	var/datum/signal/signal = new
-	signal.transmission_method = 1 //radio signal
+	signal.transmission_method = TRANSMISSION_RADIO //radio signal
 	signal.source = src
 
 	signal.data = list(
@@ -134,7 +160,7 @@ Thus, the two variables affect pump operation are set in New():
 	)
 
 	// update the ui if it exists, returns null if no ui is passed/found
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		// the ui does not exist, so we'll create a new() one
 		// for a list of parameters and their descriptions see the code docs in \code\modules\nano\nanoui.dm
@@ -143,8 +169,8 @@ Thus, the two variables affect pump operation are set in New():
 		ui.open()					// open the new ui window
 		ui.set_auto_update(1)		// auto update every Master Controller tick
 
-/obj/machinery/atmospherics/binary/pump/initialize()
-	..()
+/obj/machinery/atmospherics/binary/pump/Initialize()
+	. = ..()
 	if(frequency)
 		set_frequency(frequency)
 
@@ -154,12 +180,12 @@ Thus, the two variables affect pump operation are set in New():
 
 	if(signal.data["power"])
 		if(text2num(signal.data["power"]))
-			use_power = 1
+			update_use_power(USE_POWER_IDLE)
 		else
-			use_power = 0
+			update_use_power(USE_POWER_OFF)
 
 	if("power_toggle" in signal.data)
-		use_power = !use_power
+		update_use_power(!use_power)
 
 	if(signal.data["set_output_pressure"])
 		target_pressure = between(
@@ -183,7 +209,7 @@ Thus, the two variables affect pump operation are set in New():
 		return
 	src.add_fingerprint(usr)
 	if(!src.allowed(user))
-		user << "<span class='warning'>Access denied.</span>"
+		to_chat(user, "<span class='warning'>Access denied.</span>")
 		return
 	usr.set_machine(src)
 	ui_interact(user)
@@ -193,7 +219,7 @@ Thus, the two variables affect pump operation are set in New():
 	if(..()) return 1
 
 	if(href_list["power"])
-		use_power = !use_power
+		update_use_power(!use_power)
 
 	switch(href_list["set_press"])
 		if ("min")
@@ -216,23 +242,20 @@ Thus, the two variables affect pump operation are set in New():
 		update_icon()
 
 /obj/machinery/atmospherics/binary/pump/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (!istype(W, /obj/item/weapon/wrench))
+	if (!W.is_wrench())
 		return ..()
 	if (!(stat & NOPOWER) && use_power)
-		user << "<span class='warning'>You cannot unwrench this [src], turn it off first.</span>"
+		to_chat(user, "<span class='warning'>You cannot unwrench this [src], turn it off first.</span>")
 		return 1
-	var/datum/gas_mixture/int_air = return_air()
-	var/datum/gas_mixture/env_air = loc.return_air()
-	if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE)
-		user << "<span class='warning'>You cannot unwrench this [src], it too exerted due to internal pressure.</span>"
+	if(!can_unwrench())
+		to_chat(user, "<span class='warning'>You cannot unwrench this [src], it too exerted due to internal pressure.</span>")
 		add_fingerprint(user)
 		return 1
-	playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-	user << "<span class='notice'>You begin to unfasten \the [src]...</span>"
-	if (do_after(user, 40))
+	playsound(src, W.usesound, 50, 1)
+	to_chat(user, "<span class='notice'>You begin to unfasten \the [src]...</span>")
+	if (do_after(user, 40 * W.toolspeed))
 		user.visible_message( \
 			"<span class='notice'>\The [user] unfastens \the [src].</span>", \
 			"<span class='notice'>You have unfastened \the [src].</span>", \
 			"You hear ratchet.")
-		new /obj/item/pipe(loc, make_from=src)
-		qdel(src)
+		deconstruct()

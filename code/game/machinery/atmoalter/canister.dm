@@ -4,8 +4,9 @@
 	icon_state = "yellow"
 	density = 1
 	var/health = 100.0
-	flags = CONDUCT
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
+
+	layer = TABLE_LAYER	// Above catwalks, hopefully below other things
 
 	var/valve_open = 0
 	var/release_pressure = ONE_ATMOSPHERE
@@ -17,7 +18,7 @@
 	pressure_resistance = 7 * ONE_ATMOSPHERE
 	var/temperature_resistance = 1000 + T0C
 	volume = 1000
-	use_power = 0
+	use_power = USE_POWER_OFF
 	interact_offline = 1 // Allows this to be used when not in powered area.
 	var/release_log = ""
 	var/update_flag = 0
@@ -48,8 +49,8 @@
 
 /obj/machinery/portable_atmospherics/canister/phoron
 	name = "Canister \[Phoron\]"
-	icon_state = "orange"
-	canister_color = "orange"
+	icon_state = "orangeps"
+	canister_color = "orangeps"
 	can_label = 0
 
 /obj/machinery/portable_atmospherics/canister/carbon_dioxide
@@ -77,8 +78,8 @@
 	canister_color = "blue"
 /obj/machinery/portable_atmospherics/canister/empty/phoron
 	name = "Canister \[Phoron\]"
-	icon_state = "orange"
-	canister_color = "orange"
+	icon_state = "orangeps"
+	canister_color = "orangeps"
 /obj/machinery/portable_atmospherics/canister/empty/nitrogen
 	name = "Canister \[N2\]"
 	icon_state = "red"
@@ -238,7 +239,7 @@ update_flag
 	..()
 
 /obj/machinery/portable_atmospherics/canister/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if(!istype(W, /obj/item/weapon/wrench) && !istype(W, /obj/item/weapon/tank) && !istype(W, /obj/item/device/analyzer) && !istype(W, /obj/item/device/pda))
+	if(!W.is_wrench() && !istype(W, /obj/item/weapon/tank) && !istype(W, /obj/item/device/analyzer) && !istype(W, /obj/item/device/pda))
 		visible_message("<span class='warning'>\The [user] hits \the [src] with \a [W]!</span>")
 		src.health -= W.force
 		src.add_fingerprint(user)
@@ -254,12 +255,12 @@ update_flag
 			transfer_moles = pressure_delta*thejetpack.volume/(air_contents.temperature * R_IDEAL_GAS_EQUATION)//Actually transfer the gas
 			var/datum/gas_mixture/removed = air_contents.remove(transfer_moles)
 			thejetpack.merge(removed)
-			user << "You pulse-pressurize your jetpack from the tank."
+			to_chat(user, "You pulse-pressurize your jetpack from the tank.")
 		return
 
 	..()
 
-	nanomanager.update_uis(src) // Update all NanoUIs attached to src
+	SSnanoui.update_uis(src) // Update all NanoUIs attached to src
 
 /obj/machinery/portable_atmospherics/canister/attack_ai(var/mob/user as mob)
 	return src.attack_hand(user)
@@ -287,7 +288,7 @@ update_flag
 		data["holdingTank"] = list("name" = holding.name, "tankPressure" = round(holding.air_contents.return_pressure()))
 
 	// update the ui if it exists, returns null if no ui is passed/found
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		// the ui does not exist, so we'll create a new() one
         // for a list of parameters and their descriptions see the code docs in \code\modules\nano\nanoui.dm
@@ -348,7 +349,7 @@ update_flag
 				"\[N2O\]" = "redws", \
 				"\[N2\]" = "red", \
 				"\[O2\]" = "blue", \
-				"\[Phoron\]" = "orange", \
+				"\[Phoron\]" = "orangeps", \
 				"\[CO2\]" = "black", \
 				"\[Air\]" = "grey", \
 				"\[CAUTION\]" = "yellow", \
@@ -394,16 +395,13 @@ update_flag
 	return 1
 
 //Dirty way to fill room with gas. However it is a bit easier to do than creating some floor/engine/n2o -rastaf0
-/obj/machinery/portable_atmospherics/canister/sleeping_agent/roomfiller/New()
-	..()
+/obj/machinery/portable_atmospherics/canister/sleeping_agent/roomfiller/Initialize()
+	. = ..()
 	air_contents.gas["sleeping_agent"] = 9*4000
-	spawn(10)
-		var/turf/simulated/location = src.loc
-		if (istype(src.loc))
-			while (!location.air)
-				sleep(10)
-			location.assume_air(air_contents)
-			air_contents = new
+	var/turf/simulated/location = src.loc
+	if (istype(src.loc))
+		location.assume_air(air_contents)
+		air_contents = new
 	return 1
 
 /obj/machinery/portable_atmospherics/canister/nitrogen/New()
@@ -428,3 +426,27 @@ update_flag
 
 	src.update_icon()
 	return 1
+
+//R-UST port
+// Special types used for engine setup admin verb, they contain double amount of that of normal canister.
+/obj/machinery/portable_atmospherics/canister/nitrogen/engine_setup/New()
+	..()
+	src.air_contents.adjust_gas("nitrogen", MolesForPressure())
+	src.update_icon()
+	return 1
+
+/obj/machinery/portable_atmospherics/canister/carbon_dioxide/engine_setup/New()
+	..()
+	src.air_contents.adjust_gas("carbon_dioxide", MolesForPressure())
+	src.update_icon()
+	return 1
+
+/obj/machinery/portable_atmospherics/canister/phoron/engine_setup/New()
+	..()
+	src.air_contents.adjust_gas("phoron", MolesForPressure())
+	src.update_icon()
+	return 1
+
+/obj/machinery/portable_atmospherics/canister/take_damage(var/damage)
+	src.health -= damage
+	healthcheck()

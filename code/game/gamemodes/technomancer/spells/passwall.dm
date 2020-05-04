@@ -20,7 +20,7 @@
 	if(busy)	//Prevent someone from trying to get two uses of the spell from one instance.
 		return 0
 	if(!allowed_to_teleport())
-		user << "<span class='warning'>You can't teleport here!</span>"
+		to_chat(user, "<span class='warning'>You can't teleport here!</span>")
 		return 0
 //	if(isturf(hit_atom))
 
@@ -28,7 +28,7 @@
 	var/turf/our_turf = get_turf(user)	//Where we are.
 	if(!T.density)
 		if(!T.check_density())
-			user << "<span class='warning'>Perhaps you should try using passWALL on a wall, or other solid object.</span>"
+			to_chat(user, "<span class='warning'>Perhaps you should try using passWALL on a wall, or other solid object.</span>")
 			return 0
 	var/direction = get_dir(our_turf, T)
 	var/total_cost = 0
@@ -39,13 +39,16 @@
 	visible_message("<span class='info'>[user] rests a hand on \the [hit_atom].</span>")
 	busy = 1
 
-	var/datum/effect/effect/system/spark_spread/spark_system = PoolOrNew(/datum/effect/effect/system/spark_spread)
+	var/datum/effect/effect/system/spark_spread/spark_system = new /datum/effect/effect/system/spark_spread()
 	spark_system.set_up(5, 0, our_turf)
 
 	while(i)
 		checked_turf = get_step(checked_turf, direction) //Advance in the given direction
 		total_cost += check_for_scepter() ? 400 : 800 //Phasing through matter's expensive, you know.
 		i--
+		if(checked_turf.block_tele) // The fun ends here.
+			break
+
 		if(!checked_turf.density) //If we found a destination (a non-dense turf), then we can stop.
 			var/dense_objs_on_turf = 0
 			for(var/atom/movable/stuff in checked_turf.contents) //Make sure nothing dense is where we want to go, like an airlock or window.
@@ -59,18 +62,18 @@
 
 	if(found_turf)
 		if(user.loc != our_turf)
-			user << "<span class='warning'>You need to stand still in order to phase through \the [hit_atom].</span>"
+			to_chat(user, "<span class='warning'>You need to stand still in order to phase through \the [hit_atom].</span>")
 			return 0
 		if(pay_energy(total_cost) && !user.incapacitated() )
 			visible_message("<span class='warning'>[user] appears to phase through \the [hit_atom]!</span>")
-			user << "<span class='info'>You find a destination on the other side of \the [hit_atom], and phase through it.</span>"
+			to_chat(user, "<span class='info'>You find a destination on the other side of \the [hit_atom], and phase through it.</span>")
 			spark_system.start()
 			user.forceMove(found_turf)
 			qdel(src)
 			return 1
 		else
-			user << "<span class='warning'>You don't have enough energy to phase through these walls!</span>"
+			to_chat(user, "<span class='warning'>You don't have enough energy to phase through these walls!</span>")
 			busy = 0
 	else
-		user << "<span class='info'>You weren't able to find an open space to go to.</span>"
+		to_chat(user, "<span class='info'>You weren't able to find an open space to go to.</span>")
 		busy = 0

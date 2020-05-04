@@ -23,7 +23,7 @@ var/bomb_set
 	var/timing_wire
 	var/removal_stage = 0 // 0 is no removal, 1 is covers removed, 2 is covers open,
 	                      // 3 is sealant open, 4 is unwrenched, 5 is removed from bolts.
-	use_power = 0
+	use_power = USE_POWER_OFF
 
 /obj/machinery/nuclearbomb/New()
 	..()
@@ -55,29 +55,30 @@ var/bomb_set
 	return
 
 /obj/machinery/nuclearbomb/attackby(obj/item/weapon/O as obj, mob/user as mob)
-	if(istype(O, /obj/item/weapon/screwdriver))
+	if(O.is_screwdriver())
+		playsound(src, O.usesound, 50, 1)
 		add_fingerprint(user)
 		if(auth)
 			if(opened == 0)
 				opened = 1
 				overlays += image(icon, "npanel_open")
-				user << "You unscrew the control panel of [src]."
+				to_chat(user, "You unscrew the control panel of [src].")
 
 			else
 				opened = 0
 				overlays -= image(icon, "npanel_open")
-				user << "You screw the control panel of [src] back on."
+				to_chat(user, "You screw the control panel of [src] back on.")
 		else
 			if(opened == 0)
-				user << "The [src] emits a buzzing noise, the panel staying locked in."
+				to_chat(user, "The [src] emits a buzzing noise, the panel staying locked in.")
 			if(opened == 1)
 				opened = 0
 				overlays -= image(icon, "npanel_open")
-				user << "You screw the control panel of [src] back on."
+				to_chat(user, "You screw the control panel of [src] back on.")
 			flick("nuclearbombc", src)
 
 		return
-	if(istype(O, /obj/item/weapon/wirecutters) || istype(O, /obj/item/device/multitool))
+	if(O.is_wirecutter() || istype(O, /obj/item/device/multitool))
 		if(opened == 1)
 			nukehack_win(user)
 		return
@@ -98,22 +99,23 @@ var/bomb_set
 					var/obj/item/weapon/weldingtool/WT = O
 					if(!WT.isOn()) return
 					if(WT.get_fuel() < 5) // uses up 5 fuel.
-						user << "<span class='warning'>You need more fuel to complete this task.</span>"
+						to_chat(user, "<span class='warning'>You need more fuel to complete this task.</span>")
 						return
 
 					user.visible_message("[user] starts cutting loose the anchoring bolt covers on [src].", "You start cutting loose the anchoring bolt covers with [O]...")
 
-					if(do_after(user,40))
+					if(do_after(user,40 * WT.toolspeed))
 						if(!src || !user || !WT.remove_fuel(5, user)) return
 						user.visible_message("[user] cuts through the bolt covers on [src].", "You cut through the bolt cover.")
 						removal_stage = 1
 				return
 
 			if(1)
-				if(istype(O,/obj/item/weapon/crowbar))
+				if(O.is_crowbar())
 					user.visible_message("[user] starts forcing open the bolt covers on [src].", "You start forcing open the anchoring bolt covers with [O]...")
 
-					if(do_after(user,15))
+					playsound(src, O.usesound, 50, 1)
+					if(do_after(user,15 * O.toolspeed))
 						if(!src || !user) return
 						user.visible_message("[user] forces open the bolt covers on [src].", "You force open the bolt covers.")
 						removal_stage = 2
@@ -125,34 +127,34 @@ var/bomb_set
 					var/obj/item/weapon/weldingtool/WT = O
 					if(!WT.isOn()) return
 					if(WT.get_fuel() < 5) // uses up 5 fuel.
-						user << "<span class='warning'>You need more fuel to complete this task.</span>"
+						to_chat(user, "<span class='warning'>You need more fuel to complete this task.</span>")
 						return
 
 					user.visible_message("[user] starts cutting apart the anchoring system sealant on [src].", "You start cutting apart the anchoring system's sealant with [O]...")
-
-					if(do_after(user,40))
+					playsound(src, WT.usesound, 50, 1)
+					if(do_after(user,40 * WT.toolspeed))
 						if(!src || !user || !WT.remove_fuel(5, user)) return
 						user.visible_message("[user] cuts apart the anchoring system sealant on [src].", "You cut apart the anchoring system's sealant.")
 						removal_stage = 3
 				return
 
 			if(3)
-				if(istype(O,/obj/item/weapon/wrench))
+				if(O.is_wrench())
 
 					user.visible_message("[user] begins unwrenching the anchoring bolts on [src].", "You begin unwrenching the anchoring bolts...")
-
-					if(do_after(user,50))
+					playsound(src, O.usesound, 50, 1)
+					if(do_after(user,50 * O.toolspeed))
 						if(!src || !user) return
 						user.visible_message("[user] unwrenches the anchoring bolts on [src].", "You unwrench the anchoring bolts.")
 						removal_stage = 4
 				return
 
 			if(4)
-				if(istype(O,/obj/item/weapon/crowbar))
+				if(O.is_crowbar())
 
 					user.visible_message("[user] begins lifting [src] off of the anchors.", "You begin lifting the device off the anchors...")
-
-					if(do_after(user,80))
+					playsound(src, O.usesound, 50, 1)
+					if(do_after(user,80 * O.toolspeed))
 						if(!src || !user) return
 						user.visible_message("[user] crowbars [src] off of the anchors. It can now be moved.", "You jam the crowbar under the nuclear device and lift it off its anchors. You can now move it!")
 						anchored = 0
@@ -163,7 +165,7 @@ var/bomb_set
 /obj/machinery/nuclearbomb/attack_hand(mob/user as mob)
 	if(extended)
 		if(!ishuman(user))
-			usr << "<span class='warning'>You don't have the dexterity to do this!</span>"
+			to_chat(user, "<span class='warning'>You don't have the dexterity to do this!</span>")
 			return 1
 
 		user.set_machine(src)
@@ -217,14 +219,14 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 	if(!usr.canmove || usr.stat || usr.restrained())
 		return
 	if(!ishuman(usr))
-		usr << "<span class='warning'>You don't have the dexterity to do this!</span>"
+		to_chat(usr, "<span class='warning'>You don't have the dexterity to do this!</span>")
 		return 1
 
 	if(deployable)
-		usr << "<span class='warning'>You close several panels to make [src] undeployable.</span>"
+		to_chat(usr, "<span class='warning'>You close several panels to make [src] undeployable.</span>")
 		deployable = 0
 	else
-		usr << "<span class='warning'>You adjust some panels to make [src] deployable.</span>"
+		to_chat(usr, "<span class='warning'>You adjust some panels to make [src] deployable.</span>")
 		deployable = 1
 	return
 
@@ -238,10 +240,10 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 			var/temp_wire = href_list["wire"]
 			if(href_list["act"] == "pulse")
 				if(!istype(usr.get_active_hand(), /obj/item/device/multitool))
-					usr << "You need a multitool!"
+					to_chat(usr, "You need a multitool!")
 				else
 					if(wires[temp_wire])
-						usr << "You can't pulse a cut wire."
+						to_chat(usr, "You can't pulse a cut wire.")
 					else
 						if(light_wire == temp_wire)
 							lighthack = !lighthack
@@ -260,8 +262,9 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 							else
 								visible_message("<span class='notice'>The [src] emits a quiet whirling noise!</span>")
 			if(href_list["act"] == "wire")
-				if(!istype(usr.get_active_hand(), /obj/item/weapon/wirecutters))
-					usr << "You need wirecutters!"
+				var/obj/item/I = usr.get_active_hand()
+				if(!I.is_wirecutter())
+					to_chat(usr, "You need wirecutters!")
 				else
 					wires[temp_wire] = !wires[temp_wire]
 					if(safety_wire == temp_wire)
@@ -312,7 +315,7 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 					if(timing == -1.0)
 						return
 					if(safety)
-						usr << "<span class='warning'>The safety is still on.</span>"
+						to_chat(usr, "<span class='warning'>The safety is still on.</span>")
 						return
 					timing = !(timing)
 					if(timing)
@@ -375,7 +378,7 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 
 	var/off_station = 0
 	var/turf/bomb_location = get_turf(src)
-	if(bomb_location && (bomb_location.z in config.station_levels))
+	if(bomb_location && (bomb_location.z in using_map.station_levels))
 		if((bomb_location.x < (128-NUKERANGE)) || (bomb_location.x > (128+NUKERANGE)) || (bomb_location.y < (128-NUKERANGE)) || (bomb_location.y > (128+NUKERANGE)))
 			off_station = 1
 	else
@@ -390,13 +393,13 @@ obj/machinery/nuclearbomb/proc/nukehack_win(mob/user as mob)
 		ticker.station_explosion_cinematic(off_station,null)
 		if(ticker.mode)
 			ticker.mode.explosion_in_progress = 0
-			world << "<B>The station was destoyed by the nuclear blast!</B>"
+			to_world("<B>The station was destoyed by the nuclear blast!</B>")
 
 			ticker.mode.station_was_nuked = (off_station<2)	//offstation==1 is a draw. the station becomes irradiated and needs to be evacuated.
 															//kinda shit but I couldn't  get permission to do what I wanted to do.
 
 			if(!ticker.mode.check_finished())//If the mode does not deal with the nuke going off so just reboot because everyone is stuck as is
-				world << "<B>Resetting in 30 seconds!</B>"
+				to_world("<B>Resetting in 30 seconds!</B>")
 
 				feedback_set_details("end_error","nuke - unhandled ending")
 

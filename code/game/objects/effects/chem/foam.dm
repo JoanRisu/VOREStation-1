@@ -14,26 +14,33 @@
 	var/amount = 3
 	var/expand = 1
 	var/metal = 0
+	var/dries = 1 //VOREStation Add
+	var/slips = 0 //VOREStation Add
 
-/obj/effect/effect/foam/New(var/loc, var/ismetal = 0)
-	..(loc)
-	icon_state = "[ismetal? "m" : ""]foam"
+/obj/effect/effect/foam/Initialize(var/mapload, var/ismetal = 0)
+	. = ..()
+	//icon_state = "[ismetal? "m" : ""]foam" //VOREStation Removal
 	metal = ismetal
 	playsound(src, 'sound/effects/bubbles2.ogg', 80, 1, -3)
-	spawn(3 + metal * 3)
-		process()
-		checkReagents()
-	spawn(120)
-		processing_objects.Remove(src)
-		sleep(30)
-		if(metal)
-			var/obj/structure/foamedmetal/M = new(src.loc)
-			M.metal = metal
-			M.updateicon()
-		flick("[icon_state]-disolve", src)
-		sleep(5)
-		qdel(src)
-	return
+	if(dries) //VOREStation Add
+		addtimer(CALLBACK(src, .proc/post_spread), 3 + metal * 3)
+		addtimer(CALLBACK(src, .proc/pre_harden), 12 SECONDS)
+		addtimer(CALLBACK(src, .proc/harden), 15 SECONDS)
+
+/obj/effect/effect/foam/proc/post_spread()
+	process()
+	checkReagents()
+
+/obj/effect/effect/foam/proc/pre_harden()
+	return //VOREStation Edit
+
+/obj/effect/effect/foam/proc/harden()
+	if(metal)
+		var/obj/structure/foamedmetal/M = new(src.loc)
+		M.metal = metal
+		M.updateicon()
+	flick("[icon_state]-disolve", src)
+	QDEL_IN(src, 5)
 
 /obj/effect/effect/foam/proc/checkReagents() // transfer any reagents to the floor
 	if(!metal && reagents)
@@ -74,9 +81,11 @@
 			qdel(src)
 
 /obj/effect/effect/foam/Crossed(var/atom/movable/AM)
+	if(AM.is_incorporeal())
+		return
 	if(metal)
 		return
-	if(istype(AM, /mob/living))
+	if(slips && istype(AM, /mob/living)) //VOREStation Add
 		var/mob/living/M = AM
 		M.slip("the foam", 6)
 
@@ -108,7 +117,7 @@
 			F.amount += amount
 			return
 
-		F = PoolOrNew(/obj/effect/effect/foam, list(location, metal))
+		F = new /obj/effect/effect/foam(location, metal)
 		F.amount = amount
 
 		if(!metal) // don't carry other chemicals if a metal foam
@@ -130,6 +139,7 @@
 	anchored = 1
 	name = "foamed metal"
 	desc = "A lightweight foamed metal wall."
+	can_atmos_pass = ATMOS_PASS_NO
 	var/metal = 1 // 1 = aluminum, 2 = iron
 
 /obj/structure/foamedmetal/New()
@@ -139,7 +149,7 @@
 /obj/structure/foamedmetal/Destroy()
 	density = 0
 	update_nearby_tiles(1)
-	..()
+	return ..()
 
 /obj/structure/foamedmetal/proc/updateicon()
 	if(metal == 1)
@@ -150,8 +160,10 @@
 /obj/structure/foamedmetal/ex_act(severity)
 	qdel(src)
 
-/obj/structure/foamedmetal/bullet_act()
-	if(metal == 1 || prob(50))
+/obj/structure/foamedmetal/bullet_act(var/obj/item/projectile/P)
+	if(istype(P, /obj/item/projectile/test))
+		return
+	else if(metal == 1 || prob(50))
 		qdel(src)
 
 /obj/structure/foamedmetal/attack_hand(var/mob/user)
@@ -159,7 +171,7 @@
 		user.visible_message("<span class='warning'>[user] smashes through the foamed metal.</span>", "<span class='notice'>You smash through the metal foam wall.</span>")
 		qdel(src)
 	else
-		user << "<span class='notice'>You hit the metal foam but bounce off it.</span>"
+		to_chat(user, "<span class='notice'>You hit the metal foam but bounce off it.</span>")
 	return
 
 /obj/structure/foamedmetal/attackby(var/obj/item/I, var/mob/user)
@@ -175,9 +187,4 @@
 		user.visible_message("<span class='warning'>[user] smashes through the foamed metal.</span>", "<span class='notice'>You smash through the foamed metal with \the [I].</span>")
 		qdel(src)
 	else
-		user << "<span class='notice'>You hit the metal foam to no effect.</span>"
-
-/obj/structure/foamedmetal/CanPass(atom/movable/mover, turf/target, height=1.5, air_group = 0)
-	if(air_group)
-		return 0
-	return !density
+		to_chat(user, "<span class='notice'>You hit the metal foam to no effect.</span>")

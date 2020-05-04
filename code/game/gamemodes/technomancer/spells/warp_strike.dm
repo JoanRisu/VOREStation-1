@@ -16,13 +16,15 @@
 
 /obj/item/weapon/spell/warp_strike/New()
 	..()
-	sparks = PoolOrNew(/datum/effect/effect/system/spark_spread)
+	sparks = new /datum/effect/effect/system/spark_spread()
 	sparks.set_up(5, 0, src)
 	sparks.attach(loc)
 
 /obj/item/weapon/spell/warp_strike/on_ranged_cast(atom/hit_atom, mob/user)
 	var/turf/T = get_turf(hit_atom)
 	if(T)
+		if(!within_range(T))
+			return
 		//First, we handle who to teleport to.
 		user.setClickCooldown(5)
 		var/mob/living/chosen_target = targeting_assist(T,5)		//The person who's about to get attacked.
@@ -49,7 +51,7 @@
 		var/new_dir = get_dir(user, chosen_target)
 		user.dir = new_dir
 		sparks.start()
-		owner.adjust_instability(12)
+		adjust_instability(12)
 
 		//Finally, we handle striking the victim with whatever's in the user's offhand.
 		var/obj/item/I = user.get_inactive_hand()
@@ -62,7 +64,7 @@
 		if(I)
 
 			if(is_path_in_list(I.type, blacklisted_items))
-				user << "<span class='danger'>You can't use \the [I] while warping!</span>"
+				to_chat(user, "<span class='danger'>You can't use \the [I] while warping!</span>")
 				return
 
 			if(istype(I, /obj/item/weapon))
@@ -74,4 +76,5 @@
 				I.afterattack(chosen_target, user)
 		else
 			chosen_target.attack_hand(user)
+		log_and_message_admins("has warp striked [chosen_target].")
 

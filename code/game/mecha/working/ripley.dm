@@ -3,11 +3,14 @@
 	name = "APLU \"Ripley\""
 	icon_state = "ripley"
 	initial_icon = "ripley"
-	step_in = 6
+	step_in = 5 // vorestation edit, was 6 but that's PAINFULLY slow
+	step_energy_drain = 5 // vorestation edit because 10 drained a significant chunk of its cell before you even got out the airlock
 	max_temperature = 20000
 	health = 200
+	maxhealth = 200
 	wreckage = /obj/effect/decal/mecha_wreckage/ripley
 	cargo_capacity = 10
+	var/obj/item/weapon/mining_scanner/orescanner // vorestation addition
 
 /obj/mecha/working/ripley/Destroy()
 	for(var/atom/movable/A in src.cargo)
@@ -20,7 +23,7 @@
 	..()
 
 /obj/mecha/working/ripley/firefighter
-	desc = "Standart APLU chassis was refitted with additional thermal protection and cistern."
+	desc = "Standard APLU chassis was refitted with additional thermal protection and cistern."
 	name = "APLU \"Firefighter\""
 	icon_state = "firefighter"
 	initial_icon = "firefighter"
@@ -29,20 +32,31 @@
 	lights_power = 8
 	damage_absorption = list("fire"=0.5,"bullet"=0.8,"bomb"=0.5)
 	wreckage = /obj/effect/decal/mecha_wreckage/ripley/firefighter
+	max_hull_equip = 2
+	max_weapon_equip = 0
+	max_utility_equip = 2
+	max_universal_equip = 1
+	max_special_equip = 1
 
 /obj/mecha/working/ripley/deathripley
 	desc = "OH SHIT IT'S THE DEATHSQUAD WE'RE ALL GONNA DIE"
 	name = "DEATH-RIPLEY"
 	icon_state = "deathripley"
+	initial_icon = "deathripley"
 	step_in = 2
 	opacity=0
 	lights_power = 60
 	wreckage = /obj/effect/decal/mecha_wreckage/ripley/deathripley
 	step_energy_drain = 0
+	max_hull_equip = 1
+	max_weapon_equip = 1
+	max_utility_equip = 3
+	max_universal_equip = 1
+	max_special_equip = 1
 
-/obj/mecha/working/ripley/deathripley/New()
+/obj/mecha/working/ripley/deathripley/Initialize()
 	..()
-	var/obj/item/mecha_parts/mecha_equipment/ME = new /obj/item/mecha_parts/mecha_equipment/tool/safety_clamp
+	var/obj/item/mecha_parts/mecha_equipment/ME = new /obj/item/mecha_parts/mecha_equipment/tool/hydraulic_clamp/safety
 	ME.attach(src)
 	return
 
@@ -50,7 +64,7 @@
 	desc = "An old, dusty mining ripley."
 	name = "APLU \"Miner\""
 
-/obj/mecha/working/ripley/mining/New()
+/obj/mecha/working/ripley/mining/Initialize()
 	..()
 	//Attach drill
 	if(prob(25)) //Possible diamond drill... Feeling lucky?
@@ -66,4 +80,20 @@
 	for(var/obj/item/mecha_parts/mecha_tracking/B in src.contents)//Deletes the beacon so it can't be found easily
 		qdel (B)
 
+
+// VORESTATION EDIT BEGIN
+
+/obj/mecha/working/ripley/New()
+	..()
+	orescanner = new /obj/item/weapon/mining_scanner
+
+/obj/mecha/working/ripley/verb/detect_ore()
+	set category = "Exosuit Interface"
+	set name = "Detect Ores"
+	set src = usr.loc
+	set popup_menu = 0
+
+	orescanner.attack_self(usr)
+
+// VORESTATION EDIT END
 

@@ -9,12 +9,16 @@ var/list/ventcrawl_machinery = list(
 	/obj/item/device/radio/borg,
 	/obj/item/weapon/holder,
 	/obj/machinery/camera,
-	/mob/living/simple_animal/borer,
+	/obj/belly,
+	/obj/screen
 	)
+	//VOREStation Edit : added /obj/belly, to this list, travis is complaining about this in his indentation check
+	//mob/living/simple_mob/borer, //VORESTATION AI TEMPORARY REMOVAL REPLACE BACK IN LIST WHEN RESOLVED //VOREStation Edit
 
 /mob/living/var/list/icon/pipes_shown = list()
 /mob/living/var/last_played_vent
 /mob/living/var/is_ventcrawling = 0
+/mob/living/var/prepping_to_ventcrawl = 0
 /mob/var/next_play_vent = 0
 
 /mob/living/proc/can_ventcrawl()
@@ -34,20 +38,29 @@ var/list/ventcrawl_machinery = list(
 	if(is_ventcrawling && istype(loc, /obj/machinery/atmospherics)) //attach us back into the pipes
 		remove_ventcrawl()
 		add_ventcrawl(loc)
+		client.screen += global_hud.centermarker
 
-/mob/living/carbon/slime/can_ventcrawl()
-	if(Victim)
+/mob/living/simple_mob/slime/xenobio/can_ventcrawl()
+	if(victim)
 		to_chat(src, "<span class='warning'>You cannot ventcrawl while feeding.</span>")
 		return FALSE
 	. = ..()
 
-/mob/living/proc/is_allowed_vent_crawl_item(var/obj/item/carried_item)
+/mob/living/proc/is_allowed_vent_crawl_item(var/obj/carried_item)
+	//Ability master easy test for allowed (cheaper than istype)
 	if(carried_item == ability_master)
 		return 1
-	for(var/type in can_enter_vent_with)
-		if(istype(carried_item, can_enter_vent_with))
-			return get_inventory_slot(carried_item) == 0
-	return 0
+
+	//Try to find it in our allowed list (istype includes subtypes)
+	var/listed = FALSE
+	for(var/test_type in can_enter_vent_with)
+		if(istype(carried_item,test_type))
+			listed = TRUE
+			break
+
+	//Only allow it if it's "IN" the mob, not equipped on/being held
+	if(listed && !get_inventory_slot(carried_item))
+		return 1
 
 /mob/living/carbon/is_allowed_vent_crawl_item(var/obj/item/carried_item)
 	if(carried_item in internal_organs)
@@ -56,11 +69,6 @@ var/list/ventcrawl_machinery = list(
 
 /mob/living/carbon/human/is_allowed_vent_crawl_item(var/obj/item/carried_item)
 	if(carried_item in organs)
-		return 1
-	return ..()
-
-/mob/living/simple_animal/spiderbot/is_allowed_vent_crawl_item(var/obj/item/carried_item)
-	if(carried_item == held_item)
 		return 1
 	return ..()
 
@@ -81,7 +89,7 @@ var/list/ventcrawl_machinery = list(
 	var/atom/pipe
 	var/list/pipes = list()
 	for(var/obj/machinery/atmospherics/unary/U in range(1))
-		if(is_type_in_list(U,ventcrawl_machinery) && Adjacent(U))
+		if(is_type_in_list(U,ventcrawl_machinery) && Adjacent(U) && !U.welded)
 			pipes |= U
 	if(!pipes || !pipes.len)
 		to_chat(src, "There are no pipes that you can ventcrawl into within range!")
@@ -99,7 +107,7 @@ var/list/ventcrawl_machinery = list(
 /mob/living/var/ventcrawl_layer = 3
 
 /mob/living/proc/handle_ventcrawl(var/atom/clicked_on)
-	if(!can_ventcrawl())
+	if(!can_ventcrawl() || prepping_to_ventcrawl)
 		return
 
 	var/obj/machinery/atmospherics/unary/vent_found
@@ -145,6 +153,10 @@ var/list/ventcrawl_machinery = list(
 					if(HAZARD_HIGH_PRESSURE to INFINITY)
 						to_chat(src, "<span class='danger'>You feel a roaring wind pushing you away from the vent!</span>")
 
+			fade_towards(vent_found,45)
+			prepping_to_ventcrawl = 1
+			spawn(50)
+				prepping_to_ventcrawl = 0
 			if(!do_after(src, 45, vent_found, 1, 1))
 				return
 			if(!can_ventcrawl())
@@ -170,9 +182,12 @@ var/list/ventcrawl_machinery = list(
 	for(var/datum/pipeline/pipeline in network.line_members)
 		for(var/obj/machinery/atmospherics/A in (pipeline.members || pipeline.edges))
 			if(!A.pipe_image)
-				A.pipe_image = image(A, A.loc, layer = 20, dir = A.dir)
+				A.pipe_image = image(A, A.loc, dir = A.dir)
+				A.pipe_image.plane = PLANE_LIGHTING_ABOVE
 			pipes_shown += A.pipe_image
 			client.images += A.pipe_image
+	if(client)
+		client.screen += global_hud.centermarker
 
 /mob/living/proc/remove_ventcrawl()
 	is_ventcrawling = 0
@@ -180,6 +195,7 @@ var/list/ventcrawl_machinery = list(
 	if(client)
 		for(var/image/current_image in pipes_shown)
 			client.images -= current_image
+		client.screen -= global_hud.centermarker
 		client.eye = src
 
 	pipes_shown.len = 0

@@ -10,7 +10,7 @@
 	desc = "Injects biological organisms that are inserted with the contents of an inserted beaker at the command of a remote computer."
 	density = 1
 	anchored = 1
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	icon = 'icons/obj/biogenerator.dmi'
 	icon_state = "biogen-work"
 	var/mob/living/occupant
@@ -48,11 +48,11 @@
 
 /obj/machinery/xenobio2/manualinjector/proc/move_into_injector(var/mob/user,var/mob/living/victim)
 	if(src.occupant)
-		user << "<span class='danger'>The injector is full, empty it first!</span>"
+		to_chat(user, "<span class='danger'>The injector is full, empty it first!</span>")
 		return
 
-	if(!(istype(victim, /mob/living/simple_animal/xeno)) && !emagged)
-		user << "<span class='danger'>This is not a suitable subject for the injector!</span>"
+	if(!(istype(victim, /mob/living/simple_mob/xeno)) && !emagged)
+		to_chat(user, "<span class='danger'>This is not a suitable subject for the injector!</span>")
 		return
 
 	user.visible_message("<span class='danger'>[user] starts to put [victim] into the injector!</span>")
@@ -85,7 +85,7 @@
 	if(!occupant)
 		return
 	if(isxeno(occupant))
-		var/mob/living/simple_animal/xeno/X = occupant
+		var/mob/living/simple_mob/xeno/X = occupant
 		beaker.reagents.trans_to_holder(X.reagents, computer.transfer_amount, 1, 0)
 	else
 		beaker.reagents.trans_to_mob(occupant, computer.transfer_amount)
@@ -93,11 +93,11 @@
 /obj/machinery/xenobio2/manualinjector/attackby(var/obj/item/W, var/mob/user)
 
 	//Let's try to deconstruct first.
-	if(istype(W, /obj/item/weapon/screwdriver))
+	if(W.is_screwdriver())
 		default_deconstruction_screwdriver(user, W)
 		return
 
-	if(istype(W, /obj/item/weapon/crowbar) && !occupant)
+	if(W.is_crowbar() && !occupant)
 		default_deconstruction_crowbar(user, W)
 		return
 
@@ -116,14 +116,14 @@
 				var/obj/machinery/computer/xenobio2/C = P.connectable
 				computer = C
 				C.injector = src
-				user << "<span class='warning'> You link the [src] to the [P.connectable]!</span>"
+				to_chat(user, "<span class='warning'> You link the [src] to the [P.connectable]!</span>")
 		else
-			user << "<span class='warning'> You store the [src] in the [P]'s buffer!</span>"
+			to_chat(user, "<span class='warning'> You store the [src] in the [P]'s buffer!</span>")
 			P.connectable = src
 		return
 
 	if(panel_open)
-		user << "<span class='warning'>Close the panel first!</span>"
+		to_chat(user, "<span class='warning'>Close the panel first!</span>")
 
 	var/obj/item/weapon/grab/G = W
 
@@ -131,7 +131,7 @@
 		return ..()
 
 	if(G.state < 2)
-		user << "<span class='danger'>You need a better grip to do that!</span>"
+		to_chat(user, "<span class='danger'>You need a better grip to do that!</span>")
 		return
 
 	move_into_injector(user,G.affecting)

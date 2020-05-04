@@ -5,7 +5,7 @@ var/datum/uplink/uplink = new()
 	var/list/datum/uplink_item/items
 	var/list/datum/uplink_category/categories
 
-/datum/uplink/New()
+/datum/uplink/New(var/type)
 	items_assoc = list()
 	items = init_subtypes(/datum/uplink_item)
 	categories = init_subtypes(/datum/uplink_category)
@@ -38,7 +38,8 @@ var/datum/uplink/uplink = new()
 
 /datum/uplink_item/New()
 	..()
-	antag_roles = list()
+	if(!antag_roles)
+		antag_roles = list()
 
 
 
@@ -85,8 +86,9 @@ var/datum/uplink/uplink = new()
 
 	for(var/antag_role in antag_roles)
 		var/datum/antagonist/antag = all_antag_types[antag_role]
-		if(antag.is_antagonist(U.uplink_owner))
-			return 1
+		if(!isnull(antag))
+			if(antag.is_antagonist(U.uplink_owner))
+				return 1
 	return 0
 
 /datum/uplink_item/proc/cost(var/telecrystals, obj/item/device/uplink/U)
@@ -144,7 +146,7 @@ datum/uplink_item/dd_SortValue()
 
 /datum/uplink_item/item/log_icon()
 	var/obj/I = path
-	return "\icon[I]"
+	return "[bicon(I)]"
 
 /********************************
 *                           	*
@@ -158,7 +160,37 @@ datum/uplink_item/dd_SortValue()
 	if(!default_abstract_uplink_icon)
 		default_abstract_uplink_icon = image('icons/obj/pda.dmi', "pda-syn")
 
-	return "\icon[default_abstract_uplink_icon]"
+	return "[bicon(default_abstract_uplink_icon)]"
+
+/*
+ * Crated goods.
+ */
+
+/datum/uplink_item/crated
+	var/crate_path = /obj/structure/largecrate
+	var/list/paths = list()	// List of paths to be spawned into the crate.
+
+/datum/uplink_item/crated/get_goods(var/obj/item/device/uplink/U, var/loc)
+	var/obj/L = new crate_path(get_turf(loc))
+
+	L.adjust_scale(rand(9, 12) / 10, rand(9, 12) / 10)	// Some variation in the crate / locker size.
+
+	for(var/path in paths)
+		var/obj/O = new path(L)
+		O.forceMove(L)
+
+	return L
+
+/datum/uplink_item/crated/description()
+	if(!desc)
+		// Fallback description
+		var/obj/temp = crate_path
+		desc = initial(temp.desc)
+	return ..()
+
+/datum/uplink_item/crated/log_icon()
+	var/obj/I = crate_path
+	return "\icon[I]"
 
 /****************
 * Support procs *

@@ -11,10 +11,11 @@
 	throwforce = 1.0
 	throw_speed = 1
 	throw_range = 2
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	var/access = list()
 	access = access_crate_cash
 	var/worth = 0
+	drop_sound = 'sound/items/drop/paper.ogg'
 
 /obj/item/weapon/spacecash/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(istype(W, /obj/item/weapon/spacecash))
@@ -29,7 +30,7 @@
 			h_user.drop_from_inventory(src)
 			h_user.drop_from_inventory(SC)
 			h_user.put_in_hands(SC)
-		user << "<span class='notice'>You combine the Thalers to a bundle of [SC.worth] Thalers.</span>"
+		to_chat(user, "<span class='notice'>You combine the Thalers to a bundle of [SC.worth] Thalers.</span>")
 		qdel(src)
 
 /obj/item/weapon/spacecash/update_icon()
@@ -78,7 +79,9 @@
 
 /obj/item/weapon/spacecash/attack_self()
 	var/amount = input(usr, "How many Thalers do you want to take? (0 to [src.worth])", "Take Money", 20) as num
-	amount = round(Clamp(amount, 0, src.worth))
+	if(!src || QDELETED(src))
+		return
+	amount = round(CLAMP(amount, 0, src.worth))
 
 	if(!amount)
 		return
@@ -145,15 +148,16 @@ proc/spawn_money(var/sum, spawnloc, mob/living/carbon/human/human_user as mob)
 	return
 
 /obj/item/weapon/spacecash/ewallet
-	name = "Charge card"
+	name = "charge card"
 	icon_state = "efundcard"
 	desc = "A card that holds an amount of money."
+	drop_sound = 'sound/items/drop/card.ogg'
 	var/owner_name = "" //So the ATM can set it so the EFTPOS can put a valid name on transactions.
 	attack_self() return  //Don't act
 	attackby()    return  //like actual
 	update_icon() return  //space cash
 
 /obj/item/weapon/spacecash/ewallet/examine(mob/user)
-	..(user)
-	if (!(user in view(2)) && user!=src.loc) return
-	user << "\blue Charge card's owner: [src.owner_name]. Thalers remaining: [src.worth]."
+	. = ..()
+	if(Adjacent(user))
+		. += "<span class='notice'>Charge card's owner: [src.owner_name]. Thalers remaining: [src.worth].</span>"

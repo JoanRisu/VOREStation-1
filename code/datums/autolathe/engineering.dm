@@ -58,6 +58,10 @@
 	name = "fax machine electronics"
 	path =/obj/item/weapon/circuitboard/fax
 
+/datum/category_item/autolathe/engineering/papershredder
+	name = "paper shredder electronics"
+	path =/obj/item/weapon/circuitboard/papershredder
+
 /datum/category_item/autolathe/engineering/microwave
 	name = "microwave electronics"
 	path =/obj/item/weapon/circuitboard/microwave
@@ -69,6 +73,10 @@
 /datum/category_item/autolathe/engineering/request
 	name = "request console electronics"
 	path =/obj/item/weapon/circuitboard/request
+
+/datum/category_item/autolathe/engineering/pipelayer
+	name = "pipe layer electronics"
+	path =/obj/item/weapon/circuitboard/pipelayer
 
 /datum/category_item/autolathe/engineering/motor
 	name = "motor"
@@ -85,6 +93,7 @@
 /datum/category_item/autolathe/engineering/rcd_ammo
 	name = "matter cartridge"
 	path =/obj/item/weapon/rcd_ammo
+	no_scale = TRUE //prevents material duplication exploits
 
 /datum/category_item/autolathe/engineering/rcd
 	name = "rapid construction device"

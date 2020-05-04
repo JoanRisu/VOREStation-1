@@ -2,29 +2,37 @@
 // parent class for pipes //
 ////////////////////////////
 obj/machinery/atmospherics/pipe/zpipe
-		icon = 'icons/obj/structures.dmi'
-		icon_state = "up"
+	icon = 'icons/obj/structures.dmi'
+	icon_state = "up"
 
-		name = "upwards pipe"
-		desc = "A pipe segment to connect upwards."
+	name = "upwards pipe"
+	desc = "A pipe segment to connect upwards."
 
-		volume = 70
+	volume = 70
 
-		dir = SOUTH
-		initialize_directions = SOUTH
+	dir = SOUTH
+	initialize_directions = SOUTH
 
-		var/minimum_temperature_difference = 300
-		var/thermal_conductivity = 0 //WALL_HEAT_TRANSFER_COEFFICIENT No
+	construction_type = /obj/item/pipe/directional
+	pipe_state = "cap"
 
-		var/maximum_pressure = 70*ONE_ATMOSPHERE
-		var/fatigue_pressure = 55*ONE_ATMOSPHERE
-		alert_pressure = 55*ONE_ATMOSPHERE
+	// node1 is the connection on the same Z
+	// node2 is the connection on the other Z
 
+	var/minimum_temperature_difference = 300
+	var/thermal_conductivity = 0 //WALL_HEAT_TRANSFER_COEFFICIENT No
 
-		level = 1
+	var/maximum_pressure = 70*ONE_ATMOSPHERE
+	var/fatigue_pressure = 55*ONE_ATMOSPHERE
+	alert_pressure = 55*ONE_ATMOSPHERE
 
-obj/machinery/atmospherics/pipe/zpipe/New()
+	level = 1
+
+/obj/machinery/atmospherics/pipe/zpipe/New()
 	..()
+	init_dir()
+
+/obj/machinery/atmospherics/pipe/zpipe/init_dir()
 	switch(dir)
 		if(SOUTH)
 			initialize_directions = SOUTH
@@ -48,7 +56,7 @@ obj/machinery/atmospherics/pipe/zpipe/New()
 		invisibility = i ? 101 : 0
 	update_icon()
 
-obj/machinery/atmospherics/pipe/up/process()
+obj/machinery/atmospherics/pipe/zpipe/process()
 	if(!parent) //This should cut back on the overhead calling build_network thousands of times per cycle
 		..()
 	else
@@ -78,22 +86,23 @@ obj/machinery/atmospherics/pipe/zpipe/proc/burst()
 	qdel(src) // NOT qdel.
 
 obj/machinery/atmospherics/pipe/zpipe/proc/normalize_dir()
-	if(dir==3)
-		set_dir(1)
-	else if(dir==12)
-		set_dir(4)
+	if(dir == (NORTH|SOUTH))
+		set_dir(NORTH)
+	else if(dir == (EAST|WEST))
+		set_dir(EAST)
 
 obj/machinery/atmospherics/pipe/zpipe/Destroy()
 	if(node1)
 		node1.disconnect(src)
 	if(node2)
 		node2.disconnect(src)
-	..()
+	. = ..()
 
 obj/machinery/atmospherics/pipe/zpipe/pipeline_expansion()
 	return list(node1, node2)
 
 obj/machinery/atmospherics/pipe/zpipe/update_icon()
+	color = pipe_color
 	return
 
 obj/machinery/atmospherics/pipe/zpipe/disconnect(obj/machinery/atmospherics/reference)
@@ -118,7 +127,7 @@ obj/machinery/atmospherics/pipe/zpipe/up
 		name = "upwards pipe"
 		desc = "A pipe segment to connect upwards."
 
-obj/machinery/atmospherics/pipe/zpipe/up/initialize()
+obj/machinery/atmospherics/pipe/zpipe/up/atmos_init()
 	normalize_dir()
 	var/node1_dir
 
@@ -128,22 +137,21 @@ obj/machinery/atmospherics/pipe/zpipe/up/initialize()
 				node1_dir = direction
 
 	for(var/obj/machinery/atmospherics/target in get_step(src,node1_dir))
-		if(target.initialize_directions & get_dir(target,src))
-			if (check_connect_types(target,src))
-				node1 = target
-				break
+		if(can_be_node(target, 1))
+			node1 = target
+			break
 
 	var/turf/above = GetAbove(src)
 	if(above)
 		for(var/obj/machinery/atmospherics/target in above)
-			if(target.initialize_directions && istype(target, /obj/machinery/atmospherics/pipe/zpipe/down))
-				if (check_connect_types(target,src))
+			if(istype(target, /obj/machinery/atmospherics/pipe/zpipe/down))
+				if (check_connectable(target) && target.check_connectable(src))
 					node2 = target
 					break
 
 
 	var/turf/T = src.loc			// hide if turf is not intact
-	hide(!T.is_plating())
+	if(level == 1 && !T.is_plating()) hide(1)	// but respect level
 
 ///////////////////////
 // and the down pipe //
@@ -156,7 +164,7 @@ obj/machinery/atmospherics/pipe/zpipe/down
 		name = "downwards pipe"
 		desc = "A pipe segment to connect downwards."
 
-obj/machinery/atmospherics/pipe/zpipe/down/initialize()
+obj/machinery/atmospherics/pipe/zpipe/down/atmos_init()
 	normalize_dir()
 	var/node1_dir
 
@@ -166,22 +174,21 @@ obj/machinery/atmospherics/pipe/zpipe/down/initialize()
 				node1_dir = direction
 
 	for(var/obj/machinery/atmospherics/target in get_step(src,node1_dir))
-		if(target.initialize_directions & get_dir(target,src))
-			if (check_connect_types(target,src))
-				node1 = target
-				break
+		if(can_be_node(target, 1))
+			node1 = target
+			break
 
 	var/turf/below = GetBelow(src)
 	if(below)
 		for(var/obj/machinery/atmospherics/target in below)
-			if(target.initialize_directions && istype(target, /obj/machinery/atmospherics/pipe/zpipe/up))
-				if (check_connect_types(target,src))
+			if(istype(target, /obj/machinery/atmospherics/pipe/zpipe/up))
+				if (check_connectable(target) && target.check_connectable(src))
 					node2 = target
 					break
 
 
 	var/turf/T = src.loc			// hide if turf is not intact
-	hide(!T.is_plating())
+	if(level == 1 && !T.is_plating()) hide(1)	// but respect level
 
 ///////////////////////
 // supply/scrubbers  //
@@ -192,7 +199,8 @@ obj/machinery/atmospherics/pipe/zpipe/up/scrubbers
 	name = "upwards scrubbers pipe"
 	desc = "A scrubbers pipe segment to connect upwards."
 	connect_types = CONNECT_TYPE_SCRUBBER
-	layer = 2.38
+	piping_layer = PIPING_LAYER_SCRUBBER
+	layer = PIPES_SCRUBBER_LAYER
 	icon_connect_type = "-scrubbers"
 	color = PIPE_COLOR_RED
 
@@ -201,16 +209,38 @@ obj/machinery/atmospherics/pipe/zpipe/up/supply
 	name = "upwards supply pipe"
 	desc = "A supply pipe segment to connect upwards."
 	connect_types = CONNECT_TYPE_SUPPLY
-	layer = 2.39
+	piping_layer = PIPING_LAYER_SUPPLY
+	layer = PIPES_SUPPLY_LAYER
 	icon_connect_type = "-supply"
 	color = PIPE_COLOR_BLUE
+
+obj/machinery/atmospherics/pipe/zpipe/up/fuel
+	icon_state = "up-fuel"
+	name = "upwards fuel pipe"
+	desc = "A fuel pipe segment to connect upwards."
+	connect_types = CONNECT_TYPE_FUEL
+	piping_layer = PIPING_LAYER_FUEL
+	layer = PIPES_FUEL_LAYER
+	icon_connect_type = "-fuel"
+	color = PIPE_COLOR_YELLOW
+
+obj/machinery/atmospherics/pipe/zpipe/up/aux
+	icon_state = "up-aux"
+	name = "upwards aux pipe"
+	desc = "A aux pipe segment to connect upwards."
+	connect_types = CONNECT_TYPE_AUX
+	piping_layer = PIPING_LAYER_AUX
+	layer = PIPES_AUX_LAYER
+	icon_connect_type = "-aux"
+	color = PIPE_COLOR_CYAN
 
 obj/machinery/atmospherics/pipe/zpipe/down/scrubbers
 	icon_state = "down-scrubbers"
 	name = "downwards scrubbers pipe"
 	desc = "A scrubbers pipe segment to connect downwards."
 	connect_types = CONNECT_TYPE_SCRUBBER
-	layer = 2.38
+	piping_layer = PIPING_LAYER_SCRUBBER
+	layer = PIPES_SCRUBBER_LAYER
 	icon_connect_type = "-scrubbers"
 	color = PIPE_COLOR_RED
 
@@ -219,6 +249,27 @@ obj/machinery/atmospherics/pipe/zpipe/down/supply
 	name = "downwards supply pipe"
 	desc = "A supply pipe segment to connect downwards."
 	connect_types = CONNECT_TYPE_SUPPLY
-	layer = 2.39
+	piping_layer = PIPING_LAYER_SUPPLY
+	layer = PIPES_SUPPLY_LAYER
 	icon_connect_type = "-supply"
 	color = PIPE_COLOR_BLUE
+
+obj/machinery/atmospherics/pipe/zpipe/down/fuel
+	icon_state = "down-fuel"
+	name = "downwards fuel pipe"
+	desc = "A fuel pipe segment to connect downwards."
+	connect_types = CONNECT_TYPE_FUEL
+	piping_layer = PIPING_LAYER_FUEL
+	layer = PIPES_FUEL_LAYER
+	icon_connect_type = "-fuel"
+	color = PIPE_COLOR_YELLOW
+
+obj/machinery/atmospherics/pipe/zpipe/down/aux
+	icon_state = "down-aux"
+	name = "upwards aux pipe"
+	desc = "A aux pipe segment to connect upwards."
+	connect_types = CONNECT_TYPE_AUX
+	piping_layer = PIPING_LAYER_AUX
+	layer = PIPES_AUX_LAYER
+	icon_connect_type = "-aux"
+	color = PIPE_COLOR_CYAN

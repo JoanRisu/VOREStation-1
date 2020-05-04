@@ -9,10 +9,15 @@
 	item_cost = 5
 	path = /obj/item/device/binoculars
 
-/datum/uplink_item/item/tools/toolbox
+/datum/uplink_item/item/tools/toolbox // Leaving the basic as an option since powertools are loud.
 	name = "Fully Loaded Toolbox"
-	item_cost = 10
+	item_cost = 5
 	path = /obj/item/weapon/storage/toolbox/syndicate
+
+/datum/uplink_item/item/tools/powertoolbox
+	name = "Fully Loaded Powertool Box"
+	item_cost = 10
+	path = /obj/item/weapon/storage/toolbox/syndicate/powertools
 
 /datum/uplink_item/item/tools/clerical
 	name = "Morphic Clerical Kit"
@@ -48,6 +53,12 @@
 	name = "Black Ammunition Duffle Bag"
 	path = /obj/item/weapon/storage/backpack/dufflebag/syndie/ammo
 
+/datum/uplink_item/item/tools/shield_diffuser
+	name = "Handheld Shield Diffuser"
+	desc = "A small device used to disrupt energy barriers, and allow passage through them."
+	item_cost = 16
+	path = /obj/item/weapon/shield_diffuser
+
 /datum/uplink_item/item/tools/space_suit
 	name = "Space Suit"
 	item_cost = 15
@@ -58,11 +69,6 @@
 	item_cost = 15
 	path = /obj/item/device/encryptionkey/binary
 
-/datum/uplink_item/item/tools/packagebomb
-	name = "Package Bomb (Small)"
-	item_cost = 20
-	path = /obj/item/weapon/storage/box/syndie_kit/demolitions
-
 /datum/uplink_item/item/tools/hacking_tool
 	name = "Door Hacking Tool"
 	item_cost = 20
@@ -71,15 +77,41 @@
 			When in hacking mode this device will grant full access to any standard airlock within 20 to 40 seconds. \
 			This device will also be able to immediately access the last 6 to 8 hacked airlocks."
 
+/datum/uplink_item/item/tools/ai_detector
+	name = "Anti-Surveillance Tool"
+	item_cost = 20
+	path = /obj/item/device/multitool/ai_detector
+	desc = "This functions like a normal multitool, but includes an integrated camera network sensor that will warn the holder if they are being \
+	watched, by changing color and beeping.  It is able to detect both AI visual surveillance and security camera utilization from terminals, and \
+	will give different warnings by beeping and changing colors based on what it detects.  Only the holder can hear the warnings."
+
+/datum/uplink_item/item/tools/radio_jammer
+	name = "Subspace Jammer"
+	item_cost = 25
+	path = /obj/item/device/radio_jammer
+	desc = "A device which is capable of disrupting subspace communications, preventing the use of headsets, PDAs, and communicators within \
+	a radius of seven meters.  It runs off weapon cells, which can be replaced as needed.  One cell will last for approximately ten minutes."
+
 /datum/uplink_item/item/tools/emag
 	name = "Cryptographic Sequencer"
 	item_cost = 30
 	path = /obj/item/weapon/card/emag
 
+/datum/uplink_item/item/tools/graviton
+	name = "Graviton Goggles"
+	desc = "An obvious, if useful pair of advanced imaging goggles that allow you to see objects and turfs through walls."
+	item_cost = 15
+	path = /obj/item/clothing/glasses/graviton
+
 /datum/uplink_item/item/tools/thermal
 	name = "Thermal Imaging Glasses"
 	item_cost = 30
 	path = /obj/item/clothing/glasses/thermal/syndi
+
+/datum/uplink_item/item/tools/packagebomb
+	name = "Package Bomb (Small)"
+	item_cost = 30
+	path = /obj/item/weapon/storage/box/syndie_kit/demolitions
 
 /datum/uplink_item/item/tools/powersink
 	name = "Powersink (DANGER!)"
@@ -88,13 +120,18 @@
 
 /datum/uplink_item/item/tools/packagebomb/large
 	name = "Package Bomb (Large)"
-	item_cost = 40
+	item_cost = 60
 	path = /obj/item/weapon/storage/box/syndie_kit/demolitions_heavy
+
+/datum/uplink_item/item/tools/integratedcircuitprinter
+	name = "Integrated Circuit Printer (Upgraded)"
+	item_cost = 10
+	path = /obj/item/device/integrated_circuit_printer/upgraded
 
 /*
 /datum/uplink_item/item/tools/packagebomb/huge
 	name = "Package Bomb (Huge)
-	item_cost = 60
+	item_cost = 100
 	path = /obj/item/weapon/storage/box/syndie_kit/demolitions_super_heavy
 */
 

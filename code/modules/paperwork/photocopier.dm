@@ -1,11 +1,12 @@
 /obj/machinery/photocopier
 	name = "photocopier"
+	desc = "Copy all your important papers here!"
 	icon = 'icons/obj/library.dmi'
 	icon_state = "bigscanner"
 	var/insert_anim = "bigscanner1"
 	anchored = 1
 	density = 1
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 30
 	active_power_usage = 200
 	power_channel = EQUIP
@@ -16,12 +17,18 @@
 	var/maxcopies = 10	//how many copies can be copied at once- idea shamelessly stolen from bs12's copier!
 
 /obj/machinery/photocopier/New()
+	..()
 	component_parts = list()
 	component_parts += new /obj/item/weapon/stock_parts/scanning_module(src)
 	component_parts += new /obj/item/weapon/stock_parts/motor(src)
 	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
 	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
 	RefreshParts()
+
+/obj/machinery/photocopier/examine(mob/user as mob)
+	. = ..()
+	if(Adjacent(user))
+		. += "The screen shows there's [toner ? "[toner]" : "no"] toner left in the printer."
 
 /obj/machinery/photocopier/attack_ai(mob/user as mob)
 	return attack_hand(user)
@@ -49,7 +56,7 @@
 	else
 		data["isSilicon"] = null
 
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		ui = new(user, src, ui_key, "photocopier.tmpl", src.name, 300, 250)
 		ui.set_initial_data(data)
@@ -66,16 +73,20 @@
 				break
 
 			if (istype(copyitem, /obj/item/weapon/paper))
+				playsound(loc, "sound/machines/copier.ogg", 100, 1)
+				sleep(11)
 				copy(copyitem)
-				sleep(15)
 			else if (istype(copyitem, /obj/item/weapon/photo))
+				playsound(loc, "sound/machines/copier.ogg", 100, 1)
+				sleep(11)
 				photocopy(copyitem)
-				sleep(15)
 			else if (istype(copyitem, /obj/item/weapon/paper_bundle))
+				sleep(11)
+				playsound(loc, "sound/machines/copier.ogg", 100, 1)
 				var/obj/item/weapon/paper_bundle/B = bundlecopy(copyitem)
-				sleep(15*B.pages.len)
+				sleep(11*B.pages.len)
 			else
-				usr << "<span class='warning'>\The [copyitem] can't be copied by \the [src].</span>"
+				to_chat(usr, "<span class='warning'>\The [copyitem] can't be copied by \the [src].</span>")
 				break
 
 			use_power(active_power_usage)
@@ -83,7 +94,7 @@
 		if(copyitem)
 			copyitem.loc = usr.loc
 			usr.put_in_hands(copyitem)
-			usr << "<span class='notice'>You take \the [copyitem] out of \the [src].</span>"
+			to_chat(usr, "<span class='notice'>You take \the [copyitem] out of \the [src].</span>")
 			copyitem = null
 	else if(href_list["min"])
 		if(copies > 1)
@@ -113,7 +124,7 @@
 			toner -= 5
 			sleep(15)
 
-	nanomanager.update_uis(src)
+	SSnanoui.update_uis(src)
 
 /obj/machinery/photocopier/attackby(obj/item/O as obj, mob/user as mob)
 	if(istype(O, /obj/item/weapon/paper) || istype(O, /obj/item/weapon/photo) || istype(O, /obj/item/weapon/paper_bundle))
@@ -121,23 +132,24 @@
 			user.drop_item()
 			copyitem = O
 			O.loc = src
-			user << "<span class='notice'>You insert \the [O] into \the [src].</span>"
+			to_chat(user, "<span class='notice'>You insert \the [O] into \the [src].</span>")
+			playsound(loc, "sound/machines/click.ogg", 100, 1)
 			flick(insert_anim, src)
 		else
-			user << "<span class='notice'>There is already something in \the [src].</span>"
+			to_chat(user, "<span class='notice'>There is already something in \the [src].</span>")
 	else if(istype(O, /obj/item/device/toner))
 		if(toner <= 10) //allow replacing when low toner is affecting the print darkness
 			user.drop_item()
-			user << "<span class='notice'>You insert the toner cartridge into \the [src].</span>"
+			to_chat(user, "<span class='notice'>You insert the toner cartridge into \the [src].</span>")
 			var/obj/item/device/toner/T = O
 			toner += T.toner_amount
 			qdel(O)
 		else
-			user << "<span class='notice'>This cartridge is not yet ready for replacement! Use up the rest of the toner.</span>"
-	else if(istype(O, /obj/item/weapon/wrench))
-		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
+			to_chat(user, "<span class='notice'>This cartridge is not yet ready for replacement! Use up the rest of the toner.</span>")
+	else if(O.is_wrench())
+		playsound(loc, O.usesound, 50, 1)
 		anchored = !anchored
-		user << "<span class='notice'>You [anchored ? "wrench" : "unwrench"] \the [src].</span>"
+		to_chat(user, "<span class='notice'>You [anchored ? "wrench" : "unwrench"] \the [src].</span>")
 
 	else if(default_deconstruction_screwdriver(user, O))
 		return

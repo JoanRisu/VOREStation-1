@@ -140,7 +140,7 @@
 
 /obj/item/weapon/paper/listneningpost/year2559/july
 	name = "\improper July 2559 Report"
-	info = {"UNSC ships have been spotted in the area. Admiral Glenn Pink is on board. This guy went MIA almost
+	info = {"USDF ships have been spotted in the area. Admiral Glenn Pink is on board. This guy went MIA almost
 			ten years ago, and now he's back? Why? Apparently he's got some kind of connection with V.O.R.E.'s
 			captain Ace. Sounds like they're gearing up to go kick some Nazi ass. It's like a bad action movie
 			plot. I don't know who this Admiral Pink is, but I guess Ace has at least a couple friends in high
@@ -149,7 +149,7 @@
 /obj/item/weapon/paper/listneningpost/year2559/august
 	name = "\improper August 2559 Report"
 	info = {"So, the reason Admiral Pink showed up in the last report was because these Space Nazis hijacked
-			one of his vessels; the UNSC Jormungandr or something. Well, the crazy bastards took it back.
+			one of his vessels; the USDF Jormungandr or something. Well, the crazy bastards took it back.
 			We overheard radio transmissions about some kind of huge mech, bigger than anything we've ever seen
 			in regard to exosuits. Tore up the crew bad. Killed a few, wounded all of them, but after-action
 			report says someone got close and slapped C4 on its leg while its anti-tank cannon was firing.
@@ -210,16 +210,12 @@
 	info = {"A loud, painfully high pitched SSTV signal came across global comms. It seems to be a distress signal
 			of some kind. To what, I have no idea. Efforts to trace the signal's origin have fallen inconclusive."}
 
-/* // Template
-/obj/item/weapon/paper/listneningpost/year2560/january
-	name = "\improper January 2560 Report"
-	info = {""}
-*/
-
-/* Odd report: "I wonder how much longer they will accept my empty reports. They will cancel the case soon without
-results. When the pickup comes, I will tell them I have lost faith in our cause, and beg them to consider a diplomatic
-solution. How many nuclear teams have been dispatched with those nukes? I must try and prevent more from ever being sent.
-If they will not listen to reason, I will detonate the warehouse myself. Maybe some day in the immediate future, space
-will be peaceful, though I don't intend to live to see it. And that is why I write this down- it is my sacrifice that
-stabilised your worlds, traveller. Spare a thought for me, and please attempt to prevent nuclear proliferation, should
-it ever rear it's ugly head again. -Donk Co. Operative #451"*/
+/obj/item/weapon/paper/listneningpost/oddreport
+	name = "\improper Odd Report"
+	info = {"I wonder how much longer they will accept my empty reports. They will cancel the case soon without
+	results. When the pickup comes, I will tell them I have lost faith in our cause, and beg them to consider a diplomatic
+	solution. How many nuclear teams have been dispatched with those nukes? I must try and prevent more from ever being sent.
+	If they will not listen to reason, I will detonate the warehouse myself. Maybe some day in the immediate future, space
+	will be peaceful, though I don't intend to live to see it. And that is why I write this down- it is my sacrifice that
+	stabilised your worlds, traveller. Spare a thought for me, and please attempt to prevent nuclear proliferation, should
+	it ever rear it's ugly head again. -Donk Co. Operative #451"}

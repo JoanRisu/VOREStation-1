@@ -37,8 +37,8 @@
 
 	var/mob/living/carbon/human/H = holder.wearer
 
-	H << "<font color='blue'><b>You are now invisible to normal detection.</b></font>"
-	H.invisibility = INVISIBILITY_LEVEL_TWO
+	to_chat(H, "<font color='blue'><b>You are now nearly invisible to normal detection.</b></font>")
+	H.alpha = 5
 
 	anim(get_turf(H), H, 'icons/effects/effects.dmi', "electricity",null,20,null)
 
@@ -51,11 +51,11 @@
 
 	var/mob/living/carbon/human/H = holder.wearer
 
-	H << "<span class='danger'>You are now visible.</span>"
-	H.invisibility = 0
+	to_chat(H, "<span class='danger'>You are now visible.</span>")
 
 	anim(get_turf(H), H,'icons/mob/mob.dmi',,"uncloak",,H.dir)
 	anim(get_turf(H), H, 'icons/effects/effects.dmi', "electricity",null,20,null)
+	H.alpha = initial(H.alpha)
 
 	for(var/mob/O in oviewers(H))
 		O.show_message("[H.name] appears from thin air!",1)
@@ -100,7 +100,7 @@
 	var/mob/living/carbon/human/H = holder.wearer
 
 	if(!istype(H.loc, /turf))
-		H << "<span class='warning'>You cannot teleport out of your current location.</span>"
+		to_chat(H, "<span class='warning'>You cannot teleport out of your current location.</span>")
 		return 0
 
 	var/turf/T
@@ -110,23 +110,23 @@
 		T = get_teleport_loc(get_turf(H), H, 6, 1, 1, 1)
 
 	if(!T)
-		H << "<span class='warning'>No valid teleport target found.</span>"
+		to_chat(H, "<span class='warning'>No valid teleport target found.</span>")
 		return 0
 
 	if(T.density)
-		H << "<span class='warning'>You cannot teleport into solid walls.</span>"
+		to_chat(H, "<span class='warning'>You cannot teleport into solid walls.</span>")
 		return 0
 
-	if(T.z in config.admin_levels)
-		H << "<span class='warning'>You cannot use your teleporter on this Z-level.</span>"
+	if(T.z in using_map.admin_levels)
+		to_chat(H, "<span class='warning'>You cannot use your teleporter on this Z-level.</span>")
 		return 0
 
 	if(T.contains_dense_objects())
-		H << "<span class='warning'>You cannot teleport to a location with solid objects.</span>"
+		to_chat(H, "<span class='warning'>You cannot teleport to a location with solid objects.</span>")
 		return 0
 
 	if(T.z != H.z || get_dist(T, get_turf(H)) > world.view)
-		H << "<span class='warning'>You cannot teleport to such a distant object.</span>"
+		to_chat(H, "<span class='warning'>You cannot teleport to such a distant object.</span>")
 		return 0
 
 	if(!..()) return 0
@@ -161,6 +161,7 @@
 
 	if(holder && holder.wearer)
 		if(..(target) && target)
+			set_dir(get_dir(src,target))  // Face the target
 			holder.wearer.Beam(target,"n_beam",,10)
 		return 1
 	return 0
@@ -168,7 +169,7 @@
 /obj/item/rig_module/self_destruct
 
 	name = "self-destruct module"
-	desc = "Oh my God, Station Administrator. A bomb."
+	desc = "Oh my God, a bomb!"
 	icon_state = "deadman"
 	usable = 1
 	active = 1
@@ -183,15 +184,13 @@
 
 /obj/item/rig_module/self_destruct/New()
 	..()
-	src.smoke = PoolOrNew(/datum/effect/effect/system/smoke_spread/bad)
+	src.smoke = new /datum/effect/effect/system/smoke_spread/bad()
 	src.smoke.attach(src)
 
 /obj/item/rig_module/self_destruct/Destroy()
 	qdel(smoke)
 	smoke = null
 	return ..()
-
-
 
 /obj/item/rig_module/self_destruct/activate()
 	return

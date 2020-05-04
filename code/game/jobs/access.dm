@@ -14,8 +14,12 @@
 		return check_access(id)
 	return 0
 
-/obj/item/proc/GetAccess()
-	return list()
+///obj/item/proc/GetAccess()
+//	return list()
+
+/atom/movable/proc/GetAccess()
+	var/obj/item/weapon/card/id/id = GetIdCard()
+	return id ? id.GetAccess() : list()
 
 /obj/proc/GetID()
 	return null
@@ -174,6 +178,10 @@
 /proc/get_centcom_access_desc(A)
 	return get_access_desc(A)
 
+/proc/get_access_by_id(id)
+	var/list/AS = get_all_access_datums_by_id()
+	return AS[id]
+
 /proc/get_all_jobs()
 	var/list/all_jobs = list()
 	var/list/all_datums = typesof(/datum/job)
@@ -197,7 +205,7 @@
 		"Emergency Response Team",
 		"Emergency Response Team Leader")
 
-/mob/proc/GetIdCard()
+/atom/movable/proc/GetIdCard()
 	return null
 
 /mob/living/bot/GetIdCard()

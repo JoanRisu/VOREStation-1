@@ -1,9 +1,8 @@
 /obj/item/organ/internal/cell
 	name = "microbattery"
 	desc = "A small, powerful cell for use in fully prosthetic bodies."
-	icon = 'icons/obj/power.dmi'
 	icon_state = "scell"
-	organ_tag = "cell"
+	organ_tag = O_CELL
 	parent_organ = BP_TORSO
 	vital = 1
 
@@ -15,18 +14,22 @@
 	..()
 	// This is very ghetto way of rebooting an IPC. TODO better way.
 	if(owner && owner.stat == DEAD)
-		owner.stat = 0
+		owner.set_stat(CONSCIOUS)
 		owner.visible_message("<span class='danger'>\The [owner] twitches visibly!</span>")
 
+/obj/item/organ/internal/cell/emp_act(severity)
+	..()
+	owner.adjust_nutrition(-rand(10 / severity, 50 / severity))
 
 // Used for an MMI or posibrain being installed into a human.
 /obj/item/organ/internal/mmi_holder
 	name = "brain interface"
-	organ_tag = "brain"
+	organ_tag = O_BRAIN
 	parent_organ = BP_HEAD
 	vital = 1
 	var/brain_type = /obj/item/device/mmi
 	var/obj/item/device/mmi/stored_mmi
+	robotic = ORGAN_ASSISTED
 
 /obj/item/organ/internal/mmi_holder/Destroy()
 	if(stored_mmi && (stored_mmi.loc == src))
@@ -62,8 +65,10 @@
 	stored_mmi.icon_state = "mmi_full"
 	icon_state = stored_mmi.icon_state
 
+	stored_mmi.brainmob.languages = owner.languages
+
 	if(owner && owner.stat == DEAD)
-		owner.stat = 0
+		owner.set_stat(CONSCIOUS)
 		dead_mob_list -= owner
 		living_mob_list |= owner
 		owner.visible_message("<span class='danger'>\The [owner] twitches visibly!</span>")
@@ -82,21 +87,30 @@
 		holder_mob.drop_from_inventory(src)
 	qdel(src)
 
+/obj/item/organ/internal/mmi_holder/emp_act(severity)
+	// ..() // VOREStation Edit - Don't take damage
+	owner.adjustToxLoss(rand(6/severity, 12/severity))
+
 /obj/item/organ/internal/mmi_holder/posibrain
 	name = "positronic brain interface"
 	brain_type = /obj/item/device/mmi/digital/posibrain
-
+	robotic = ORGAN_ROBOT
 
 /obj/item/organ/internal/mmi_holder/posibrain/update_from_mmi()
 	..()
 	stored_mmi.icon_state = "posibrain-occupied"
 	icon_state = stored_mmi.icon_state
 
+	stored_mmi.brainmob.languages = owner.languages
+
 /obj/item/organ/internal/mmi_holder/robot
 	name = "digital brain interface"
 	brain_type = /obj/item/device/mmi/digital/robot
+	robotic = ORGAN_ROBOT
 
 /obj/item/organ/internal/mmi_holder/robot/update_from_mmi()
 	..()
 	stored_mmi.icon_state = "mainboard"
 	icon_state = stored_mmi.icon_state
+
+	stored_mmi.brainmob.languages = owner.languages

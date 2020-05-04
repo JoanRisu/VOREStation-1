@@ -1,5 +1,5 @@
 /obj/item/clothing/suit/armor
-	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/weapon/gun/projectile,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight/maglight)
+	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/weapon/gun/projectile,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight/maglight,/obj/item/clothing/head/helmet)
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO
 	item_flags = THICKMATERIAL
 
@@ -13,10 +13,10 @@
 	if(..()) //This will only run if no other problems occured when equiping.
 		for(var/obj/item/clothing/I in list(H.gloves, H.shoes))
 			if(I && (src.body_parts_covered & ARMS && I.body_parts_covered & ARMS) )
-				H << "<span class='warning'>You can't wear \the [src] with \the [I], it's in the way.</span>"
+				to_chat(H, "<span class='warning'>You can't wear \the [src] with \the [I], it's in the way.</span>")
 				return 0
 			if(I && (src.body_parts_covered & LEGS && I.body_parts_covered & LEGS) )
-				H << "<span class='warning'>You can't wear \the [src] with \the [I], it's in the way.</span>"
+				to_chat(H, "<span class='warning'>You can't wear \the [src] with \the [I], it's in the way.</span>")
 				return 0
 		return 1
 
@@ -45,7 +45,6 @@
 	icon_state = "riot"
 	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
 	armor = list(melee = 80, bullet = 10, laser = 10, energy = 10, bomb = 0, bio = 0, rad = 0)
-	flags_inv = HIDEJUMPSUIT
 	siemens_coefficient = 0.5
 
 /obj/item/clothing/suit/armor/riot/alt
@@ -58,6 +57,7 @@
 	icon_state = "bulletproof"
 	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
 	blood_overlay_type = "armor"
+	slowdown = 0.5
 	armor = list(melee = 10, bullet = 80, laser = 10, energy = 10, bomb = 0, bio = 0, rad = 0)
 	siemens_coefficient = 0.7
 
@@ -71,12 +71,16 @@
 	desc = "A vest that excels in protecting the wearer against energy projectiles."
 	icon_state = "armor_reflec"
 	blood_overlay_type = "armor"
+	slowdown = 0.5
 	armor = list(melee = 10, bullet = 10, laser = 80, energy = 50, bomb = 0, bio = 0, rad = 0)
 	siemens_coefficient = 0.1
 
 /obj/item/clothing/suit/armor/laserproof/handle_shield(mob/user, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
 	if(istype(damage_source, /obj/item/projectile/energy) || istype(damage_source, /obj/item/projectile/beam))
 		var/obj/item/projectile/P = damage_source
+
+		if(P.reflected) // Can't reflect twice
+			return ..()
 
 		var/reflectchance = 40 - round(damage/3)
 		if(!(def_zone in list(BP_TORSO, BP_GROIN)))
@@ -100,6 +104,7 @@
 	desc = "A vest that protects the wearer from several common types of weaponry."
 	icon_state = "combat"
 	blood_overlay_type = "armor"
+	slowdown = 0.5
 	armor = list(melee = 50, bullet = 50, laser = 50, energy = 30, bomb = 30, bio = 0, rad = 0)
 	siemens_coefficient = 0.6
 
@@ -109,6 +114,7 @@
 	icon_state = "swatarmor"
 	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS
+	flags_inv = HIDETIE|HIDEHOLSTER
 	slowdown = 1
 	armor = list(melee = 60, bullet = 60, laser = 60, energy = 40, bomb = 40, bio = 0, rad = 0)
 	siemens_coefficient = 0.7
@@ -120,15 +126,17 @@
 	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.01
-	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL
+	item_flags = THICKMATERIAL
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS
-	allowed = list(/obj/item/weapon/gun,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency_oxygen)
+	allowed = list(/obj/item/weapon/gun,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency/oxygen,/obj/item/clothing/head/helmet)
 	slowdown = 1
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 	armor = list(melee = 80, bullet = 60, laser = 50,energy = 25, bomb = 50, bio = 100, rad = 100)
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETIE|HIDEHOLSTER
 	cold_protection = UPPER_TORSO | LOWER_TORSO | LEGS | FEET | ARMS | HANDS
 	min_cold_protection_temperature = SPACE_SUIT_MIN_COLD_PROTECTION_TEMPERATURE
+	min_pressure_protection = 0 * ONE_ATMOSPHERE
+	max_pressure_protection = 20* ONE_ATMOSPHERE
 	siemens_coefficient = 0.6
 
 
@@ -190,10 +198,10 @@
 /obj/item/clothing/suit/armor/reactive/attack_self(mob/user as mob)
 	active = !( active )
 	if (active)
-		user << "\blue The reactive armor is now active."
+		to_chat(user, "<font color='blue'>The reactive armor is now active.</font>")
 		icon_state = "reactive"
 	else
-		user << "\blue The reactive armor is now inactive."
+		to_chat(user, "<font color='blue'>The reactive armor is now inactive.</font>")
 		icon_state = "reactiveoff"
 		add_fingerprint(user)
 	return
@@ -202,6 +210,36 @@
 	active = 0
 	icon_state = "reactiveoff"
 	..()
+
+// Alien armor has a chance to completely block attacks.
+/obj/item/clothing/suit/armor/alien
+	name = "alien enhancement vest"
+	desc = "It's a strange piece of what appears to be armor. It looks very light and agile. Strangely enough it seems to have been designed for a humanoid shape."
+	description_info = "It has a 20% chance to completely nullify an incoming attack, and the wearer moves slightly faster."
+	icon_state = "alien_speed"
+	blood_overlay_type = "armor"
+	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
+	slowdown = -1
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO
+	armor = list(melee = 50, bullet = 50, laser = 50, energy = 50, bomb = 50, bio = 0, rad = 40)
+	siemens_coefficient = 0.4
+	var/block_chance = 20
+
+/obj/item/clothing/suit/armor/alien/tank
+	name = "alien protection suit"
+	desc = "It's really resilient yet lightweight, so it's probably meant to be armor. Strangely enough it seems to have been designed for a humanoid shape."
+	description_info = "It has a 40% chance to completely nullify an incoming attack."
+	icon_state = "alien_tank"
+	slowdown = 0
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS
+	armor = list(melee = 70, bullet = 70, laser = 70, energy = 70, bomb = 70, bio = 0, rad = 40)
+	block_chance = 40
+
+/obj/item/clothing/suit/armor/alien/handle_shield(mob/user, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
+	if(prob(block_chance))
+		user.visible_message("<span class='danger'>\The [src] completely absorbs [attack_text]!</span>")
+		return TRUE
+	return FALSE
 
 //Non-hardsuit ERT armor.
 /obj/item/clothing/suit/armor/vest/ert
@@ -232,7 +270,7 @@
 //Medical
 /obj/item/clothing/suit/armor/vest/ert/medical
 	name = "emergency response team medical armor"
-	desc = "A set of armor worn by medical members of the Emergency Response Team. Has red and white highlights."
+	desc = "A set of armor worn by medical members of the Emergency Response Team. Has blue and white highlights."
 	icon_state = "ertarmor_med"
 
 //New Vests
@@ -242,7 +280,7 @@
 	icon_state = "kvest"
 	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
 	armor = list(melee = 40, bullet = 30, laser = 30, energy = 10, bomb = 10, bio = 0, rad = 0)
-	allowed = list(/obj/item/weapon/gun,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight/maglight)
+	allowed = list(/obj/item/weapon/gun,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight/maglight,/obj/item/clothing/head/helmet)
 
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO
 	item_flags = THICKMATERIAL
@@ -274,6 +312,7 @@
 	desc = "An armoured jacket with silver rank pips and livery."
 	icon_state = "warden_jacket"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|LEGS
+	flags_inv = HIDETIE|HIDEHOLSTER
 
 /obj/item/clothing/suit/storage/vest/wardencoat/alt
 	name = "Warden's jacket"
@@ -294,17 +333,14 @@
 	desc = "A greatcoat enhanced with a special alloy for some protection and style."
 	icon_state = "hos"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|LEGS
-	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
-	flags_inv = HIDEJUMPSUIT
-	siemens_coefficient = 0.6
+	flags_inv = HIDETIE|HIDEHOLSTER
 
 //Jensen cosplay gear
 /obj/item/clothing/suit/storage/vest/hoscoat/jensen
 	name = "armored trenchcoat"
 	desc = "A trenchcoat augmented with a special alloy for some protection and style."
 	icon_state = "hostrench"
-	flags_inv = 0
-	siemens_coefficient = 0.6
+	flags_inv = HIDEHOLSTER
 
 /obj/item/clothing/suit/storage/vest/pcrc
 	name = "PCRC armor vest"
@@ -313,6 +349,44 @@
 	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
 	icon_badge = "pcrcvest_badge"
 	icon_nobadge = "pcrcvest_nobadge"
+
+/obj/item/clothing/suit/storage/vest/solgov
+	name = "\improper Solar Confederate Government armored vest"
+	desc = "A synthetic armor vest. This one is marked with the crest of the Solar Confederate Government."
+	icon_state = "solvest"
+	armor = list(melee = 40, bullet = 40, laser = 40, energy = 25, bomb = 30, bio = 0, rad = 0)
+
+/obj/item/clothing/suit/storage/vest/solgov/heavy
+	name = "\improper Solar Confederate Government heavy armored vest"
+	desc = "A synthetic armor vest with PEACEKEEPER printed in distinctive blue lettering on the chest. This one has added webbing and ballistic plates."
+	icon_state = "solwebvest"
+
+/obj/item/clothing/suit/storage/vest/solgov/security
+	name = "master at arms heavy armored vest"
+	desc = "A synthetic armor vest with MASTER AT ARMS printed in silver lettering on the chest. This one has added webbing and ballistic plates."
+	icon_state = "secwebvest"
+
+/obj/item/clothing/suit/storage/vest/solgov/command
+	name = "command heavy armored vest"
+	desc = "A synthetic armor vest with Solar Confederate Government printed in detailed gold lettering on the chest. This one has added webbing and ballistic plates."
+	icon_state = "comwebvest"
+
+/obj/item/clothing/suit/storage/vest/tactical //crack at a more balanced mid-range armor, minor improvements over standard vests, with the idea "modern" combat armor would focus on energy weapon protection.
+	name = "tactical armored vest"
+	desc = "A heavy armored vest in a fetching tan. It is surprisingly flexible and light, even with the extra webbing and advanced ceramic plates."
+	icon_state = "tacwebvest"
+	item_state = "tacwebvest"
+	armor = list(melee = 40, bullet = 40, laser = 60, energy = 35, bomb = 30, bio = 0, rad = 0)
+
+/obj/item/clothing/suit/storage/vest/heavy/flexitac //a reskin of the above to have a matching armor set
+	name = "tactical light vest"
+	desc = "An armored vest made from advanced flexible ceramic plates. It's surprisingly mobile, if a little unfashionable."
+	icon_state = "flexitac"
+	item_state = "flexitac"
+	armor = list(melee = 40, bullet = 40, laser = 60, energy = 35, bomb = 30, bio = 0, rad = 0)
+	cold_protection = UPPER_TORSO|LOWER_TORSO
+	min_cold_protection_temperature = T0C - 20
+	slowdown = 0.3
 
 /obj/item/clothing/suit/storage/vest/detective
 	name = "detective armor vest"
@@ -324,9 +398,10 @@
 
 /obj/item/clothing/suit/storage/vest/press
 	name = "press vest"
+	icon_state = "pvest"
 	desc = "A simple kevlar plate carrier. This one has the word 'Press' embroidered on patches on the back and front."
 	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
-	allowed = list(/obj/item/device/flashlight,/obj/item/device/taperecorder,/obj/item/weapon/pen,/obj/item/device/camera_film,/obj/item/device/camera)
+	allowed = list(/obj/item/device/flashlight,/obj/item/device/taperecorder,/obj/item/weapon/pen,/obj/item/device/camera_film,/obj/item/device/camera,/obj/item/clothing/head/helmet)
 
 /obj/item/clothing/suit/storage/vest/heavy
 	name = "heavy armor vest"
@@ -334,7 +409,7 @@
 	icon_state = "webvest"
 	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
 	armor = list(melee = 50, bullet = 40, laser = 40, energy = 25, bomb = 25, bio = 0, rad = 0)
-	slowdown = 1
+	slowdown = 0.5
 
 /obj/item/clothing/suit/storage/vest/heavy/officer
 	name = "officer heavy armor vest"
@@ -380,29 +455,29 @@
 //All of the armor below is mostly unused
 
 /obj/item/clothing/suit/armor/centcomm
-	name = "Cent. Com. armor"
+	name = "CentCom armor"
 	desc = "A suit that protects against some damage."
 	icon_state = "centcom"
 	item_state_slots = list(slot_r_hand_str = "armor", slot_l_hand_str = "armor")
-	w_class = 4//bulky item
+	w_class = ITEMSIZE_LARGE//bulky item
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency_oxygen)
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency/oxygen,/obj/item/clothing/head/helmet)
+	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETIE|HIDEHOLSTER
 	cold_protection = UPPER_TORSO | LOWER_TORSO | LEGS | FEET | ARMS | HANDS
 	min_cold_protection_temperature = SPACE_SUIT_MIN_COLD_PROTECTION_TEMPERATURE
 	siemens_coefficient = 0
 
 /obj/item/clothing/suit/armor/heavy
 	name = "heavy armor"
-	desc = "A heavily armored suit that protects against moderate damage."
+	desc = "An old military-grade suit of armor. Incredibly robust against brute force damage! However, it offers little protection from energy-based weapons, which, combined with its bulk, makes it woefully obsolete."
 	icon_state = "heavy"
 	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
-	armor = list(melee = 60, bullet = 60, laser = 60, energy = 40, bomb = 40, bio = 0, rad = 0)
-	w_class = 4//bulky item
+	armor = list(melee = 90, bullet = 80, laser = 10, energy = 10, bomb = 80, bio = 0, rad = 0)
+	w_class = ITEMSIZE_HUGE // Very bulky, very heavy.
 	gas_transfer_coefficient = 0.90
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	slowdown = 3
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+	slowdown = 5 // If you're a tank you're gonna move like a tank.
+	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETIE|HIDEHOLSTER
 	siemens_coefficient = 0
 
 /obj/item/clothing/suit/armor/tdome
@@ -421,3 +496,104 @@
 	desc = "Pukish armor."
 	icon_state = "tdgreen"
 	siemens_coefficient = 1
+
+//Modular plate carriers
+/obj/item/clothing/suit/armor/pcarrier
+	name = "plate carrier"
+	desc = "A lightweight black plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon = 'icons/obj/clothing/modular_armor.dmi'
+	item_icons = list(slot_wear_suit_str = 'icons/mob/modular_armor.dmi')
+	icon_state = "pcarrier"
+	valid_accessory_slots = (\
+		ACCESSORY_SLOT_INSIGNIA\
+		|ACCESSORY_SLOT_ARMOR_C\
+		|ACCESSORY_SLOT_ARMOR_A\
+		|ACCESSORY_SLOT_ARMOR_L\
+		|ACCESSORY_SLOT_ARMOR_S\
+		|ACCESSORY_SLOT_ARMOR_M)
+	restricted_accessory_slots = (\
+		ACCESSORY_SLOT_INSIGNIA\
+		|ACCESSORY_SLOT_ARMOR_C\
+		|ACCESSORY_SLOT_ARMOR_A\
+		|ACCESSORY_SLOT_ARMOR_L\
+		|ACCESSORY_SLOT_ARMOR_S\
+		|ACCESSORY_SLOT_ARMOR_M)
+	blood_overlay_type = "armor"
+
+/obj/item/clothing/suit/armor/pcarrier/mob_can_equip(var/mob/living/carbon/human/H, slot)
+	if(..()) //This will only run if no other problems occured when equiping.
+		if(H.gloves)
+			if(H.gloves.body_parts_covered & ARMS)
+				for(var/obj/item/clothing/accessory/A in src)
+					if(A.body_parts_covered & ARMS)
+						to_chat(H, "<span class='warning'>You can't wear \the [A] with \the [H.gloves], they're in the way.</span>")
+						return 0
+		if(H.shoes)
+			if(H.shoes.body_parts_covered & LEGS)
+				for(var/obj/item/clothing/accessory/A in src)
+					if(A.body_parts_covered & LEGS)
+						to_chat(H, "<span class='warning'>You can't wear \the [A] with \the [H.shoes], they're in the way.</span>")
+						return 0
+		return 1
+
+/obj/item/clothing/suit/armor/pcarrier/light
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate)
+
+/obj/item/clothing/suit/armor/pcarrier/light/sol
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate, /obj/item/clothing/accessory/armor/tag)
+
+/obj/item/clothing/suit/armor/pcarrier/light/nt
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate, /obj/item/clothing/accessory/armor/tag/nt)
+
+/obj/item/clothing/suit/armor/pcarrier/medium
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches)
+
+/obj/item/clothing/suit/armor/pcarrier/medium/sol
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches, /obj/item/clothing/accessory/armor/tag)
+
+/obj/item/clothing/suit/armor/pcarrier/medium/security
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches, /obj/item/clothing/accessory/armor/tag/sec)
+
+/obj/item/clothing/suit/armor/pcarrier/medium/command
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches, /obj/item/clothing/accessory/armor/tag/com)
+
+/obj/item/clothing/suit/armor/pcarrier/medium/nt
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches, /obj/item/clothing/accessory/armor/tag/nt)
+
+/obj/item/clothing/suit/armor/pcarrier/blue
+	name = "blue plate carrier"
+	desc = "A lightweight blue plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon_state = "pcarrier_blue"
+
+/obj/item/clothing/suit/armor/pcarrier/press
+	name = "light blue plate carrier"
+	desc = "A lightweight light blue plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon_state = "pcarrier_press"
+
+/obj/item/clothing/suit/armor/pcarrier/blue/sol
+	name = "peacekeeper plate carrier"
+	desc = "A lightweight plate carrier vest in SCG Peacekeeper colors. It can be equipped with armor plates, but provides no protection of its own."
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/medium, /obj/item/clothing/accessory/storage/pouches/blue, /obj/item/clothing/accessory/armor/armguards/blue, /obj/item/clothing/accessory/armor/tag)
+
+/obj/item/clothing/suit/armor/pcarrier/green
+	name = "green plate carrier"
+	desc = "A lightweight green plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon_state = "pcarrier_green"
+
+/obj/item/clothing/suit/armor/pcarrier/navy
+	name = "navy plate carrier"
+	desc = "A lightweight navy blue plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon_state = "pcarrier_navy"
+
+/obj/item/clothing/suit/armor/pcarrier/tan
+	name = "tan plate carrier"
+	desc = "A lightweight tan plate carrier vest. It can be equipped with armor plates, but provides no protection of its own."
+	icon_state = "pcarrier_tan"
+
+/obj/item/clothing/suit/armor/pcarrier/tan/tactical
+	name = "tactical plate carrier"
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/tactical, /obj/item/clothing/accessory/storage/pouches/large/tan)
+
+/obj/item/clothing/suit/armor/pcarrier/merc
+	starting_accessories = list(/obj/item/clothing/accessory/armor/armorplate/merc, /obj/item/clothing/accessory/armor/armguards/merc, /obj/item/clothing/accessory/armor/legguards/merc, /obj/item/clothing/accessory/storage/pouches/large)
+

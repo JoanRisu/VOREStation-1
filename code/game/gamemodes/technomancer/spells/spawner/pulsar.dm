@@ -11,40 +11,62 @@
 	icon_state = "radiance"
 	cast_methods = CAST_RANGED | CAST_THROW
 	aspect = ASPECT_EMP
-	spawner_type = /obj/effect/temporary_effect/pulsar
+	spawner_type = /obj/effect/temporary_effect/pulse/pulsar
 
 /obj/item/weapon/spell/spawner/pulsar/New()
 	..()
 	set_light(3, 2, l_color = "#2ECCFA")
 
 /obj/item/weapon/spell/spawner/pulsar/on_ranged_cast(atom/hit_atom, mob/user)
-	if(pay_energy(4000))
-		owner.adjust_instability(8)
+	if(within_range(hit_atom) && pay_energy(4000))
+		adjust_instability(8)
 		..()
 
 /obj/item/weapon/spell/spawner/pulsar/on_throw_cast(atom/hit_atom, mob/user)
-	empulse(hit_atom, 1, 1, log=1)
+	empulse(hit_atom, 1, 1, 1, 1, log=1)
 
-/obj/effect/temporary_effect/pulsar
-	name = "pulsar"
-	desc = "Not a real pulsar, but still emits loads of EMP."
-	icon = 'icons/effects/effects.dmi'
-	icon_state = "shield2"
-	time_to_die = null
-	invisibility = 0
-	new_light_range = 4
-	new_light_power = 5
-	new_light_color = "#2ECCFA"
+// Does something every so often. Deletes itself when pulses_remaining hits zero.
+/obj/effect/temporary_effect/pulse
 	var/pulses_remaining = 3
+	var/pulse_delay = 2 SECONDS
 
-/obj/effect/temporary_effect/pulsar/New()
+/obj/effect/temporary_effect/pulse/Initialize()
 	..()
+	return INITIALIZE_HINT_LATELOAD
+
+/obj/effect/temporary_effect/pulse/LateInitialize()
 	pulse_loop()
 
-/obj/effect/temporary_effect/pulsar/proc/pulse_loop()
+/obj/effect/temporary_effect/pulse/proc/pulse_loop()
+	set waitfor = FALSE
+	
 	while(pulses_remaining)
-		sleep(2 SECONDS)
-		empulse(src, heavy_range = 1, light_range = 2, log = 1)
+		sleep(pulse_delay)
+		on_pulse()
 		pulses_remaining--
 	qdel(src)
+
+// Override for specific effects.
+/obj/effect/temporary_effect/pulse/proc/on_pulse()
+
+
+
+/obj/effect/temporary_effect/pulse/pulsar
+	name = "pulsar"
+	desc = "Not a real pulsar, but still emits loads of EMP."
+	icon_state = "shield2"
+	time_to_die = null
+	light_range = 4
+	light_power = 5
+	light_color = "#2ECCFA"
+	pulses_remaining = 3
+
+/obj/effect/temporary_effect/pulse/pulsar/on_pulse()
+	empulse(src, 1, 1, 2, 2, log = 1)
+
+
+
+
+
+
 

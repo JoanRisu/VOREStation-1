@@ -5,11 +5,14 @@ var/list/holder_mob_icon_cache = list()
 	name = "holder"
 	desc = "You shouldn't ever see this."
 	icon = 'icons/obj/objects.dmi'
+	randpixel = 0
+	center_of_mass = null
 	slot_flags = SLOT_HEAD | SLOT_HOLSTER
 	show_messages = 1
 
 	sprite_sheets = list(
-		"Teshari" = 'icons/mob/species/seromi/head.dmi'
+		SPECIES_TESHARI = 'icons/mob/species/seromi/head.dmi',
+		SPECIES_VOX = 'icons/mob/species/vox/head.dmi'
 		)
 
 	origin_tech = null
@@ -22,11 +25,11 @@ var/list/holder_mob_icon_cache = list()
 
 /obj/item/weapon/holder/New()
 	..()
-	processing_objects.Add(src)
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/holder/Destroy()
-	processing_objects.Remove(src)
-	..()
+	STOP_PROCESSING(SSobj, src)
+	return ..()
 
 /obj/item/weapon/holder/process()
 	update_state()
@@ -38,10 +41,13 @@ var/list/holder_mob_icon_cache = list()
 		update_state()
 
 /obj/item/weapon/holder/proc/update_state()
-	if(istype(loc,/turf) || !(contents.len))
+	if(!(contents.len))
+		qdel(src)
+	else if(isturf(loc))
+		drop_items()
 		if(held_mob)
 			held_mob.forceMove(loc)
-		drop_items()
+			held_mob = null
 		qdel(src)
 
 /obj/item/weapon/holder/proc/drop_items()
@@ -82,8 +88,6 @@ var/list/holder_mob_icon_cache = list()
 			H.update_inv_l_hand()
 		else if(H.r_hand == src)
 			H.update_inv_r_hand()
-		else
-			H.regenerate_icons()
 
 //Mob specific holders.
 /obj/item/weapon/holder/diona
@@ -93,11 +97,37 @@ var/list/holder_mob_icon_cache = list()
 /obj/item/weapon/holder/drone
 	origin_tech = list(TECH_MAGNET = 3, TECH_ENGINEERING = 5)
 
+/obj/item/weapon/holder/drone/swarm
+	origin_tech = list(TECH_MAGNET = 6, TECH_ENGINEERING = 7, TECH_PRECURSOR = 2, TECH_ARCANE = 1)
+
+/obj/item/weapon/holder/pai
+	origin_tech = list(TECH_DATA = 2)
+
 /obj/item/weapon/holder/mouse
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 
 /obj/item/weapon/holder/borer
 	origin_tech = list(TECH_BIO = 6)
+
+/obj/item/weapon/holder/leech
+	color = "#003366"
+	origin_tech = list(TECH_BIO = 5, TECH_PHORON = 2)
+
+/obj/item/weapon/holder/fish
+	attack_verb = list("fished", "disrespected", "smacked", "smackereled")
+	hitsound = 'sound/effects/slime_squish.ogg'
+	slot_flags = SLOT_HOLSTER
+	origin_tech = list(TECH_BIO = 3)
+
+/obj/item/weapon/holder/fish/afterattack(var/atom/target, var/mob/living/user, proximity)
+	if(!target)
+		return
+	if(!proximity)
+		return
+	if(isliving(target))
+		var/mob/living/L = target
+		if(prob(10))
+			L.Stun(2)
 
 /obj/item/weapon/holder/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	for(var/mob/M in src.contents)
@@ -109,6 +139,8 @@ var/list/holder_mob_icon_cache = list()
 /mob/living/MouseDrop(var/atom/over_object)
 	var/mob/living/carbon/human/H = over_object
 	if(holder_type && issmall(src) && istype(H) && !H.lying && Adjacent(H) && (src.a_intent == I_HELP && H.a_intent == I_HELP)) //VOREStation Edit
+		if(istype(src, /mob/living/simple_mob/animal/passive/mouse)) //vorestation edit
+			return ..() //vorestation edit
 		if(!issmall(H) || !istype(src, /mob/living/carbon/human))
 			get_scooped(H, (usr == src))
 		return
@@ -130,14 +162,13 @@ var/list/holder_mob_icon_cache = list()
 	grabber.put_in_hands(H)
 
 	if(self_grab)
-		grabber << "<span class='notice'>\The [src] clambers onto you!</span>"
-		src << "<span class='notice'>You climb up onto \the [grabber]!</span>"
+		to_chat(grabber, "<span class='notice'>\The [src] clambers onto you!</span>")
+		to_chat(src, "<span class='notice'>You climb up onto \the [grabber]!</span>")
 		grabber.equip_to_slot_if_possible(H, slot_back, 0, 1)
 	else
-		grabber << "<span class='notice'>You scoop up \the [src]!</span>"
-		src << "<span class='notice'>\The [grabber] scoops you up!</span>"
+		to_chat(grabber, "<span class='notice'>You scoop up \the [src]!</span>")
+		to_chat(src, "<span class='notice'>\The [grabber] scoops you up!</span>")
 
-	grabber.status_flags |= PASSEMOTES
 	H.sync(src)
 	return H
 

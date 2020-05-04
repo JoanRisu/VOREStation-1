@@ -15,10 +15,11 @@
 
 	var/mob/living/carbon/T = changeling_sting(10,/mob/proc/changeling_silence_sting)
 	if(!T)	return 0
+	add_attack_logs(src,T,"Silence sting (changeling)")
 	var/duration = 30
 	if(src.mind.changeling.recursive_enhancement)
 		duration = duration + 10
-		src << "<span class='notice'>They will be unable to cry out in fear for a little longer.</span>"
+		to_chat(src, "<span class='notice'>They will be unable to cry out in fear for a little longer.</span>")
 	T.silent += duration
 	feedback_add_details("changeling_powers","SS")
 	return 1

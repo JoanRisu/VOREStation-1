@@ -5,11 +5,7 @@
 	if(!(Proj.damage_type == BRUTE || Proj.damage_type == BURN))
 		return
 
-	health -= Proj.damage
-
-	..()
-
-	if(locked && tamper_proof && health <= 0)
+	if(locked && tamper_proof && health <= Proj.damage)
 		if(tamper_proof == 2) // Mainly used for events to prevent any chance of opening the box improperly.
 			visible_message("<font color='red'><b>The anti-tamper mechanism of [src] triggers an explosion!</b></font>")
 			var/turf/T = get_turf(src.loc)
@@ -33,9 +29,11 @@
 				visible_message("<font color='green'><b>The anti-tamper mechanism of [src] fails!</b></font>")
 		return
 
-	if(health <= 0)
-		for(var/atom/movable/A as mob|obj in src)
-			A.loc = src.loc
-		qdel(src)
+	..()
 
 	return
+
+/obj/structure/closet/crate/medical/blood
+	icon_state = "blood"
+	icon_opened = "bloodopen"
+	icon_closed = "blood"

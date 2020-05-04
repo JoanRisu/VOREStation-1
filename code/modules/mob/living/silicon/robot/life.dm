@@ -11,9 +11,14 @@
 	clamp_values()
 	handle_regular_status_updates()
 	handle_actions()
+	handle_instability()
+	// For some reason borg Life() doesn't call ..()
+	handle_modifiers()
+	handle_light()
 
 	if(client)
 		handle_regular_hud_updates()
+		handle_vision()
 		update_items()
 	if (src.stat != DEAD) //still using power
 		use_power()
@@ -35,7 +40,7 @@
 
 /mob/living/silicon/robot/proc/use_power()
 	// Debug only
-	// world << "DEBUG: life.dm line 35: cyborg use_power() called at tick [controller_iteration]"
+	// to_world("DEBUG: life.dm line 35: cyborg use_power() called at tick [controller_iteration]")
 	used_power_this_tick = 0
 	for(var/V in components)
 		var/datum/robot_component/C = components[V]
@@ -55,7 +60,7 @@
 		src.has_power = 1
 	else
 		if (src.has_power)
-			src << "\red You are now running on emergency backup power."
+			to_chat(src, "<font color='red'>You are now running on emergency backup power.</font>")
 		src.has_power = 0
 		if(lights_on) // Light is on but there is no power!
 			lights_on = 0
@@ -75,15 +80,15 @@
 		Paralyse(3)
 		src.sleeping--
 
-	if(src.resting)
-		Weaken(5)
+	//if(src.resting) // VOREStation edit. Our borgos would rather not.
+	//	Weaken(5)
 
 	if(health < config.health_threshold_dead && src.stat != 2) //die only once
 		death()
 
 	if (src.stat != 2) //Alive.
 		if (src.paralysis || src.stunned || src.weakened || !src.has_power) //Stunned etc.
-			src.stat = 1
+			src.set_stat(UNCONSCIOUS)
 			if (src.stunned > 0)
 				AdjustStunned(-1)
 			if (src.weakened > 0)
@@ -95,18 +100,17 @@
 				src.blinded = 0
 
 		else	//Not stunned.
-			src.stat = 0
+			src.set_stat(CONSCIOUS)
 
-		confused = max(0, confused - 1)
+		AdjustConfused(-1)
 
-	else //Dead.
+	else //Dead or just unconscious.
 		src.blinded = 1
-		src.stat = 2
 
 	if (src.stuttering) src.stuttering--
 
 	if (src.eye_blind)
-		src.eye_blind--
+		src.AdjustBlinded(-1)
 		src.blinded = 1
 
 	if (src.ear_deaf > 0) src.ear_deaf--
@@ -147,7 +151,8 @@
 	return 1
 
 /mob/living/silicon/robot/handle_regular_hud_updates()
-
+	var/fullbright = FALSE
+	var/seemeson = FALSE
 	if (src.stat == 2 || (XRAY in mutations) || (src.sight_mode & BORGXRAY))
 		src.sight |= SEE_TURFS
 		src.sight |= SEE_MOBS
@@ -159,18 +164,29 @@
 		src.sight |= SEE_MOBS
 		src.see_in_dark = 8
 		see_invisible = SEE_INVISIBLE_MINIMUM
+		fullbright = TRUE
 	else if (src.sight_mode & BORGMESON)
 		src.sight |= SEE_TURFS
 		src.see_in_dark = 8
 		see_invisible = SEE_INVISIBLE_MINIMUM
+		fullbright = TRUE
+		seemeson = TRUE
 	else if (src.sight_mode & BORGMATERIAL)
 		src.sight |= SEE_OBJS
 		src.see_in_dark = 8
 		see_invisible = SEE_INVISIBLE_MINIMUM
+		fullbright = TRUE
 	else if (src.sight_mode & BORGTHERM)
 		src.sight |= SEE_MOBS
 		src.see_in_dark = 8
 		src.see_invisible = SEE_INVISIBLE_LEVEL_TWO
+		fullbright = TRUE
+	else if (!seedarkness)
+		src.sight &= ~SEE_MOBS
+		src.sight &= ~SEE_TURFS
+		src.sight &= ~SEE_OBJS
+		src.see_in_dark = 8
+		src.see_invisible = SEE_INVISIBLE_NOLIGHTING
 	else if (src.stat != 2)
 		src.sight &= ~SEE_MOBS
 		src.sight &= ~SEE_TURFS
@@ -178,18 +194,9 @@
 		src.see_in_dark = 8 			 // see_in_dark means you can FAINTLY see in the dark, humans have a range of 3 or so, tajaran have it at 8
 		src.see_invisible = SEE_INVISIBLE_LIVING // This is normal vision (25), setting it lower for normal vision means you don't "see" things like darkness since darkness
 							 // has a "invisible" value of 15
-
+	plane_holder.set_vis(VIS_FULLBRIGHT,fullbright)
+	plane_holder.set_vis(VIS_MESONS,seemeson)
 	..()
-
-	var/obj/item/borg/sight/hud/hud = (locate(/obj/item/borg/sight/hud) in src)
-	if(hud && hud.hud)
-		hud.hud.process_hud(src)
-	else
-		switch(src.sensor_mode)
-			if (SEC_HUD)
-				process_sec_hud(src,0)
-			if (MED_HUD)
-				process_med_hud(src,0)
 
 	if (src.healths)
 		if (src.stat != 2)
@@ -312,7 +319,7 @@
 		killswitch_time --
 		if(killswitch_time <= 0)
 			if(src.client)
-				src << "<span class='danger'>Killswitch Activated</span>"
+				to_chat(src, "<span class='danger'>Killswitch Activated</span>")
 			killswitch = 0
 			spawn(5)
 				gib()
@@ -323,20 +330,28 @@
 		weaponlock_time --
 		if(weaponlock_time <= 0)
 			if(src.client)
-				src << "<span class='danger'>Weapon Lock Timed Out!</span>"
+				to_chat(src, "<span class='danger'>Weapon Lock Timed Out!</span>")
 			weapon_lock = 0
 			weaponlock_time = 120
 
 /mob/living/silicon/robot/update_canmove()
-	if(paralysis || stunned || weakened || buckled || lockdown || !is_component_functioning("actuator")) canmove = 0
-	else canmove = 1
+	..() // Let's not reinvent the wheel.
+	if(lockdown || !is_component_functioning("actuator"))
+		canmove = FALSE
 	return canmove
 
 /mob/living/silicon/robot/update_fire()
-	overlays -= image("icon"='icons/mob/OnFire.dmi', "icon_state"="Standing")
+	overlays -= image("icon"='icons/mob/OnFire.dmi', "icon_state" = get_fire_icon_state())
 	if(on_fire)
-		overlays += image("icon"='icons/mob/OnFire.dmi', "icon_state"="Standing")
+		overlays += image("icon"='icons/mob/OnFire.dmi', "icon_state" = get_fire_icon_state())
 
 /mob/living/silicon/robot/fire_act()
 	if(!on_fire) //Silicons don't gain stacks from hotspots, but hotspots can ignite them
 		IgniteMob()
+
+/mob/living/silicon/robot/handle_light()
+	. = ..()
+	if(. == FALSE) // If no other light sources are on.
+		if(lights_on)
+			set_light(integrated_light_power, 1, "#FFFFFF")
+			return TRUE

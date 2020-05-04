@@ -2,15 +2,14 @@
 /obj/machinery/power/port_gen
 	name = "Placeholder Generator"	//seriously, don't use this. It can't be anchored without VV magic.
 	desc = "A portable generator for emergency backup power"
-	icon = 'icons/obj/power.dmi'
-	icon_state = "portgen0"
+	icon = 'icons/obj/power_vr.dmi' //VOREStation Edit
+	icon_state = "portgen0" //VOREStation Edit
 	density = 1
 	anchored = 0
-	use_power = 0
+	use_power = USE_POWER_OFF
 
 	var/active = 0
 	var/power_gen = 5000
-	var/open = 0
 	var/recent_fault = 0
 	var/power_output = 1
 
@@ -49,12 +48,12 @@
 		return
 
 /obj/machinery/power/port_gen/examine(mob/user)
-	if(!..(user,1 ))
-		return
-	if(active)
-		usr << "\blue The generator is on."
-	else
-		usr << "\blue The generator is off."
+	. = ..()
+	if(Adjacent(user)) //It literally has a light on the sprite, are you sure this is necessary?
+		if(active)
+			. += "<span class='notice'>The generator is on.</span>"
+		else
+			. += "<span class='notice'>The generator is off.</span>"
 
 /obj/machinery/power/port_gen/emp_act(severity)
 	var/duration = 6000 //ten minutes
@@ -63,9 +62,12 @@
 			stat &= BROKEN
 			if(prob(75)) explode()
 		if(2)
-			if(prob(25)) stat &= BROKEN
+			if(prob(50)) stat &= BROKEN
 			if(prob(10)) explode()
 		if(3)
+			if(prob(25)) stat &= BROKEN
+			duration = 300
+		if(4)
 			if(prob(10)) stat &= BROKEN
 			duration = 300
 
@@ -85,10 +87,9 @@
 /obj/machinery/power/port_gen/pacman
 	name = "\improper P.A.C.M.A.N.-type Portable Generator"
 	desc = "A power generator that runs on solid phoron sheets. Rated for 80 kW max safe output."
-
+	circuit = /obj/item/weapon/circuitboard/pacman
 	var/sheet_name = "Phoron Sheets"
 	var/sheet_path = /obj/item/stack/material/phoron
-	var/board_path = "/obj/item/weapon/circuitboard/pacman"
 
 	/*
 		These values were chosen so that the generator can run safely up to 80 kW
@@ -109,8 +110,8 @@
 	var/temperature = 0		//The current temperature
 	var/overheating = 0		//if this gets high enough the generator explodes
 
-/obj/machinery/power/port_gen/pacman/initialize()
-	..()
+/obj/machinery/power/port_gen/pacman/Initialize()
+	. = ..()
 	if(anchored)
 		connect_to_network()
 
@@ -119,14 +120,17 @@
 	component_parts = list()
 	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
 	component_parts += new /obj/item/weapon/stock_parts/micro_laser(src)
-	component_parts += new /obj/item/stack/cable_coil(src)
-	component_parts += new /obj/item/stack/cable_coil(src)
+	component_parts += new /obj/item/stack/cable_coil(src, 2)
 	component_parts += new /obj/item/weapon/stock_parts/capacitor(src)
-	component_parts += new board_path(src)
 	RefreshParts()
 
 /obj/machinery/power/port_gen/pacman/Destroy()
 	DropFuel()
+	return ..()
+
+/obj/machinery/power/port_gen/pacman/dismantle()
+	while ( sheets > 0 )
+		DropFuel()
 	return ..()
 
 /obj/machinery/power/port_gen/pacman/RefreshParts()
@@ -140,11 +144,13 @@
 	power_gen = round(initial(power_gen) * (max(2, temp_rating) / 2))
 
 /obj/machinery/power/port_gen/pacman/examine(mob/user)
-	..(user)
-	user << "\The [src] appears to be producing [power_gen*power_output] W."
-	user << "There [sheets == 1 ? "is" : "are"] [sheets] sheet\s left in the hopper."
-	if(IsBroken()) user << "<span class='warning'>\The [src] seems to have broken down.</span>"
-	if(overheating) user << "<span class='danger'>\The [src] is overheating!</span>"
+	. = ..()
+	. += "It appears to be producing [power_gen*power_output] W."
+	. += "There [sheets == 1 ? "is" : "are"] [sheets] sheet\s left in the hopper."
+	if(IsBroken())
+		. += "<span class='warning'>It seems to have broken down.</span>"
+	if(overheating)
+		. += "<span class='danger'>It is overheating!</span>"
 
 /obj/machinery/power/port_gen/pacman/HasFuel()
 	var/needed_sheets = power_output / time_per_sheet
@@ -259,44 +265,31 @@
 		var/obj/item/stack/addstack = O
 		var/amount = min((max_sheets - sheets), addstack.amount)
 		if(amount < 1)
-			user << "\blue The [src.name] is full!"
+			to_chat(user, "<span class='warning'>The [src.name] is full!</span>")
 			return
-		user << "\blue You add [amount] sheet\s to the [src.name]."
+		to_chat(user, "<span class='notice'>You add [amount] sheet\s to the [src.name].</span>")
 		sheets += amount
 		addstack.use(amount)
 		updateUsrDialog()
 		return
 	else if(!active)
-		if(istype(O, /obj/item/weapon/wrench))
-
+		if(O.is_wrench())
 			if(!anchored)
 				connect_to_network()
-				user << "\blue You secure the generator to the floor."
+				to_chat(user, "<span class='notice'>You secure the generator to the floor.</span>")
 			else
 				disconnect_from_network()
-				user << "\blue You unsecure the generator from the floor."
-
+				to_chat(user, "<span class='notice'>You unsecure the generator from the floor.</span>")
 			playsound(src.loc, 'sound/items/Deconstruct.ogg', 50, 1)
 			anchored = !anchored
-
-		else if(istype(O, /obj/item/weapon/screwdriver))
-			open = !open
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
-			if(open)
-				user << "\blue You open the access panel."
-			else
-				user << "\blue You close the access panel."
-		else if(istype(O, /obj/item/weapon/crowbar) && open)
-			var/obj/structure/frame/new_frame = new /obj/structure/frame(src.loc)
-			for(var/obj/item/I in component_parts)
-				I.loc = src.loc
-			while ( sheets > 0 )
-				DropFuel()
-
-			new_frame.frame_type = "machine"
-			new_frame.state = 2
-			new_frame.icon_state = "machine_1"
-			qdel(src)
+			return
+		else if(default_deconstruction_screwdriver(user, O))
+			return
+		else if(default_deconstruction_crowbar(user, O))
+			return
+		else if(default_part_replacement(user, O))
+			return
+	return ..()
 
 /obj/machinery/power/port_gen/pacman/attack_hand(mob/user as mob)
 	..()
@@ -334,7 +327,7 @@
 
 
 
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		ui = new(user, src, ui_key, "pacman.tmpl", src.name, 500, 560)
 		ui.set_initial_data(data)
@@ -347,7 +340,7 @@
 	if (get_dist(src, user) > 1 )
 		if (!istype(user, /mob/living/silicon/ai))
 			user.unset_machine()
-			user << browse(null, "window=port_gen")
+			user << browse(null, "window=port_gen"
 			return
 
 	user.set_machine(src)
@@ -379,11 +372,11 @@
 		if(href_list["action"] == "enable")
 			if(!active && HasFuel() && !IsBroken())
 				active = 1
-				icon_state = "portgen1"
+				icon_state = "[initial(icon_state)]on" //VOREStation Edit
 		if(href_list["action"] == "disable")
 			if (active)
 				active = 0
-				icon_state = "portgen0"
+				icon_state = initial(icon_state) //VOREStation Edit
 		if(href_list["action"] == "eject")
 			if(!active)
 				DropFuel()
@@ -401,22 +394,18 @@
 	sheet_path = /obj/item/stack/material/uranium
 	sheet_name = "Uranium Sheets"
 	time_per_sheet = 576 //same power output, but a 50 sheet stack will last 2 hours at max safe power
-	board_path = "/obj/item/weapon/circuitboard/pacman/super"
+	circuit = /obj/item/weapon/circuitboard/pacman/super
 
 /obj/machinery/power/port_gen/pacman/super/UseFuel()
 	//produces a tiny amount of radiation when in use
 	if (prob(2*power_output))
-		for (var/mob/living/L in range(src, 5))
-			L.apply_effect(1, IRRADIATE) //should amount to ~5 rads per minute at max safe power
+		SSradiation.radiate(src, 4)
 	..()
 
 /obj/machinery/power/port_gen/pacman/super/explode()
 	//a nice burst of radiation
 	var/rads = 50 + (sheets + sheet_left)*1.5
-	for (var/mob/living/L in range(src, 10))
-		//should really fall with the square of the distance, but that makes the rads value drop too fast
-		//I dunno, maybe physics works different when you live in 2D -- SM radiation also works like this, apparently
-		L.apply_effect(max(20, round(rads/get_dist(L,src))), IRRADIATE)
+	SSradiation.radiate(src, (max(20, rads)))
 
 	explosion(src.loc, 3, 3, 5, 3)
 	qdel(src)
@@ -436,7 +425,7 @@
 	time_per_sheet = 576
 	max_temperature = 800
 	temperature_gain = 90
-	board_path = "/obj/item/weapon/circuitboard/pacman/mrs"
+	circuit = /obj/item/weapon/circuitboard/pacman/mrs
 
 /obj/machinery/power/port_gen/pacman/mrs/explode()
 	//no special effects, but the explosion is pretty big (same as a supermatter shard).

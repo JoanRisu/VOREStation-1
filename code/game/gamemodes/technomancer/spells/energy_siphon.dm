@@ -4,6 +4,7 @@
 	Every second, electricity is stolen until the link is broken by the target moving too far away, or having no more energy left.  \
 	Can drain from powercells, microbatteries, and other Cores.  The beam created by the siphoning is harmful to touch."
 	enhancement_desc = "Rate of siphoning is doubled."
+	spell_power_desc = "Rate of siphoning is scaled up based on spell power."
 	cost = 100
 	obj_path = /obj/item/weapon/spell/energy_siphon
 	ability_icon_state = "tech_energysiphon"
@@ -21,26 +22,26 @@
 
 /obj/item/weapon/spell/energy_siphon/New()
 	..()
-	processing_objects |= src
+	START_PROCESSING(SSobj, src)
 
 /obj/item/weapon/spell/energy_siphon/Destroy()
 	stop_siphoning()
-	processing_objects -= src
-	..()
+	STOP_PROCESSING(SSobj, src)
+	return ..()
 
 /obj/item/weapon/spell/energy_siphon/process()
 	if(!siphoning)
 		return
 	if(!pay_energy(100))
-		owner << "<span class='warning'>You can't afford to maintain the siphon link!</span>"
+		to_chat(owner, "<span class='warning'>You can't afford to maintain the siphon link!</span>")
 		stop_siphoning()
 		return
 	if(get_dist(siphoning, get_turf(src)) > 4)
-		owner << "<span class='warning'>\The [siphoning] is too far to drain from!</span>"
+		to_chat(owner, "<span class='warning'>\The [siphoning] is too far to drain from!</span>")
 		stop_siphoning()
 		return
 	if(!(siphoning in view(owner)))
-		owner << "<span class='warning'>\The [siphoning] cannot be seen!</span>"
+		to_chat(owner, "<span class='warning'>\The [siphoning] cannot be seen!</span>")
 		stop_siphoning()
 		return
 	siphon(siphoning, owner)
@@ -48,14 +49,15 @@
 
 
 /obj/item/weapon/spell/energy_siphon/on_ranged_cast(atom/hit_atom, mob/user)
-	if(istype(hit_atom, /atom/movable))
+	if(istype(hit_atom, /atom/movable) && within_range(hit_atom, 4))
 		var/atom/movable/AM = hit_atom
 		populate_siphon_list(AM)
 		if(!things_to_siphon.len)
-			user << "<span class='warning'>You cannot steal energy from \a [AM].</span>"
+			to_chat(user, "<span class='warning'>You cannot steal energy from \a [AM].</span>")
 			return 0
 		siphoning = AM
 		update_icon()
+		log_and_message_admins("is siphoning energy from \a [AM].")
 	else
 		stop_siphoning()
 
@@ -81,10 +83,10 @@
 #define SIPHON_CORE_TO_ENERGY	0.5
 
 // This is called every tick, so long as a link exists between the target and the Technomancer.
-/obj/item/weapon/spell/energy_siphon/proc/siphon(atom/movable/siphoning, mob/user)
+/obj/item/weapon/spell/energy_siphon/proc/siphon(atom/movable/siphoning, mob/living/user)
 	var/list/things_to_drain = things_to_siphon // Temporary list copy of what we're gonna steal from.
 	var/charge_to_give = 0 // How much energy to give to the Technomancer at the end.
-	var/flow_remaining = flow_rate
+	var/flow_remaining = calculate_spell_power(flow_rate)
 
 	if(!siphoning)
 		return 0
@@ -135,18 +137,18 @@
 	// Now we can actually fill up the core.
 	if(core.energy < core.max_energy)
 		give_energy(charge_to_give)
-		user << "<span class='notice'>Stolen [charge_to_give * CELLRATE] kJ and converted to [charge_to_give] Core energy.</span>"
+		to_chat(user, "<span class='notice'>Stolen [charge_to_give * CELLRATE] kJ and converted to [charge_to_give] Core energy.</span>")
 		if( (core.max_energy - core.energy) < charge_to_give ) // We have some overflow, if this is true.
 			if(user.isSynthetic()) // Let's do something with it, if we're a robot.
 				charge_to_give = charge_to_give - (core.max_energy - core.energy)
-				user.nutrition =  min(user.nutrition + (charge_to_give / SIPHON_FBP_TO_ENERGY), 400)
-				user << "<span class='notice'>Redirected energy to internal microcell.</span>"
+				user.adjust_nutrition(charge_to_give / SIPHON_FBP_TO_ENERGY)
+				to_chat(user, "<span class='notice'>Redirected energy to internal microcell.</span>")
 	else
-		user << "<span class='notice'>Stolen [charge_to_give * CELLRATE] kJ.</span>"
+		to_chat(user, "<span class='notice'>Stolen [charge_to_give * CELLRATE] kJ.</span>")
 	adjust_instability(2)
 
 	if(flow_remaining == flow_rate) // We didn't drain anything.
-		user << "<span class='warning'>\The [siphoning] cannot be drained any further.</span>"
+		to_chat(user, "<span class='warning'>\The [siphoning] cannot be drained any further.</span>")
 		stop_siphoning()
 
 /obj/item/weapon/spell/energy_siphon/update_icon()
@@ -163,14 +165,15 @@
 			while(i)
 				var/obj/item/projectile/beam/lightning/energy_siphon/lightning = new(get_turf(source))
 				lightning.firer = user
-				lightning.launch(user)
+				lightning.old_style_target(user)
+				lightning.fire()
 				i--
 				sleep(3)
 
 /obj/item/projectile/beam/lightning/energy_siphon
 	name = "energy stream"
 	icon_state = "lightning"
-	kill_count = 6 // Backup plan in-case the effect somehow misses the Technomancer.
+	range = 6 // Backup plan in-case the effect somehow misses the Technomancer.
 	power = 5 // This fires really fast, so this may add up if someone keeps standing in the beam.
 	penetrating = 5
 
@@ -191,9 +194,9 @@
 	if(ishuman(target_mob)) // Otherwise someone else stood in the beam and is going to pay for it.
 		var/mob/living/carbon/human/H = target_mob
 		var/obj/item/organ/external/affected = H.get_organ(check_zone(BP_TORSO))
-		H.electrocute_act(power, src, H.get_siemens_coefficient_organ(affected), affected)
+		H.electrocute_act(power, src, H.get_siemens_coefficient_organ(affected), affected, 0)
 	else
-		target_mob.electrocute_act(power, src, 1.0, BP_TORSO)
+		target_mob.electrocute_act(power, src, 0.75, BP_TORSO)
 	return 0 // Since this is a continous beam, it needs to keep flying until it hits the Technomancer.
 
 

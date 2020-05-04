@@ -18,6 +18,7 @@
 /obj/item/weapon/inserted_spell
 	var/mob/living/carbon/human/origin = null
 	var/mob/living/host = null
+	var/spell_power_at_creation = 1.0 // This is here because the spell object that made this object probably won't exist.
 
 /obj/item/weapon/inserted_spell/New(var/newloc, var/user, var/obj/item/weapon/spell/insert/inserter)
 	..(newloc)
@@ -40,9 +41,11 @@
 		if(!allow_stacking)
 			for(var/obj/item/weapon/inserted_spell/IS in L.contents)
 				if(IS.type == inserting)
-					user << "<span class='warning'>\The [L] is already affected by \the [src].</span>"
+					to_chat(user, "<span class='warning'>\The [L] is already affected by \the [src].</span>")
 					return
-		new inserting(L,user,src)
+		var/obj/item/weapon/inserted_spell/inserted = new inserting(L,user,src)
+		inserted.spell_power_at_creation = calculate_spell_power(1.0)
+		log_and_message_admins("has casted [src] on [L].")
 		qdel(src)
 
 /obj/item/weapon/spell/insert/on_melee_cast(atom/hit_atom, mob/user)

@@ -5,7 +5,8 @@
 	icon_state = "stamp-qm"
 	item_state = "stamp"
 	throwforce = 0
-	w_class = 1.0
+	w_class = ITEMSIZE_TINY
+	slot_flags = SLOT_HOLSTER
 	throw_speed = 7
 	throw_range = 15
 	matter = list(DEFAULT_WALL_MATERIAL = 60)
@@ -13,7 +14,7 @@
 	attack_verb = list("stamped")
 
 /obj/item/weapon/stamp/captain
-	name = "station administrator's rubber stamp"
+	name = "colony director's rubber stamp"
 	icon_state = "stamp-cap"
 
 /obj/item/weapon/stamp/hop
@@ -43,6 +44,7 @@
 /obj/item/weapon/stamp/denied
 	name = "\improper DENIED rubber stamp"
 	icon_state = "stamp-deny"
+	attack_verb = list("DENIED")
 
 /obj/item/weapon/stamp/clown
 	name = "clown's rubber stamp"
@@ -53,7 +55,7 @@
 	icon_state = "stamp-intaff"
 
 /obj/item/weapon/stamp/centcomm
-	name = "centcomm rubber stamp"
+	name = "\improper CentCom rubber stamp"
 	icon_state = "stamp-cent"
 
 /obj/item/weapon/stamp/qm
@@ -65,7 +67,7 @@
 	icon_state = "stamp-cargo"
 
 /obj/item/weapon/stamp/solgov
-	name = "solgov stamp"
+	name = "\improper Sol Government rubber stamp"
 	icon_state = "stamp-sg"
 
 

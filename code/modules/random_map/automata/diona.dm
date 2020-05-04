@@ -1,5 +1,5 @@
-/turf/simulated/wall/diona/New(var/newloc)
-	..(newloc,"biomass")
+/turf/simulated/wall/diona/Initialize(mapload)
+	..(mapload, "biomass")
 
 /turf/simulated/wall/diona/attack_generic(var/mob/user, var/damage, var/attack_message)
 	if(istype(user, /mob/living/carbon/alien/diona))
@@ -38,7 +38,7 @@
 			if(1)
 				new_growth = 2
 		var/obj/structure/diona/vines/existing = locate() in T
-		if(!istype(existing)) existing = PoolOrNew(/obj/structure/diona/vines, T)
+		if(!istype(existing)) existing = new /obj/structure/diona/vines(T)
 		if(existing.growth < new_growth)
 			existing.growth = new_growth
 			existing.update_icon()
@@ -161,11 +161,11 @@
 
 	switch(value)
 		if(ARTIFACT_CHAR)
-			PoolOrNew(/obj/structure/diona/bulb,T)
+			new /obj/structure/diona/bulb(T)
 		if(MONSTER_CHAR)
 			spawn_diona_nymph(T)
 		if(DOOR_CHAR)
-			var/obj/structure/diona/vines/V = PoolOrNew(/obj/structure/diona/vines,T)
+			var/obj/structure/diona/vines/V = new /obj/structure/diona/vines(T)
 			V.growth = 3
 			V.update_icon()
 			spawn(1)

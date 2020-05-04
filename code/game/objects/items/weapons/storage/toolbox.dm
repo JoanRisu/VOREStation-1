@@ -4,63 +4,67 @@
 	icon = 'icons/obj/storage.dmi'
 	icon_state = "red"
 	item_state_slots = list(slot_r_hand_str = "toolbox_red", slot_l_hand_str = "toolbox_red")
-	flags = CONDUCT
+	center_of_mass = list("x" = 16,"y" = 11)
 	force = 10
 	throwforce = 10
 	throw_speed = 1
 	throw_range = 7
-	w_class = 4
-	max_w_class = 3
-	max_storage_space = 14 //enough to hold all starting contents
+	w_class = ITEMSIZE_LARGE
+	max_w_class = ITEMSIZE_NORMAL
+	max_storage_space = ITEMSIZE_COST_SMALL * 7 //enough to hold all starting contents
 	origin_tech = list(TECH_COMBAT = 1)
 	attack_verb = list("robusted")
+	use_sound = 'sound/items/storage/toolbox.ogg'
+	drop_sound = 'sound/items/drop/metalboots.ogg'
 
 /obj/item/weapon/storage/toolbox/emergency
 	name = "emergency toolbox"
 	icon_state = "red"
 	item_state_slots = list(slot_r_hand_str = "toolbox_red", slot_l_hand_str = "toolbox_red")
-
-/obj/item/weapon/storage/toolbox/emergency/New()
-	..()
-	new /obj/item/weapon/crowbar/red(src)
-	new /obj/item/weapon/extinguisher/mini(src)
+	starts_with = list(
+		/obj/item/weapon/tool/crowbar/red,
+		/obj/item/weapon/extinguisher/mini,
+		/obj/item/device/radio
+	)
+/obj/item/weapon/storage/toolbox/emergency/Initialize()
 	if(prob(50))
 		new /obj/item/device/flashlight(src)
 	else
 		new /obj/item/device/flashlight/flare(src)
-	new /obj/item/device/radio(src)
+	. = ..()
 
 /obj/item/weapon/storage/toolbox/mechanical
 	name = "mechanical toolbox"
 	icon_state = "blue"
 	item_state_slots = list(slot_r_hand_str = "toolbox_blue", slot_l_hand_str = "toolbox_blue")
-
-/obj/item/weapon/storage/toolbox/mechanical/New()
-	..()
-	new /obj/item/weapon/screwdriver(src)
-	new /obj/item/weapon/wrench(src)
-	new /obj/item/weapon/weldingtool(src)
-	new /obj/item/weapon/crowbar(src)
-	new /obj/item/device/analyzer(src)
-	new /obj/item/weapon/wirecutters(src)
+	starts_with = list(
+		/obj/item/weapon/tool/screwdriver,
+		/obj/item/weapon/tool/wrench,
+		/obj/item/weapon/weldingtool,
+		/obj/item/weapon/tool/crowbar,
+		/obj/item/device/analyzer,
+		/obj/item/weapon/tool/wirecutters
+	)
 
 /obj/item/weapon/storage/toolbox/electrical
 	name = "electrical toolbox"
 	icon_state = "yellow"
 	item_state_slots = list(slot_r_hand_str = "toolbox_yellow", slot_l_hand_str = "toolbox_yellow")
-
-/obj/item/weapon/storage/toolbox/electrical/New()
-	..()
-	new /obj/item/weapon/screwdriver(src)
-	new /obj/item/weapon/wirecutters(src)
-	new /obj/item/device/t_scanner(src)
-	new /obj/item/weapon/crowbar(src)
-	new /obj/item/stack/cable_coil/random(src,30)
-	new /obj/item/stack/cable_coil/random(src,30)
+	starts_with = list(
+		/obj/item/weapon/tool/screwdriver,
+		/obj/item/weapon/tool/wirecutters,
+		/obj/item/device/t_scanner,
+		/obj/item/weapon/tool/crowbar,
+		/obj/item/stack/cable_coil/random_belt,
+		/obj/item/stack/cable_coil/random_belt
+	)
+/obj/item/weapon/storage/toolbox/electrical/Initialize()
+	. = ..()
 	if(prob(5))
 		new /obj/item/clothing/gloves/yellow(src)
 	else
 		new /obj/item/stack/cable_coil/random(src,30)
+	calibrate_size()
 
 /obj/item/weapon/storage/toolbox/syndicate
 	name = "black and red toolbox"
@@ -68,30 +72,39 @@
 	item_state_slots = list(slot_r_hand_str = "toolbox_syndi", slot_l_hand_str = "toolbox_syndi")
 	origin_tech = list(TECH_COMBAT = 1, TECH_ILLEGAL = 1)
 	force = 14
+	starts_with = list(
+		/obj/item/clothing/gloves/yellow,
+		/obj/item/weapon/tool/screwdriver,
+		/obj/item/weapon/tool/wrench,
+		/obj/item/weapon/weldingtool,
+		/obj/item/weapon/tool/crowbar,
+		/obj/item/weapon/tool/wirecutters,
+		/obj/item/device/multitool
+	)
 
-/obj/item/weapon/storage/toolbox/syndicate/New()
-	..()
-	new /obj/item/clothing/gloves/yellow(src)
-	new /obj/item/weapon/screwdriver(src)
-	new /obj/item/weapon/wrench(src)
-	new /obj/item/weapon/weldingtool(src)
-	new /obj/item/weapon/crowbar(src)
-	new /obj/item/weapon/wirecutters(src)
-	new /obj/item/device/multitool(src)
+/obj/item/weapon/storage/toolbox/syndicate/powertools
+	starts_with = list(
+		/obj/item/clothing/gloves/yellow,
+		/obj/item/weapon/tool/screwdriver/power,
+		/obj/item/weapon/weldingtool/experimental,
+		/obj/item/weapon/tool/crowbar/power,
+		/obj/item/device/multitool,
+		/obj/item/stack/cable_coil/random_belt,
+		/obj/item/device/analyzer
+	)
 
 /obj/item/weapon/storage/toolbox/lunchbox
-	max_storage_space = 8 //slightly smaller than a toolbox
+	max_storage_space = ITEMSIZE_COST_SMALL * 4 //slightly smaller than a toolbox
 	name = "rainbow lunchbox"
 	icon_state = "lunchbox_rainbow"
 	item_state_slots = list(slot_r_hand_str = "toolbox_pink", slot_l_hand_str = "toolbox_pink")
 	desc = "A little lunchbox. This one is the colors of the rainbow!"
-	w_class = 3
-	max_w_class = 2
+	w_class = ITEMSIZE_NORMAL
+	max_w_class = ITEMSIZE_SMALL
 	var/filled = FALSE
 	attack_verb = list("lunched")
 
-/obj/item/weapon/storage/toolbox/lunchbox/New()
-	..()
+/obj/item/weapon/storage/toolbox/lunchbox/Initialize()
 	if(filled)
 		var/list/lunches = lunchables_lunches()
 		var/lunch = lunches[pick(lunches)]
@@ -104,6 +117,7 @@
 		var/list/drinks = lunchables_drinks()
 		var/drink = drinks[pick(drinks)]
 		new drink(src)
+	. = ..()
 
 /obj/item/weapon/storage/toolbox/lunchbox/filled
 	filled = TRUE

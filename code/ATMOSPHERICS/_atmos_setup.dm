@@ -15,11 +15,6 @@
 #define	PIPE_COLOR_BLACK	"#444444"
 #define	PIPE_COLOR_PURPLE	"#5c1ec0"
 
-#define CONNECT_TYPE_REGULAR	1
-#define CONNECT_TYPE_SUPPLY		2
-#define CONNECT_TYPE_SCRUBBER	4
-#define CONNECT_TYPE_HE			8
-
 var/global/list/pipe_colors = list("grey" = PIPE_COLOR_GREY, "red" = PIPE_COLOR_RED, "blue" = PIPE_COLOR_BLUE, "cyan" = PIPE_COLOR_CYAN, "green" = PIPE_COLOR_GREEN, "yellow" = PIPE_COLOR_YELLOW, "black" = PIPE_COLOR_BLACK, "purple" = PIPE_COLOR_PURPLE)
 
 /proc/pipe_color_lookup(var/color)
@@ -171,12 +166,12 @@ var/global/list/pipe_colors = list("grey" = PIPE_COLOR_GREY, "red" = PIPE_COLOR_
 	if(!omni_icons)
 		omni_icons = new()
 
-	var/icon/omni = new('icons/atmos/omni_devices.dmi')
+	var/icon/omni = new('icons/atmos/omni_devices_vr.dmi') //VOREStation Edit - New Icons
 
 	for(var/state in omni.IconStates())
 		if(!state || findtext(state, "map"))
 			continue
-		omni_icons[state] = image('icons/atmos/omni_devices.dmi', icon_state = state)
+		omni_icons[state] = image('icons/atmos/omni_devices_vr.dmi', icon_state = state) //VOREStation Edit - New Icons
 
 
 /datum/pipe_icon_manager/proc/gen_underlay_icons()

@@ -13,22 +13,24 @@
 
 /obj/item/weapon/spell/summon/on_ranged_cast(atom/hit_atom, mob/living/user)
 	var/turf/T = get_turf(hit_atom)
-	if(summoned_mob_type && core.summoned_mobs.len < core.max_summons && pay_energy(energy_cost))
+	if(summoned_mob_type && core.summoned_mobs.len < core.max_summons && within_range(hit_atom) && pay_energy(energy_cost))
 		var/obj/effect/E = new(T)
 		E.icon = 'icons/obj/objects.dmi'
 		E.icon_state = "anom"
 		sleep(5 SECONDS)
 		qdel(E)
-		var/mob/living/L = new summoned_mob_type(T)
-		core.summoned_mobs |= L
-		L.summoned = 1
-		var/image/summon_underlay = image('icons/obj/objects.dmi',"anom")
-		summon_underlay.alpha = 127
-		L.underlays |= summon_underlay
-		on_summon(L)
-		user << "<span class='notice'>You've successfully teleported \a [L] to you!</span>"
-		visible_message("<span class='warning'>\A [L] appears from no-where!</span>")
-		user.adjust_instability(instability_cost)
+		if(owner) // We might've been dropped.
+			var/mob/living/L = new summoned_mob_type(T)
+			core.summoned_mobs |= L
+			L.summoned = 1
+			var/image/summon_underlay = image('icons/obj/objects.dmi',"anom")
+			summon_underlay.alpha = 127
+			L.underlays |= summon_underlay
+			on_summon(L)
+			to_chat(user, "<span class='notice'>You've successfully teleported \a [L] to you!</span>")
+			visible_message("<span class='warning'>\A [L] appears from no-where!</span>")
+			log_and_message_admins("has summoned \a [L] at [T.x],[T.y],[T.z].")
+			user.adjust_instability(instability_cost)
 
 /obj/item/weapon/spell/summon/on_use_cast(mob/living/user)
 	if(summon_options.len)

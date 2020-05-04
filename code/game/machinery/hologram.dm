@@ -35,10 +35,11 @@ var/const/HOLOPAD_MODE = RANGE_BASED
 	icon_state = "holopad0"
 	show_messages = 1
 	circuit = /obj/item/weapon/circuitboard/holopad
-	layer = TURF_LAYER+0.1 //Preventing mice and drones from sneaking under them.
+	plane = TURF_PLANE
+	layer = ABOVE_TURF_LAYER
 	var/power_per_hologram = 500 //per usage per hologram
 	idle_power_usage = 5
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	var/list/mob/living/silicon/ai/masters = new() //List of AIs that use the holopad
 	var/last_request = 0 //to prevent request spam. ~Carn
 	var/holo_range = 5 // Change to change how far the AI can move away from the holopad before deactivating.
@@ -56,13 +57,13 @@ var/const/HOLOPAD_MODE = RANGE_BASED
 	if(alert(user,"Would you like to request an AI's presence?",,"Yes","No") == "Yes")
 		if(last_request + 200 < world.time) //don't spam the AI with requests you jerk!
 			last_request = world.time
-			user << "<span class='notice'>You request an AI's presence.</span>"
+			to_chat(user, "<span class='notice'>You request an AI's presence.</span>")
 			var/area/area = get_area(src)
 			for(var/mob/living/silicon/ai/AI in living_mob_list)
 				if(!AI.client)	continue
-				AI << "<span class='info'>Your presence is requested at <a href='?src=\ref[AI];jumptoholopad=\ref[src]'>\the [area]</a>.</span>"
+				to_chat(AI, "<span class='info'>Your presence is requested at <a href='?src=\ref[AI];jumptoholopad=\ref[src]'>\the [area]</a>.</span>")
 		else
-			user << "<span class='notice'>A request for AI presence was already sent recently.</span>"
+			to_chat(user, "<span class='notice'>A request for AI presence was already sent recently.</span>")
 
 /obj/machinery/hologram/holopad/attack_ai(mob/living/silicon/ai/user)
 	if(!istype(user))
@@ -81,32 +82,21 @@ var/const/HOLOPAD_MODE = RANGE_BASED
 /obj/machinery/hologram/holopad/proc/activate_holo(mob/living/silicon/ai/user)
 	if(!(stat & NOPOWER) && user.eyeobj.loc == src.loc)//If the projector has power and client eye is on it
 		if(user.holo)
-			user << "<span class='danger'>ERROR:</span> Image feed in progress."
+			to_chat(user, "<span class='danger'>ERROR:</span> Image feed in progress.")
 			return
 		create_holo(user)//Create one.
 		visible_message("A holographic image of [user] flicks to life right before your eyes!")
 	else
-		user << "<span class='danger'>ERROR:</span> Unable to project hologram."
+		to_chat(user, "<span class='danger'>ERROR:</span> Unable to project hologram.")
 	return
 
 /*This is the proc for special two-way communication between AI and holopad/people talking near holopad.
 For the other part of the code, check silicon say.dm. Particularly robot talk.*/
-/obj/machinery/hologram/holopad/hear_talk(mob/living/M, text, verb, datum/language/speaking)
-	if(M)
+/obj/machinery/hologram/holopad/hear_talk(mob/M, list/message_pieces, verb)
+	if(M && LAZYLEN(masters))
 		for(var/mob/living/silicon/ai/master in masters)
-			if(!master.say_understands(M, speaking))//The AI will be able to understand most mobs talking through the holopad.
-				if(speaking)
-					text = speaking.scramble(text)
-				else
-					text = stars(text)
-			var/name_used = M.GetVoice()
-			//This communication is imperfect because the holopad "filters" voices and is only designed to connect to the master only.
-			var/rendered
-			if(speaking)
-				rendered = "<i><span class='game say'>Holopad received, <span class='name'>[name_used]</span> [speaking.format_message(text, verb)]</span></i>"
-			else
-				rendered = "<i><span class='game say'>Holopad received, <span class='name'>[name_used]</span> [verb], <span class='message'>\"[text]\"</span></span></i>"
-			master.show_message(rendered, 2)
+			if(masters[master] && M != master)
+				master.relay_speech(M, message_pieces, verb)
 
 /obj/machinery/hologram/holopad/see_emote(mob/living/M, text)
 	if(M)
@@ -124,9 +114,10 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 	return
 
 /obj/machinery/hologram/holopad/proc/create_holo(mob/living/silicon/ai/A, turf/T = loc)
-	var/obj/effect/overlay/hologram = new(T)//Spawn a blank effect at the location.
+	var/obj/effect/overlay/aiholo/hologram = new(T)//Spawn a blank effect at the location. //VOREStation Edit to specific type for adding vars
+	hologram.master = A //VOREStation Edit: So you can reference the master AI from in the hologram procs
 	hologram.icon = A.holo_icon
-	hologram.mouse_opacity = 0//So you can't click on it.
+	//hologram.mouse_opacity = 0//So you can't click on it. //VOREStation Removal
 	hologram.layer = FLY_LAYER//Above all the other objects/mobs. Or the vast majority of them.
 	hologram.anchored = 1//So space wind cannot drag it.
 	hologram.name = "[A.name] (Hologram)"//If someone decides to right click.
@@ -136,6 +127,8 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 	set_light(2)			//pad lighting
 	icon_state = "holopad1"
 	A.holo = src
+	if(LAZYLEN(masters))
+		START_MACHINE_PROCESSING(src)
 	return 1
 
 /obj/machinery/hologram/holopad/proc/clear_holo(mob/living/silicon/ai/user)
@@ -156,14 +149,27 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 			continue
 
 		use_power(power_per_hologram)
-	return 1
+	if(..() == PROCESS_KILL && !LAZYLEN(masters))
+		return PROCESS_KILL
 
 /obj/machinery/hologram/holopad/proc/move_hologram(mob/living/silicon/ai/user)
 	if(masters[user])
+		/*VOREStation Removal, using our own code
 		step_to(masters[user], user.eyeobj) // So it turns.
 		var/obj/effect/overlay/H = masters[user]
 		H.loc = get_turf(user.eyeobj)
 		masters[user] = H
+		*/
+		//VOREStation Add - Solid mass holovore tracking stuff
+		var/obj/effect/overlay/aiholo/H = masters[user]
+		if(H.bellied)
+			walk_to(H, user.eyeobj) //Walk-to respects obstacles
+		else
+			walk_towards(H, user.eyeobj) //Walk-towards does not
+		//Hologram left the screen (got stuck on a wall or something)
+		if(get_dist(H, user.eyeobj) > world.view)
+			clear_holo(user)
+		//VOREStation Add End
 		if((HOLOPAD_MODE == RANGE_BASED && (get_dist(H, src) > holo_range)))
 			clear_holo(user)
 
@@ -182,7 +188,7 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 
 /obj/machinery/hologram
 	anchored = 1
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 5
 	active_power_usage = 100
 
@@ -202,7 +208,7 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 /obj/machinery/hologram/holopad/Destroy()
 	for (var/mob/living/silicon/ai/master in masters)
 		clear_holo(master)
-	..()
+	return ..()
 
 /*
 Holographic project of everything else.
@@ -221,7 +227,7 @@ Holographic project of everything else.
 		flat_icon.AddAlphaMask(alpha_mask)//Finally, let's mix in a distortion effect.
 		hologram.icon = flat_icon
 
-		world << "Your icon should appear now."
+		to_world("Your icon should appear now.")
 	return
 */
 

@@ -19,13 +19,14 @@
 		update_icon()
 		return
 
-/obj/structure/noticeboard/initialize()
+/obj/structure/noticeboard/Initialize()
 	for(var/obj/item/I in loc)
 		if(notices > 4) break
 		if(istype(I, /obj/item/weapon/paper))
 			I.loc = src
 			notices++
 	icon_state = "nboard0[notices]"
+	. = ..()
 
 //attaching papers!!
 /obj/structure/noticeboard/attackby(var/obj/item/weapon/O as obj, var/mob/user as mob)
@@ -37,34 +38,31 @@
 			O.loc = src
 			notices++
 			icon_state = "nboard0[notices]"	//update sprite
-			user << "<span class='notice'>You pin the paper to the noticeboard.</span>"
+			to_chat(user, "<span class='notice'>You pin the paper to the noticeboard.</span>")
 		else
-			user << "<span class='notice'>You reach to pin your paper to the board but hesitate. You are certain your paper will not be seen among the many others already attached.</span>"
-	if(istype(O, /obj/item/weapon/wrench))
-		user << "<span class='notice'>You start to unwrench the noticeboard.</span>"
-		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-		if(do_after(user, 15))
-			user << "<span class='notice'>You unwrench the noticeboard.</span>"
+			to_chat(user, "<span class='notice'>You reach to pin your paper to the board but hesitate. You are certain your paper will not be seen among the many others already attached.</span>")
+	if(O.is_wrench())
+		to_chat(user, "<span class='notice'>You start to unwrench the noticeboard.</span>")
+		playsound(src.loc, O.usesound, 50, 1)
+		if(do_after(user, 15 * O.toolspeed))
+			to_chat(user, "<span class='notice'>You unwrench the noticeboard.</span>")
 			new /obj/item/frame/noticeboard( src.loc )
 			qdel(src)
 		return
 
 /obj/structure/noticeboard/attack_hand(var/mob/user)
-	examine(user)
+	user.examinate(src)
 
 // Since Topic() never seems to interact with usr on more than a superficial
 // level, it should be fine to let anyone mess with the board other than ghosts.
 /obj/structure/noticeboard/examine(var/mob/user)
-	if(!user)
-		user = usr
-	if(user.Adjacent(src))
+	. = ..()
+	if(Adjacent(user))
 		var/dat = "<B>Noticeboard</B><BR>"
 		for(var/obj/item/weapon/paper/P in src)
 			dat += "<A href='?src=\ref[src];read=\ref[P]'>[P.name]</A> <A href='?src=\ref[src];write=\ref[P]'>Write</A> <A href='?src=\ref[src];remove=\ref[P]'>Remove</A><BR>"
 		user << browse("<HEAD><TITLE>Notices</TITLE></HEAD>[dat]","window=noticeboard")
 		onclose(user, "noticeboard")
-	else
-		..()
 
 /obj/structure/noticeboard/Topic(href, href_list)
 	..()
@@ -91,7 +89,7 @@
 					add_fingerprint(M)
 					P.attackby(E, usr)
 				else
-					M << "<span class='notice'>You'll need something to write with!</span>"
+					to_chat(M, "<span class='notice'>You'll need something to write with!</span>")
 	if(href_list["read"])
 		var/obj/item/weapon/paper/P = locate(href_list["read"])
 		if((P && P.loc == src))

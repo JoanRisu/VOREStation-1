@@ -1,5 +1,5 @@
 /datum/species/monkey/shark
-	name = "Sobaka"
+	name = SPECIES_MONKEY_AKULA
 	name_plural = "Sobaka"
 	icobase = 'icons/mob/human_races/monkeys/r_sobaka_vr.dmi'
 	deform = 'icons/mob/human_races/monkeys/r_sobaka_vr.dmi'
@@ -8,21 +8,21 @@
 	default_language = "Skrellian" //Closest we have.
 
 /datum/species/monkey/sergal
-	name = "Sergaling"
+	name = SPECIES_MONKEY_SERGAL
 	greater_form = "Sergal"
 	icobase = 'icons/mob/human_races/monkeys/r_sergaling_vr.dmi'
 	deform = 'icons/mob/human_races/monkeys/r_sergaling_vr.dmi'
 	tail = null
-	default_language = "Sagaru"
+	default_language = LANGUAGE_SAGARU
 
 /datum/species/monkey/sparra
-	name = "Sparra"
+	name = SPECIES_MONKEY_NEVREAN
 	name_plural = "Sparra"
 	greater_form = "Nevrean"
 	tail = null
 	icobase = 'icons/mob/human_races/monkeys/r_sparra_vr.dmi'
 	deform = 'icons/mob/human_races/monkeys/r_sparra_vr.dmi'
-	default_language = "Birdsong"
+	default_language = LANGUAGE_BIRDSONG
 
 
 /* Example from Polaris code
@@ -41,14 +41,14 @@
 */
 
 /datum/species/monkey/vulpkanin
-	name = "Wolpin"
+	name = SPECIES_MONKEY_VULPKANIN
 	name_plural = "Wolpin"
 
 	icobase = 'icons/mob/human_races/monkeys/r_wolpin.dmi'
 	deform = 'icons/mob/human_races/monkeys/r_wolpin.dmi'
 
 	greater_form = "Vulpkanin"
-	default_language = "Canilunzt"
+	default_language = LANGUAGE_CANILUNZT
 	flesh_color = "#966464"
 	base_color = "#000000"
 	tail = null
@@ -60,10 +60,10 @@
 	..(new_loc, "Sobaka")
 
 /mob/living/carbon/human/sergallingm/New(var/new_loc)
-	..(new_loc, "Sergaling")
+	..(new_loc, "Saru")
 
 /mob/living/carbon/human/sparram/New(var/new_loc)
 	..(new_loc, "Sparra")
 
-/mob/living/carbon/human/vulpkaninm/New(var/new_loc)
+/mob/living/carbon/human/wolpin/New(var/new_loc)
 	..(new_loc, "Wolpin")

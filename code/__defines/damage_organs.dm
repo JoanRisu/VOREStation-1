@@ -6,6 +6,9 @@
 #define OXY       "oxy"
 #define CLONE     "clone"
 #define HALLOSS   "halloss"
+#define ELECTROCUTE "electrocute"
+#define BIOACID   "bioacid"
+#define SEARING   "searing"
 
 #define CUT       "cut"
 #define BRUISE    "bruise"
@@ -45,9 +48,11 @@
 // Damage above this value must be repaired with surgery.
 #define ROBOLIMB_REPAIR_CAP 30
 
+#define ORGAN_FLESH    0 // Normal organic organs.
 #define ORGAN_ASSISTED 1 // Like pacemakers, not robotic
 #define ORGAN_ROBOT    2 // Fully robotic, no organic parts
 #define ORGAN_LIFELIKE 3 // Robotic, made to appear organic
+#define ORGAN_NANOFORM 4 // VOREStation Add - Fully nanoswarm organ
 
 //Germs and infections.
 #define GERM_LEVEL_AMBIENT  110 // Maximum germ level you can reach by standing still.
@@ -56,3 +61,4 @@
 #define INFECTION_LEVEL_ONE   100
 #define INFECTION_LEVEL_TWO   500
 #define INFECTION_LEVEL_THREE 1000
+#define INFECTION_LEVEL_MAX   1500

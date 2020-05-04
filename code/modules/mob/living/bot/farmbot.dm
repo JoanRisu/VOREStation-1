@@ -10,7 +10,7 @@
 	icon_state = "farmbot0"
 	health = 50
 	maxHealth = 50
-	req_one_access = list(access_robotics, access_hydroponics)
+	req_one_access = list(access_robotics, access_hydroponics, access_xenobiology)	//TFF 11/7/19 - adds Xenobio access on behalf of Nalarac
 
 	var/action = "" // Used to update icon
 	var/waters_trays = 1
@@ -19,7 +19,7 @@
 	var/replaces_nutriment = 0
 	var/collects_produce = 0
 	var/removes_dead = 0
-
+	var/times_idle = 0 //VOREStation Add
 	var/obj/structure/reagent_dispensers/watertank/tank
 
 
@@ -52,9 +52,11 @@
 		dat += "Weed plants: <A href='?src=\ref[src];weed=1'>[uproots_weeds ? "Yes" : "No"]</A><BR>"
 		dat += "<br>Nutriment controls:<br>"
 		dat += "Replace fertilizer: <A href='?src=\ref[src];replacenutri=1'>[replaces_nutriment ? "Yes" : "No"]</A><BR>"
+		/* VOREStation Removal - No whole-job lag-bot automation.
 		dat += "<br>Plant controls:<br>"
 		dat += "Collect produce: <A href='?src=\ref[src];collect=1'>[collects_produce ? "Yes" : "No"]</A><BR>"
 		dat += "Remove dead plants: <A href='?src=\ref[src];removedead=1'>[removes_dead ? "Yes" : "No"]</A><BR>"
+		*/
 		dat += "</TT>"
 
 	user << browse("<HEAD><TITLE>Farmbot v1.0 controls</TITLE></HEAD>[dat]", "window=autofarm")
@@ -65,7 +67,7 @@
 	. = ..()
 	if(!emagged)
 		if(user)
-			user << "<span class='notice'>You short out [src]'s plant identifier circuits.</span>"
+			to_chat(user, "<span class='notice'>You short out [src]'s plant identifier circuits.</span>")
 		spawn(rand(30, 50))
 			visible_message("<span class='warning'>[src] buzzes oddly.</span>")
 			emagged = 1
@@ -121,17 +123,20 @@
 	if(emagged)
 		for(var/mob/living/carbon/human/H in view(7, src))
 			target = H
+			times_idle = 0 //VOREStation Add - Idle shutoff time
 			return
 	else
 		for(var/obj/machinery/portable_atmospherics/hydroponics/tray in view(7, src))
 			if(confirmTarget(tray))
 				target = tray
+				times_idle = 0 //VOREStation Add - Idle shutoff time
 				return
 		if(!target && refills_water && tank && tank.reagents.total_volume < tank.reagents.maximum_volume)
 			for(var/obj/structure/sink/source in view(7, src))
 				target = source
+				times_idle = 0 //VOREStation Add - Idle shutoff time
 				return
-
+	if(++times_idle == 150) turn_off() //VOREStation Add - Idle shutoff time
 /mob/living/bot/farmbot/calcTargetPath() // We need to land NEXT to the tray, because the tray itself is impassable
 	for(var/trayDir in list(NORTH, SOUTH, EAST, WEST))
 		target_path = AStar(get_turf(loc), get_step(get_turf(target), trayDir), /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, 0, max_target_dist, id = botcard)
@@ -170,7 +175,7 @@
 				visible_message("<span class='notice'>[src] starts [T.dead? "removing the plant from" : "harvesting"] \the [A].</span>")
 
 				busy = 1
-				if(do_after(src, 30))
+				if(do_after(src, 30, A))
 					visible_message("<span class='notice'>[src] [T.dead? "removes the plant from" : "harvests"] \the [A].</span>")
 					T.attack_hand(src)
 			if(FARMBOT_WATER)
@@ -179,7 +184,7 @@
 				visible_message("<span class='notice'>[src] starts watering \the [A].</span>")
 
 				busy = 1
-				if(do_after(src, 30))
+				if(do_after(src, 30, A))
 					playsound(loc, 'sound/effects/slosh.ogg', 25, 1)
 					visible_message("<span class='notice'>[src] waters \the [A].</span>")
 					tank.reagents.trans_to(T, 100 - T.waterlevel)
@@ -198,7 +203,7 @@
 				visible_message("<span class='notice'>[src] starts fertilizing \the [A].</span>")
 
 				busy = 1
-				if(do_after(src, 30))
+				if(do_after(src, 30, A))
 
 					visible_message("<span class='notice'>[src] fertilizes \the [A].</span>")
 					T.reagents.add_reagent("ammonia", 10)
@@ -216,7 +221,7 @@
 
 		busy = 1
 		while(do_after(src, 10) && tank.reagents.total_volume < tank.reagents.maximum_volume)
-			tank.reagents.add_reagent("water", 10)
+			tank.reagents.add_reagent("water", 100) //VOREStation Edit
 			if(prob(5))
 				playsound(loc, 'sound/effects/slosh.ogg', 25, 1)
 
@@ -292,7 +297,7 @@
 	if(tray.dead && removes_dead || tray.harvest && collects_produce)
 		return FARMBOT_COLLECT
 
-	else if(refills_water && tray.waterlevel < 40 && !tray.reagents.has_reagent("water"))
+	else if(refills_water && tray.waterlevel < 40 && !tray.reagents.has_reagent("water") && tank.reagents.total_volume > 0)
 		return FARMBOT_WATER
 
 	else if(uproots_weeds && tray.weedlevel > 3)
@@ -313,7 +318,7 @@
 	var/build_step = 0
 	var/created_name = "Farmbot"
 	var/obj/tank
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 
 
 /obj/item/weapon/farmbot_arm_assembly/New(var/newloc, var/theTank)
@@ -330,7 +335,7 @@
 		return
 
 
-	user << "You add the robot arm to [src]."
+	to_chat(user, "You add the robot arm to [src].")
 
 	user.drop_from_inventory(S)
 	qdel(S)
@@ -338,11 +343,11 @@
 	new /obj/item/weapon/farmbot_arm_assembly(loc, src)
 
 /obj/structure/reagent_dispensers/watertank/attackby(var/obj/item/organ/external/S, mob/user as mob)
-	if ((!istype(S, /obj/item/organ/external/arm)) && (!S.robotic == ORGAN_ROBOT))
+	if ((!istype(S, /obj/item/organ/external/arm)) || S.robotic != ORGAN_ROBOT)
 		..()
 		return
 
-	user << "You add the robot arm to [src]."
+	to_chat(user, "You add the robot arm to [src].")
 
 	user.drop_from_inventory(S)
 	qdel(S)
@@ -353,7 +358,7 @@
 	..()
 	if((istype(W, /obj/item/device/analyzer/plant_analyzer)) && (build_step == 0))
 		build_step++
-		user << "You add the plant analyzer to [src]."
+		to_chat(user, "You add the plant analyzer to [src].")
 		name = "farmbot assembly"
 
 		user.remove_from_mob(W)
@@ -361,7 +366,7 @@
 
 	else if((istype(W, /obj/item/weapon/reagent_containers/glass/bucket)) && (build_step == 1))
 		build_step++
-		user << "You add a bucket to [src]."
+		to_chat(user, "You add a bucket to [src].")
 		name = "farmbot assembly with bucket"
 
 		user.remove_from_mob(W)
@@ -369,7 +374,7 @@
 
 	else if((istype(W, /obj/item/weapon/material/minihoe)) && (build_step == 2))
 		build_step++
-		user << "You add a minihoe to [src]."
+		to_chat(user, "You add a minihoe to [src].")
 		name = "farmbot assembly with bucket and minihoe"
 
 		user.remove_from_mob(W)
@@ -377,7 +382,7 @@
 
 	else if((isprox(W)) && (build_step == 3))
 		build_step++
-		user << "You complete the Farmbot! Beep boop."
+		to_chat(user, "You complete the Farmbot! Beep boop.")
 
 		var/mob/living/bot/farmbot/S = new /mob/living/bot/farmbot(get_turf(src), tank)
 		S.name = created_name

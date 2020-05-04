@@ -5,7 +5,7 @@
 	icon_state = "control"
 	anchored = 1
 	density = 1
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 100
 	active_power_usage = 1000
 
@@ -97,6 +97,12 @@
 		if(2)
 			if(active)	toggle_power()
 			stability -= rand(10,20)
+		if(3)
+			if(active)	toggle_power()
+			stability -= rand(8,15)
+		if(4)
+			if(active)	toggle_power()
+			stability -= rand(5,10)
 	..()
 	return 0
 
@@ -134,28 +140,28 @@
 
 /obj/machinery/power/am_control_unit/attackby(obj/item/W, mob/user)
 	if(!istype(W) || !user) return
-	if(istype(W, /obj/item/weapon/wrench))
+	if(W.is_wrench())
 		if(!anchored)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+			playsound(src, W.usesound, 75, 1)
 			user.visible_message("[user.name] secures the [src.name] to the floor.", \
 				"You secure the anchor bolts to the floor.", \
-				"You hear a ratchet")
+				"You hear a ratchet.")
 			src.anchored = 1
 			connect_to_network()
 		else if(!linked_shielding.len > 0)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
+			playsound(src, W.usesound, 75, 1)
 			user.visible_message("[user.name] unsecures the [src.name].", \
 				"You remove the anchor bolts.", \
-				"You hear a ratchet")
+				"You hear a ratchet.")
 			src.anchored = 0
 			disconnect_from_network()
 		else
-			user << "\red Once bolted and linked to a shielding unit it the [src.name] is unable to be moved!"
+			to_chat(user, "<font color='red'>Once bolted and linked to a shielding unit it the [src.name] is unable to be moved!</font>")
 		return
 
 	if(istype(W, /obj/item/weapon/am_containment))
 		if(fueljar)
-			user << "\red There is already a [fueljar] inside!"
+			to_chat(user, "<font color='red'>There is already a [fueljar] inside!</font>")
 			return
 		fueljar = W
 		user.remove_from_mob(W)
@@ -205,10 +211,10 @@
 /obj/machinery/power/am_control_unit/proc/toggle_power()
 	active = !active
 	if(active)
-		use_power = 2
+		update_use_power(USE_POWER_ACTIVE)
 		visible_message("The [src.name] starts up.")
 	else
-		use_power = 1
+		update_use_power(USE_POWER_IDLE)
 		visible_message("The [src.name] shuts down.")
 	update_icon()
 	return

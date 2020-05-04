@@ -48,13 +48,15 @@ var/list/slot_equipment_priority = list( \
 //set disable_warning to disable the 'you are unable to equip that' warning.
 //unset redraw_mob to prevent the mob from being redrawn at the end.
 /mob/proc/equip_to_slot_if_possible(obj/item/W as obj, slot, del_on_fail = 0, disable_warning = 0, redraw_mob = 1)
+	if(!W)
+		return 0
 	if(!W.mob_can_equip(src, slot))
 		if(del_on_fail)
 			qdel(W)
 
 		else
 			if(!disable_warning)
-				src << "\red You are unable to equip that." //Only print if del_on_fail is false
+				to_chat(src, "<font color='red'>You are unable to equip that.</font>") //Only print if del_on_fail is false
 		return 0
 
 	equip_to_slot(W, slot, redraw_mob) //This proc should not ever fail.
@@ -93,6 +95,14 @@ var/list/slot_equipment_priority = list( \
 //Returns the thing in our inactive hand
 /mob/proc/get_inactive_hand()
 
+// Override for your specific mob's hands or lack thereof.
+/mob/proc/is_holding_item_of_type(typepath)
+	return FALSE
+
+// Override for your specific mob's hands or lack thereof.
+/mob/proc/get_all_held_items()
+	return list()
+
 //Puts the item into your l_hand if possible and calls all necessary triggers/updates. returns 1 on success.
 /mob/proc/put_in_l_hand(var/obj/item/W)
 	if(lying || !istype(W))
@@ -120,19 +130,18 @@ var/list/slot_equipment_priority = list( \
 	if(!W)
 		return 0
 	W.forceMove(get_turf(src))
-	W.layer = initial(W.layer)
+	W.reset_plane_and_layer()
 	W.dropped()
 	return 0
 
 // Removes an item from inventory and places it in the target atom.
 // If canremove or other conditions need to be checked then use unEquip instead.
 
-/mob/proc/drop_from_inventory(var/obj/item/W, var/atom/target = null)
+/mob/proc/drop_from_inventory(var/obj/item/W, var/atom/target)
 	if(W)
 		remove_from_mob(W, target)
 		if(!(W && W.loc))
 			return 1 // self destroying objects (tk, grabs)
-		update_icons()
 		return 1
 	return 0
 
@@ -147,7 +156,6 @@ var/list/slot_equipment_priority = list( \
 //Drops the item in our active hand. TODO: rename this to drop_active_hand or something
 /mob/proc/drop_item(var/atom/Target)
 	return
-
 /*
 	Removes the object from any slots the mob might have, calling the appropriate icon update proc.
 	Does nothing else.
@@ -174,7 +182,7 @@ var/list/slot_equipment_priority = list( \
 
 /mob/proc/get_inventory_slot(obj/item/I)
 	var/slot = 0
-	for(var/s in slot_back to slot_tie) //kind of worries me
+	for(var/s in 1 to SLOT_TOTAL)
 		if(get_equipped_item(s) == I)
 			slot = s
 			break
@@ -182,10 +190,10 @@ var/list/slot_equipment_priority = list( \
 
 
 //This differs from remove_from_mob() in that it checks if the item can be unequipped first.
-/mob/proc/unEquip(obj/item/I, force = 0) //Force overrides NODROP for things like wizarditis and admin undress.
+/mob/proc/unEquip(obj/item/I, force = 0, var/atom/target) //Force overrides NODROP for things like wizarditis and admin undress.
 	if(!(force || canUnEquip(I)))
 		return
-	drop_from_inventory(I)
+	drop_from_inventory(I, target)
 	return 1
 
 
@@ -196,14 +204,14 @@ var/list/slot_equipment_priority = list( \
 	src.u_equip(O)
 	if (src.client)
 		src.client.screen -= O
-	O.layer = initial(O.layer)
+	O.reset_plane_and_layer()
 	O.screen_loc = null
 	if(istype(O, /obj/item))
 		var/obj/item/I = O
 		if(target)
 			I.forceMove(target)
 		else
-			I.dropInto(loc)
+			I.dropInto(drop_location())
 		I.dropped(src)
 	return 1
 

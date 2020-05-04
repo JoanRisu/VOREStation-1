@@ -8,17 +8,17 @@
 			VN.updateVisibility(A, opacity_check)
 
 /turf
-	var/list/image/obfuscations = new()
+	var/list/image/obfuscations
 
 /turf/drain_power()
 	return -1
 
 /turf/simulated/Destroy()
 	updateVisibility(src)
-	..()
+	return ..()
 
-/turf/simulated/New()
-	..()
+/turf/simulated/Initialize()
+	. = ..()
 	updateVisibility(src)
 
 
@@ -26,7 +26,7 @@
 
 /obj/structure/Destroy()
 	updateVisibility(src)
-	..()
+	return ..()
 
 /obj/structure/New()
 	..()

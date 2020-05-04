@@ -23,13 +23,15 @@
 	var/l_hacking = 0
 	var/emagged = 0
 	var/open = 0
-	w_class = 3
-	max_w_class = 2
-	max_storage_space = 14
+	w_class = ITEMSIZE_NORMAL
+	max_w_class = ITEMSIZE_SMALL
+	max_storage_space = ITEMSIZE_SMALL * 7
+	use_sound = 'sound/items/storage/briefcase.ogg'
 
 	examine(mob/user)
-		if(..(user, 1))
-			user << text("The service panel is [src.open ? "open" : "closed"].")
+		. = ..()
+		if(Adjacent(user))
+			. += "The service panel is [src.open ? "open" : "closed"]."
 
 	attackby(obj/item/weapon/W as obj, mob/user as mob)
 		if(locked)
@@ -41,12 +43,13 @@
 				playsound(src.loc, "sparks", 50, 1)
 				return
 
-			if (istype(W, /obj/item/weapon/screwdriver))
-				if (do_after(user, 20))
+			if (W.is_screwdriver())
+				if (do_after(user, 20 * W.toolspeed))
 					src.open =! src.open
+					playsound(src, W.usesound, 50, 1)
 					user.show_message(text("<span class='notice'>You [] the service panel.</span>", (src.open ? "open" : "close")))
 				return
-			if ((istype(W, /obj/item/device/multitool)) && (src.open == 1)&& (!src.l_hacking))
+			if (istype(W, /obj/item/device/multitool) && (src.open == 1)&& (!src.l_hacking))
 				user.show_message("<span class='notice'>Now attempting to reset internal memory, please hold.</span>", 1)
 				src.l_hacking = 1
 				if (do_after(usr, 100))
@@ -134,7 +137,7 @@
 		src.overlays = null
 		overlays += image('icons/obj/storage.dmi', icon_locking)
 		locked = 0
-		user << (feedback ? feedback : "You short out the lock of \the [src].")
+		to_chat(user, (feedback ? feedback : "You short out the lock of \the [src]."))
 		return 1
 
 // -----------------------------
@@ -149,11 +152,13 @@
 	force = 8.0
 	throw_speed = 1
 	throw_range = 4
-	w_class = 4.0
+	max_w_class = ITEMSIZE_NORMAL
+	w_class = ITEMSIZE_LARGE
+	max_storage_space = ITEMSIZE_COST_NORMAL * 4
 
 	attack_hand(mob/user as mob)
 		if ((src.loc == user) && (src.locked == 1))
-			usr << "<span class='warning'>[src] is locked and cannot be opened!</span>"
+			to_chat(user, "<span class='warning'>[src] is locked and cannot be opened!</span>")
 		else if ((src.loc == user) && (!src.locked))
 			src.open(usr)
 		else
@@ -170,26 +175,22 @@
 
 /obj/item/weapon/storage/secure/safe
 	name = "secure safe"
+	desc = "It doesn't seem all that secure. Oh well, it'll do."
 	icon = 'icons/obj/storage.dmi'
 	icon_state = "safe"
 	icon_opened = "safe0"
 	icon_locking = "safeb"
 	icon_sparking = "safespark"
 	force = 8.0
-	w_class = 8.0
-	max_w_class = 8
+	w_class = ITEMSIZE_NO_CONTAINER
+	max_w_class = ITEMSIZE_LARGE // This was 8 previously...
 	anchored = 1.0
 	density = 0
 	cant_hold = list(/obj/item/weapon/storage/secure/briefcase)
+	starts_with = list(
+		/obj/item/weapon/paper,
+		/obj/item/weapon/pen
+	)
 
-	New()
-		..()
-		new /obj/item/weapon/paper(src)
-		new /obj/item/weapon/pen(src)
-
-	attack_hand(mob/user as mob)
-		return attack_self(user)
-
-/obj/item/weapon/storage/secure/safe/HoS/New()
-	..()
-	//new /obj/item/weapon/storage/lockbox/clusterbang(src) This item is currently broken... and probably shouldnt exist to begin with (even though it's cool)
+/obj/item/weapon/storage/secure/safe/attack_hand(mob/user as mob)
+	return attack_self(user)

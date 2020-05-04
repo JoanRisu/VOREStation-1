@@ -12,16 +12,17 @@ obj/item/weapon/circuitboard/rdserver
 							/obj/item/weapon/stock_parts/scanning_module = 1)
 
 obj/item/weapon/circuitboard/rdserver/attackby(obj/item/I as obj, mob/user as mob)
-	if(istype(I,/obj/item/weapon/screwdriver))
+	if(I.is_screwdriver())
+		playsound(src, I.usesound, 50, 1)
 		user.visible_message("<span class='notice'>\The [user] adjusts the jumper on \the [src]'s access protocol pins.</span>", "<span class='notice'>You adjust the jumper on the access protocol pins.</span>")
 		if(build_path == /obj/machinery/r_n_d/server/core)
 			name = T_BOARD("RD Console - Robotics")
 			build_path = /obj/machinery/r_n_d/server/robotics
-			user << "<span class='notice'>Access protocols set to robotics.</span>"
+			to_chat(user, "<span class='notice'>Access protocols set to robotics.</span>")
 		else
 			name = T_BOARD("RD Console")
 			build_path = /obj/machinery/r_n_d/server/core
-			user << "<span class='notice'>Access protocols set to default.</span>"
+			to_chat(user, "<span class='notice'>Access protocols set to default.</span>")
 	return
 
 /obj/item/weapon/circuitboard/destructive_analyzer
@@ -85,3 +86,11 @@ obj/item/weapon/circuitboard/rdserver/attackby(obj/item/I as obj, mob/user as mo
 							/obj/item/weapon/stock_parts/manipulator = 1,
 							/obj/item/weapon/stock_parts/micro_laser = 1,
 							/obj/item/weapon/stock_parts/console_screen = 1)
+
+/obj/item/weapon/circuitboard/ntnet_relay
+	name = "Circuit board (NTNet Quantum Relay)"
+	build_path = /obj/machinery/ntnet_relay
+	board_type = new /datum/frame/frame_types/machine
+	origin_tech = list(TECH_DATA = 4)
+	req_components = list(
+							/obj/item/stack/cable_coil = 15)

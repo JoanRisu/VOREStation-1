@@ -3,6 +3,8 @@
 	desc = "The by-product of human farming."
 	singular_name = "human skin piece"
 	icon_state = "sheet-hide"
+	no_variants = FALSE
+	drop_sound = 'sound/items/drop/clothing.ogg'
 
 /obj/item/stack/material/animalhide/human
 	amount = 50
@@ -80,6 +82,7 @@
 	desc = "This hide was stripped of it's hair, but still needs tanning."
 	singular_name = "hairless hide piece"
 	icon_state = "sheet-hairlesshide"
+	no_variants = FALSE
 
 /obj/item/stack/material/hairlesshide
 	amount = 50
@@ -91,6 +94,7 @@
 	icon_state = "sheet-wetleather"
 	var/wetness = 30 //Reduced when exposed to high temperautres
 	var/drying_threshold_temperature = 500 //Kelvin to start drying
+	no_variants = FALSE
 
 /obj/item/stack/material/wetleather
 	amount = 50
@@ -98,14 +102,13 @@
 //Step one - dehairing.
 /obj/item/stack/material/animalhide/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(	istype(W, /obj/item/weapon/material/knife) || \
-		istype(W, /obj/item/weapon/material/kitchen/utensil/knife) || \
 		istype(W, /obj/item/weapon/material/twohanded/fireaxe) || \
-		istype(W, /obj/item/weapon/material/hatchet) )
+		istype(W, /obj/item/weapon/material/knife/machete/hatchet) )
 
 		//visible message on mobs is defined as visible_message(var/message, var/self_message, var/blind_message)
 		usr.visible_message("<span class='notice'>\The [usr] starts cutting hair off \the [src]</span>", "<span class='notice'>You start cutting the hair off \the [src]</span>", "You hear the sound of a knife rubbing against flesh")
 		if(do_after(user,50))
-			usr << "<span class='notice'>You cut the hair from this [src.singular_name]</span>"
+			to_chat(usr, "<span class='notice'>You cut the hair from this [src.singular_name]</span>")
 			//Try locating an exisitng stack on the tile and add to there if possible
 			for(var/obj/item/stack/material/hairlesshide/HS in usr.loc)
 				if(HS.amount < 50)

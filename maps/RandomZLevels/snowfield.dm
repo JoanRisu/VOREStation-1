@@ -11,14 +11,16 @@
 	icon_state = "green"
 	requires_power = 1
 	always_unpowered = 1
-	lighting_use_dynamic = 1
+	dynamic_lighting = 1
 	power_light = 0
 	power_equip = 0
 	power_environ = 0
 	mobcountmax = 100
 	floracountmax = 7000
-	valid_mobs = list(/mob/living/simple_animal/hostile/samak/polar, /mob/living/simple_animal/hostile/diyaab/polar,
-					/mob/living/simple_animal/hostile/shantak/polar, /mob/living/simple_animal/hostile/vore/polarbear)
+
+	valid_mobs = list(/mob/living/simple_mob/animal/sif/sakimm/polar, /mob/living/simple_mob/animal/sif/diyaab/polar,
+					/mob/living/simple_mob/animal/sif/shantak/polar, /mob/living/simple_mob/animal/space/bear/polar,
+					/mob/living/simple_mob/animal/wolf)
 	valid_flora = list(/obj/structure/flora/tree/pine, /obj/structure/flora/tree/pine, /obj/structure/flora/tree/pine,
 					/obj/structure/flora/tree/dead, /obj/structure/flora/grass/brown, /obj/structure/flora/grass/green,
 					/obj/structure/flora/grass/both, /obj/structure/flora/bush, /obj/structure/flora/ausbushes/grassybush,
@@ -27,8 +29,9 @@
 
 /area/awaymission/snowfield/restricted // No mob spawns!
 	icon_state = "red"
-	mobcountmax = 0
-	floracountmax = 500
+	mobcountmax = 1 // Hacky fix.
+	floracountmax = 100
+	valid_mobs = list(/obj/structure/flora/tree/pine) // Hacky fix.
 	valid_flora = list(/obj/structure/flora/tree/pine, /obj/structure/flora/tree/pine, /obj/structure/flora/tree/pine,
 					/obj/structure/flora/tree/dead, /obj/structure/flora/grass/brown, /obj/structure/flora/grass/green,
 					/obj/structure/flora/grass/both, /obj/structure/flora/bush, /obj/structure/flora/ausbushes/grassybush,
@@ -37,47 +40,59 @@
 
 /area/awaymission/snowfield/base
 	icon_state = "away"
-	ambience = null // Todo: Add better ambience.
+	ambience = list() // Todo: Add better ambience.
 
 // -- Mobs -- //
 
-/mob/living/simple_animal/hostile/vore/polarbear // More aggressive than normal bears so none of that fancy life() stuff.
+/mob/living/simple_mob/animal/space/bear/polar // More aggressive than normal bears so none of that fancy life() stuff.
 	name = "polar bear"
 	desc = "The real question is, why are you examining it, instead of running away?"
+	icon = 'icons/mob/vore.dmi'
 	icon_state = "polarbear"
 	icon_living = "polarbear"
 	icon_dead = "polarbear-dead"
 	icon_gib = "bear-gib"
-	speak = list("RAWR!","Rawr!","GRR!","Growl!")
-	speak_emote = list("growls", "roars")
-	emote_hear = list("rawrs","grumbles","grawls")
-	emote_see = list("stares ferociously", "stomps")
-	speak_chance = 1
-	turns_per_move = 5
+	vore_icons = SA_ICON_LIVING
+	vore_active = 1
+	say_list_type = /datum/say_list/polar_bear
+
+	faction = "polar"
+	maxHealth = 80
+	health = 80 // Polar bear will fuck you up.
+
+	//stop_when_pulled = 0 //VORESTATION AI TEMPORARY REMOVAL
+	//turns_per_move = 5 //VORESTATION AI TEMPORARY REMOVAL
 	see_in_dark = 6
-	meat_type = /obj/item/weapon/reagent_containers/food/snacks/bearmeat
+
 	response_help  = "pets"
 	response_disarm = "gently pushes aside"
 	response_harm   = "desperately attacks"
-	stop_automated_movement_when_pulled = 0
-	maxHealth = 80
-	health = 80 // Polar bear will fuck you up.
+
 	melee_damage_lower = 20
 	melee_damage_upper = 50 // srsly u gon get rekt
-	minbodytemp = 0
-	faction = "polar"
 
-/mob/living/simple_animal/hostile/vore/polarbear/death()
+	minbodytemp = 0
+
+	//speak_chance = 1 //VORESTATION AI TEMPORARY REMOVAL
+	meat_type = /obj/item/weapon/reagent_containers/food/snacks/bearmeat
+/datum/say_list/polar_bear
+	speak = list("RAWR!","Rawr!","GRR!","Growl!")
+	emote_hear = list("rawrs","grumbles","grawls")
+	emote_see = list("stares ferociously", "stomps")
+
+
+
+/mob/living/simple_mob/animal/space/bear/polar/death()
 	desc = "This bastard sure isn't drinking Space Cola anymore."
 	..()
 
-/mob/living/simple_animal/hostile/samak/polar
+/mob/living/simple_mob/animal/sif/sakimm/polar
 	faction = "polar"
 
-/mob/living/simple_animal/hostile/diyaab/polar
+/mob/living/simple_mob/animal/sif/diyaab/polar
 	faction = "polar"
 
-/mob/living/simple_animal/hostile/shantak/polar
+/mob/living/simple_mob/animal/sif/shantak/polar
 	faction = "polar"
 
 // -- Items -- //

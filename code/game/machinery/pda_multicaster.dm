@@ -1,12 +1,12 @@
 /obj/machinery/pda_multicaster
 	name = "\improper PDA multicaster"
 	desc = "This machine mirrors messages sent to it to specific departments."
-	icon = 'icons/obj/stationobjs.dmi'
-	icon_state = "controller"
+	icon = 'icons/obj/stationobjs_vr.dmi' //VOREStation Edit
+	icon_state = "pdamulti" //VOREStation Edit
 	density = 1
 	anchored = 1
 	circuit = /obj/item/weapon/circuitboard/telecomms/pda_multicaster
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 750
 	var/on = 1		// If we're currently active,
 	var/toggle = 1	// If we /should/ be active or not,
@@ -19,6 +19,7 @@
 		"engineering" = new /obj/item/device/pda/multicaster/engineering(src),
 		"medical" = new /obj/item/device/pda/multicaster/medical(src),
 		"research" = new /obj/item/device/pda/multicaster/research(src),
+		"exploration" = new /obj/item/device/pda/multicaster/exploration(src), //VOREStation Add,
 		"cargo" = new /obj/item/device/pda/multicaster/cargo(src),
 		"civilian" = new /obj/item/device/pda/multicaster/civilian(src))
 
@@ -28,7 +29,7 @@
 	component_parts = list()
 	component_parts += new /obj/item/weapon/circuitboard/telecomms/pda_multicaster(src)
 	component_parts += new /obj/item/weapon/stock_parts/subspace/ansible(src)
-	component_parts += new /obj/item/weapon/stock_parts/subspace/filter(src)
+	component_parts += new /obj/item/weapon/stock_parts/subspace/sub_filter(src)
 	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
 	component_parts += new /obj/item/weapon/stock_parts/subspace/treatment(src)
 	component_parts += new /obj/item/stack/cable_coil(src, 2)
@@ -43,12 +44,12 @@
 	if(on)
 		icon_state = initial(icon_state)
 	else
-		icon_state = "[initial(icon_state)]-p"
+		icon_state = "[initial(icon_state)]_off" //VOREStation Edit
 
 /obj/machinery/pda_multicaster/attackby(obj/item/I, mob/user)
-	if(istype(I, /obj/item/weapon/screwdriver))
+	if(I.is_screwdriver())
 		default_deconstruction_screwdriver(user, I)
-	else if(istype(I, /obj/item/weapon/crowbar))
+	else if(I.is_crowbar())
 		default_deconstruction_crowbar(user, I)
 	else
 		..()
@@ -77,15 +78,15 @@
 		if(stat & (BROKEN|NOPOWER|EMPED))
 			on = 0
 			update_PDAs(1) // 1 being to turn off.
-			idle_power_usage = 0
+			update_idle_power_usage(0)
 		else
 			on = 1
 			update_PDAs(0)
-			idle_power_usage = 750
+			update_idle_power_usage(750)
 	else
 		on = 0
 		update_PDAs(1)
-		idle_power_usage = 0
+		update_idle_power_usage(0)
 	update_icon()
 
 /obj/machinery/pda_multicaster/process()

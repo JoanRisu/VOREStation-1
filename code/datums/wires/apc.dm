@@ -10,7 +10,9 @@
 /datum/wires/apc/GetInteractWindow()
 	var/obj/machinery/power/apc/A = holder
 	. += ..()
-	. += text("<br>\n[(A.locked ? "The APC is locked." : "The APC is unlocked.")]<br>\n[(A.shorted ? "The APCs power has been shorted." : "The APC is working properly!")]<br>\n[(A.aidisabled ? "The 'AI control allowed' light is off." : "The 'AI control allowed' light is on.")]")
+	. += show_hint(0x1, A.locked, "The APC is locked.", "The APC is unlocked.")
+	. += show_hint(0x2, A.shorted, "The APCs power has been shorted.", "The APC is working properly!")
+	. += show_hint(0x4, A.aidisabled, "The 'AI control allowed' light is off.", "The 'AI control allowed' light is on.")
 
 
 /datum/wires/apc/CanUse(var/mob/living/L)
@@ -55,12 +57,14 @@
 		if(APC_WIRE_MAIN_POWER1, APC_WIRE_MAIN_POWER2)
 
 			if(!mended)
-				A.shock(usr, 50)
+				if(istype(usr, /mob/living))
+					A.shock(usr, 50)
 				A.shorted = 1
 
 			else if(!IsIndexCut(APC_WIRE_MAIN_POWER1) && !IsIndexCut(APC_WIRE_MAIN_POWER2))
 				A.shorted = 0
-				A.shock(usr, 50)
+				if(istype(usr, /mob/living))
+					A.shock(usr, 50)
 
 		if(APC_WIRE_AI_CONTROL)
 

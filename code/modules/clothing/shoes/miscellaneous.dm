@@ -8,103 +8,33 @@
 	var/list/clothing_choices = list()
 	siemens_coefficient = 0.8
 	species_restricted = null
+	step_volume_mod = 0.5
 
 /obj/item/clothing/shoes/mime
 	name = "mime shoes"
 	icon_state = "white"
+	step_volume_mod = 0	//It's a mime
 
-/obj/item/clothing/shoes/swat
-	name = "\improper SWAT shoes"
-	desc = "When you want to turn up the heat."
-	icon_state = "swat"
-	item_state_slots = list(slot_r_hand_str = "swat", slot_l_hand_str = "swat")
-	force = 3
-	armor = list(melee = 80, bullet = 60, laser = 50,energy = 25, bomb = 50, bio = 10, rad = 0)
+/obj/item/clothing/shoes/galoshes
+	desc = "Rubber boots"
+	name = "galoshes"
+	icon_state = "galoshes"
+	permeability_coefficient = 0.05
+	siemens_coefficient = 0 //They're thick rubber boots! Of course they won't conduct electricity!
 	item_flags = NOSLIP
-	siemens_coefficient = 0.6
-	var/obj/item/weapon/material/hatchet/tacknife
+	slowdown = SHOES_SLOWDOWN+1
+	species_restricted = null
+	drop_sound = 'sound/items/drop/rubber.ogg'
 
-/obj/item/clothing/shoes/swat/attack_hand(var/mob/living/M)
-	if(tacknife)
-		tacknife.loc = get_turf(src)
-		if(M.put_in_active_hand(tacknife))
-			M << "<span class='notice'>You slide \the [tacknife] out of [src].</span>"
-			playsound(M, 'sound/weapons/flipblade.ogg', 40, 1)
-			tacknife = null
-			update_icon()
-		return
-	..()
+/obj/item/clothing/shoes/dress
+	name = "dress shoes"
+	desc = "Sharp looking low quarters, perfect for a formal uniform."
+	icon_state = "laceups"
 
-/obj/item/clothing/shoes/swat/attackby(var/obj/item/I, var/mob/living/M)
-	if(istype(I, /obj/item/weapon/material/hatchet/tacknife))
-		if(tacknife)
-			return
-		M.drop_item()
-		tacknife = I
-		I.loc = src
-		M << "<span class='notice'>You slide the [I] into [src].</span>"
-		playsound(M, 'sound/weapons/flipblade.ogg', 40, 1)
-		update_icon()
-	..()
-
-/obj/item/clothing/shoes/swat/update_icon()
-	if(tacknife)
-		icon_state = "swat_1"
-	else
-		icon_state = initial(icon_state)
-
-//Stolen from CM, refurbished to be less terrible.
-/obj/item/clothing/shoes/marine
-	name = "combat boots"
-	desc = "Standard issue combat boots for combat scenarios or combat situations. All combat, all the time.  It can hold a Strategical knife."
-	icon_state = "jackboots"
-	item_state_slots = list(slot_r_hand_str = "jackboots", slot_l_hand_str = "jackboots")
-	armor = list(melee = 80, bullet = 60, laser = 50,energy = 25, bomb = 50, bio = 10, rad = 0)
-	siemens_coefficient = 0.6
-	var/obj/item/weapon/material/hatchet/tacknife
-
-/obj/item/clothing/shoes/marine/attack_hand(var/mob/living/M)
-	if(tacknife)
-		tacknife.loc = get_turf(src)
-		if(M.put_in_active_hand(tacknife))
-			M << "<span class='notice'>You slide \the [tacknife] out of [src].</span>"
-			playsound(M, 'sound/weapons/flipblade.ogg', 40, 1)
-			tacknife = null
-			update_icon()
-		return
-	..()
-
-/obj/item/clothing/shoes/marine/attackby(var/obj/item/I, var/mob/living/M)
-	if(istype(I, /obj/item/weapon/material/hatchet/tacknife))
-		if(tacknife)
-			return
-		M.drop_item()
-		tacknife = I
-		I.loc = src
-		M << "<span class='notice'>You slide the [I] into [src].</span>"
-		playsound(M, 'sound/weapons/flipblade.ogg', 40, 1)
-		update_icon()
-	..()
-
-/obj/item/clothing/shoes/marine/update_icon()
-	if(tacknife)
-		icon_state = "jackboots_1"
-	else
-		icon_state = initial(icon_state)
-
-/obj/item/clothing/shoes/combat //Basically SWAT shoes combined with galoshes.
-	name = "combat boots"
-	desc = "When you REALLY want to turn up the heat"
-	icon_state = "swat"
-	force = 5
-	armor = list(melee = 80, bullet = 60, laser = 50,energy = 25, bomb = 50, bio = 10, rad = 0)
-	item_flags = NOSLIP
-	siemens_coefficient = 0.6
-
-	cold_protection = FEET
-	min_cold_protection_temperature = SHOE_MIN_COLD_PROTECTION_TEMPERATURE
-	heat_protection = FEET
-	max_heat_protection_temperature = SHOE_MAX_HEAT_PROTECTION_TEMPERATURE
+/obj/item/clothing/shoes/dress/white
+	name = "white dress shoes"
+	desc = "Brilliantly white low quarters, not a spot on them."
+	icon_state = "whitedress"
 
 /obj/item/clothing/shoes/sandal
 	desc = "A pair of rather plain, wooden sandals."
@@ -168,7 +98,8 @@
 	icon_state = "slippers"
 	force = 0
 	species_restricted = null
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
+	drop_sound = 'sound/items/drop/clothing.ogg'
 
 /obj/item/clothing/shoes/slippers_worn
 	name = "worn bunny slippers"
@@ -176,7 +107,7 @@
 	icon_state = "slippers_worn"
 	item_state_slots = list(slot_r_hand_str = "slippers", slot_l_hand_str = "slippers")
 	force = 0
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 
 /obj/item/clothing/shoes/laceup
 	name = "laceup shoes"
@@ -192,28 +123,70 @@
 	slowdown = SHOES_SLOWDOWN+1
 	species_restricted = null
 
-/obj/item/clothing/shoes/winterboots
-	name = "winter boots"
-	desc = "Boots lined with 'synthetic' animal fur."
-	icon_state = "winterboots"
-	cold_protection = FEET|LEGS
-	min_cold_protection_temperature = SHOE_MIN_COLD_PROTECTION_TEMPERATURE
-	heat_protection = FEET|LEGS
-	max_heat_protection_temperature = SHOE_MAX_HEAT_PROTECTION_TEMPERATURE
-
 /obj/item/clothing/shoes/flipflop
 	name = "flip flops"
 	desc = "A pair of foam flip flops. For those not afraid to show a little ankle."
 	icon_state = "thongsandal"
+	addblends = "thongsandal_a"
 
 /obj/item/clothing/shoes/athletic
 	name = "athletic shoes"
 	desc = "A pair of sleek atheletic shoes. Made by and for the sporty types."
 	icon_state = "sportshoe"
+	addblends = "sportshoe_a"
 	item_state_slots = list(slot_r_hand_str = "sportheld", slot_l_hand_str = "sportheld")
 
 /obj/item/clothing/shoes/skater
 	name = "skater shoes"
 	desc = "A pair of wide shoes with thick soles.  Designed for skating."
 	icon_state = "skatershoe"
+	addblends = "skatershoe_a"
 	item_state_slots = list(slot_r_hand_str = "skaterheld", slot_l_hand_str = "skaterheld")
+
+/obj/item/clothing/shoes/heels
+	name = "high heels"
+	desc = "A pair of high-heeled shoes. Fancy!"
+	icon_state = "heels"
+	addblends = "heels_a"
+
+/obj/item/clothing/shoes/footwraps
+	name = "cloth footwraps"
+	desc = "A roll of treated canvas used for wrapping claws or paws"
+	icon_state = "clothwrap"
+	item_state = "clothwrap"
+	force = 0
+	w_class = ITEMSIZE_SMALL
+	species_restricted = null
+	drop_sound = 'sound/items/drop/clothing.ogg'
+
+/obj/item/clothing/shoes/boots/ranger
+	var/bootcolor = "white"
+	name = "ranger boots"
+	desc = "The Rangers special lightweight hybrid magboots-jetboots perfect for EVA. If only these functions were so easy to copy in reality.\
+	 These ones are just a well-made pair of boots in appropriate colours."
+	icon = 'icons/obj/clothing/ranger.dmi'
+	icon_state = "ranger_boots"
+
+/obj/item/clothing/shoes/boots/ranger/Initialize()
+	. = ..()
+	if(icon_state == "ranger_boots")
+		name = "[bootcolor] ranger boots"
+		icon_state = "[bootcolor]_ranger_boots"
+
+/obj/item/clothing/shoes/boots/ranger/black
+	bootcolor = "black"
+
+/obj/item/clothing/shoes/boots/ranger/pink
+	bootcolor = "pink"
+
+/obj/item/clothing/shoes/boots/ranger/green
+	bootcolor = "green"
+
+/obj/item/clothing/shoes/boots/ranger/cyan
+	bootcolor = "cyan"
+
+/obj/item/clothing/shoes/boots/ranger/orange
+	bootcolor = "orange"
+
+/obj/item/clothing/shoes/boots/ranger/yellow
+	bootcolor = "yellow"

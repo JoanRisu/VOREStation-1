@@ -156,6 +156,13 @@
 			else
 				H.gender = MALE
 
+		//Body markings
+		for(var/tag in dna.body_markings)
+			var/obj/item/organ/external/E = H.organs_by_name[tag]
+			if(E)
+				var/list/marklist = dna.body_markings[tag]
+				E.markings = marklist.Copy()
+
 		//Hair
 		var/hair = dna.GetUIValueRange(DNA_UI_HAIR_STYLE,hair_styles_list.len)
 		if((0 < hair) && (hair <= hair_styles_list.len))
@@ -168,12 +175,20 @@
 
 		// VORE StationEdit Start
 
-		//Ears
+		// Ears
 		var/ears = dna.GetUIValueRange(DNA_UI_EAR_STYLE, ear_styles_list.len + 1) - 1
 		if(ears <= 1)
 			H.ear_style = null
 		else if((0 < ears) && (ears <= ear_styles_list.len))
 			H.ear_style = ear_styles_list[ear_styles_list[ears]]
+
+		// Ear Color
+		H.r_ears  = dna.GetUIValueRange(DNA_UI_EARS_R,    255)
+		H.g_ears  = dna.GetUIValueRange(DNA_UI_EARS_G,    255)
+		H.b_ears  = dna.GetUIValueRange(DNA_UI_EARS_B, 	  255)
+		H.r_ears2 = dna.GetUIValueRange(DNA_UI_EARS2_R,   255)
+		H.g_ears2 = dna.GetUIValueRange(DNA_UI_EARS2_G,   255)
+		H.b_ears2 = dna.GetUIValueRange(DNA_UI_EARS2_B,	  255)
 
 		//Tail
 		var/tail = dna.GetUIValueRange(DNA_UI_TAIL_STYLE, tail_styles_list.len + 1) - 1
@@ -182,29 +197,65 @@
 		else if((0 < tail) && (tail <= tail_styles_list.len))
 			H.tail_style = tail_styles_list[tail_styles_list[tail]]
 
+		//Wing
+		var/wing = dna.GetUIValueRange(DNA_UI_WING_STYLE, wing_styles_list.len + 1) - 1
+		if(wing <= 1)
+			H.wing_style = null
+		else if((0 < wing) && (wing <= wing_styles_list.len))
+			H.wing_style = wing_styles_list[wing_styles_list[wing]]
+
+		//Wing Color
+		H.r_wing   = dna.GetUIValueRange(DNA_UI_WING_R,    255)
+		H.g_wing   = dna.GetUIValueRange(DNA_UI_WING_G,    255)
+		H.b_wing   = dna.GetUIValueRange(DNA_UI_WING_B,    255)
+
 		// Playerscale
 		var/size = dna.GetUIValueRange(DNA_UI_PLAYERSCALE, player_sizes_list.len)
 		if((0 < size) && (size <= player_sizes_list.len))
-			H.size_multiplier = player_sizes_list[player_sizes_list[size]]
+			H.resize(player_sizes_list[player_sizes_list[size]], FALSE)
 
 		// Tail/Taur Color
 		H.r_tail   = dna.GetUIValueRange(DNA_UI_TAIL_R,    255)
 		H.g_tail   = dna.GetUIValueRange(DNA_UI_TAIL_G,    255)
 		H.b_tail   = dna.GetUIValueRange(DNA_UI_TAIL_B,    255)
+		H.r_tail2  = dna.GetUIValueRange(DNA_UI_TAIL2_R,   255)
+		H.g_tail2  = dna.GetUIValueRange(DNA_UI_TAIL2_G,   255)
+		H.b_tail2  = dna.GetUIValueRange(DNA_UI_TAIL2_B,   255)
 
 		// Technically custom_species is not part of the UI, but this place avoids merge problems.
 		H.custom_species = dna.custom_species
+		if(istype(H.species,/datum/species/custom))
+			var/datum/species/custom/CS = H.species
+			var/datum/species/custom/new_CS = CS.produceCopy(dna.base_species,dna.species_traits,src)
+			new_CS.blood_color = dna.blood_color
 
+		if(istype(H.species,/datum/species/xenochimera))
+			var/datum/species/xenochimera/CS = H.species
+			var/datum/species/xenochimera/new_CS = CS.produceCopy(dna.base_species,dna.species_traits,src)
+			new_CS.blood_color = dna.blood_color
+
+		if(istype(H.species,/datum/species/alraune))
+			var/datum/species/alraune/CS = H.species
+			var/datum/species/alraune/new_CS = CS.produceCopy(dna.base_species,dna.species_traits,src)
+			new_CS.blood_color = dna.blood_color
 		// VOREStation Edit End
 
+		H.force_update_organs() //VOREStation Add - Gotta do this too
 		H.force_update_limbs()
-		H.update_body(0)
+		//H.update_body(0) //VOREStation Edit - Done in force_update_limbs already
 		H.update_eyes()
 		H.update_hair()
 
 		return 1
 	else
 		return 0
+
+//VOREStation Add
+/mob/living/carbon/human/proc/force_update_organs()
+	for(var/organ in organs + internal_organs)
+		var/obj/item/organ/O = organ
+		O.species = species
+//VOREStation Add End
 
 // Used below, simple injection modifier.
 /proc/probinj(var/pr, var/inj)

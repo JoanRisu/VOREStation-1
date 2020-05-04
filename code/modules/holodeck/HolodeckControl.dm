@@ -4,7 +4,7 @@
 	icon_keyboard = "tech_key"
 	icon_screen = "holocontrol"
 
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	active_power_usage = 8000 //8kW for the scenery + 500W per holoitem
 	var/item_power_usage = 500
 
@@ -18,23 +18,57 @@
 	var/mob/last_to_emag = null
 	var/last_change = 0
 	var/last_gravity_change = 0
-	var/list/supported_programs = list( \
-	"Empty Court" = "emptycourt", \
-	"Basketball Court" = "basketball",	\
-	"Thunderdome Court" = "thunderdomecourt",	\
-	"Boxing Ring"="boxingcourt",	\
-	"Beach" = "beach",	\
-	"Desert" = "desert",	\
-	"Space" = "space",	\
-	"Picnic Area" = "picnicarea",	\
-	"Snow Field" = "snowfield",	\
-	"Theatre" = "theatre",	\
-	"Meeting Hall" = "meetinghall",	\
-	"Courtroom" = "courtroom",	\
-	"Turn Off" = "turnoff"	\
+
+	var/area/projection_area = /area/holodeck/alphadeck
+	var/current_program
+	var/powerdown_program = "Turn Off"
+	var/default_program = "Empty Court"
+
+	var/list/supported_programs = list(
+	"Empty Court" 		= new/datum/holodeck_program(/area/holodeck/source_emptycourt, list('sound/music/THUNDERDOME.ogg')),
+	"Boxing Ring" 		= new/datum/holodeck_program(/area/holodeck/source_boxingcourt, list('sound/music/THUNDERDOME.ogg')),
+	"Basketball" 		= new/datum/holodeck_program(/area/holodeck/source_basketball, list('sound/music/THUNDERDOME.ogg')),
+	"Thunderdome"		= new/datum/holodeck_program(/area/holodeck/source_thunderdomecourt, list('sound/music/THUNDERDOME.ogg')),
+	"Beach" 			= new/datum/holodeck_program(/area/holodeck/source_beach),
+	"Desert" 			= new/datum/holodeck_program(/area/holodeck/source_desert,
+													list(
+														'sound/effects/weather/wind/wind_2_1.ogg',
+											 			'sound/effects/weather/wind/wind_2_2.ogg',
+											 			'sound/effects/weather/wind/wind_3_1.ogg',
+											 			'sound/effects/weather/wind/wind_4_1.ogg',
+											 			'sound/effects/weather/wind/wind_4_2.ogg',
+											 			'sound/effects/weather/wind/wind_5_1.ogg'
+												 		)
+		 											),
+	"Snowfield" 		= new/datum/holodeck_program(/area/holodeck/source_snowfield,
+													list(
+														'sound/effects/weather/wind/wind_2_1.ogg',
+											 			'sound/effects/weather/wind/wind_2_2.ogg',
+											 			'sound/effects/weather/wind/wind_3_1.ogg',
+											 			'sound/effects/weather/wind/wind_4_1.ogg',
+											 			'sound/effects/weather/wind/wind_4_2.ogg',
+											 			'sound/effects/weather/wind/wind_5_1.ogg'
+												 		)
+		 											),
+	"Space" 			= new/datum/holodeck_program(/area/holodeck/source_space,
+													list(
+														'sound/ambience/ambispace.ogg',
+														'sound/music/main.ogg',
+														'sound/music/space.ogg',
+														'sound/music/traitor.ogg',
+														)
+													),
+	"Picnic Area" 		= new/datum/holodeck_program(/area/holodeck/source_picnicarea, list('sound/music/title2.ogg')),
+	"Theatre" 			= new/datum/holodeck_program(/area/holodeck/source_theatre),
+	"Meetinghall" 		= new/datum/holodeck_program(/area/holodeck/source_meetinghall),
+	"Courtroom" 		= new/datum/holodeck_program(/area/holodeck/source_courtroom, list('sound/music/traitor.ogg')),
+	"Turn Off" 			= new/datum/holodeck_program(/area/holodeck/source_plating, list())
 	)
-	var/list/restricted_programs = list("Atmospheric Burn Simulation" = "burntest", "Wildlife Simulation" = "wildlifecarp")
-	var/current_program = "turnoff"
+
+	var/list/restricted_programs = list(
+	"Burnoff Test Simulation"	= new/datum/holodeck_program(/area/holodeck/source_burntest, list()),
+	"Wildlife Simulation" 		= new/datum/holodeck_program(/area/holodeck/source_wildlife, list())
+	)
 
 /obj/machinery/computer/HolodeckControl/attack_ai(var/mob/user as mob)
 	return src.attack_hand(user)
@@ -59,10 +93,10 @@
 	var/restricted_program_list[0]
 
 	for(var/P in supported_programs)
-		program_list[++program_list.len] = list("name" = P, "program" = supported_programs[P])
+		program_list[++program_list.len] = P
 
 	for(var/P in restricted_programs)
-		restricted_program_list[++restricted_program_list.len] = list("name" = P, "program" = restricted_programs[P])
+		restricted_program_list[++restricted_program_list.len] = P
 
 	data["supportedPrograms"] = program_list
 	data["restrictedPrograms"] = restricted_program_list
@@ -78,7 +112,7 @@
 	else
 		data["gravity"] = null
 
-	ui = nanomanager.try_update_ui(user, src, ui_key, ui, data, force_open)
+	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
 	if (!ui)
 		ui = new(user, src, ui_key, "holodeck.tmpl", src.name, 400, 550)
 		ui.set_initial_data(data)
@@ -93,9 +127,9 @@
 
 		if(href_list["program"])
 			var/prog = href_list["program"]
-			if(prog in holodeck_programs)
-				loadProgram(holodeck_programs[prog])
-				current_program = href_list["program"]
+			if(prog in (supported_programs + restricted_programs))
+				if(loadProgram(prog))
+					current_program = prog
 
 		else if(href_list["AIoverride"])
 			if(!issilicon(usr))
@@ -118,7 +152,7 @@
 
 		src.add_fingerprint(usr)
 
-	nanomanager.update_uis(src)
+	SSnanoui.update_uis(src)
 
 /obj/machinery/computer/HolodeckControl/emag_act(var/remaining_charges, var/mob/user as mob)
 	playsound(src.loc, 'sound/effects/sparks4.ogg', 75, 1)
@@ -127,8 +161,8 @@
 		emagged = 1
 		safety_disabled = 1
 		update_projections()
-		user << "<span class='notice'>You vastly increase projector power and override the safety and security protocols.</span>"
-		user << "Warning.  Automatic shutoff and derezing protocols have been corrupted.  Please call [company_name] maintenance and do not use the simulator."
+		to_chat(user, "<span class='notice'>You vastly increase projector power and override the safety and security protocols.</span>")
+		to_chat(user, "Warning.  Automatic shutoff and derezing protocols have been corrupted.  Please call [using_map.company_name] maintenance and do not use the simulator.")
 		log_game("[key_name(usr)] emagged the Holodeck Control Computer")
 		return 1
 	return
@@ -143,14 +177,17 @@
 		for(var/obj/item/weapon/holo/esword/H in linkedholodeck)
 			H.damtype = initial(H.damtype)
 
-	for(var/mob/living/simple_animal/hostile/carp/holodeck/C in holographic_mobs)
+	for(var/mob/living/simple_mob/animal/space/carp/holodeck/C in holographic_mobs)
 		C.set_safety(!safety_disabled)
 		if (last_to_emag)
 			C.friends = list(last_to_emag)
 
 /obj/machinery/computer/HolodeckControl/New()
 	..()
-	linkedholodeck = locate(/area/holodeck/alphadeck)
+	current_program = powerdown_program
+	linkedholodeck = locate(projection_area)
+	if(!linkedholodeck)
+		to_world("<span class='danger'>Holodeck computer at [x],[y],[z] failed to locate projection area.</span>")
 
 //This could all be done better, but it works for now.
 /obj/machinery/computer/HolodeckControl/Destroy()
@@ -173,7 +210,7 @@
 			derez(item, 0)
 
 	if (!safety_disabled)
-		for(var/mob/living/simple_animal/hostile/carp/holodeck/C in holographic_mobs)
+		for(var/mob/living/simple_mob/animal/space/carp/holodeck/C in holographic_mobs)
 			if (get_area(C.loc) != linkedholodeck)
 				holographic_mobs -= C
 				C.derez()
@@ -185,9 +222,9 @@
 
 		if(!checkInteg(linkedholodeck))
 			damaged = 1
-			loadProgram(holodeck_programs["turnoff"], 0)
+			loadProgram(powerdown_program, 0)
 			active = 0
-			use_power = 1
+			update_use_power(USE_POWER_IDLE)
 			for(var/mob/M in range(10,src))
 				M.show_message("The holodeck overloads!")
 
@@ -210,7 +247,6 @@
 		var/mob/M = obj.loc
 		if(ismob(M))
 			M.remove_from_mob(obj)
-			M.update_icons()	//so their overlays update
 
 	if(!silent)
 		var/obj/oldobj = obj
@@ -227,20 +263,29 @@
 //Why is it called toggle if it doesn't toggle?
 /obj/machinery/computer/HolodeckControl/proc/togglePower(var/toggleOn = 0)
 	if(toggleOn)
-		loadProgram(holodeck_programs["emptycourt"], 0)
+		loadProgram(default_program, 0)
 	else
-		loadProgram(holodeck_programs["turnoff"], 0)
+		loadProgram(powerdown_program, 0)
 
 		if(!linkedholodeck.has_gravity)
-			linkedholodeck.gravitychange(1,linkedholodeck)
+			linkedholodeck.gravitychange(1)
 
 		active = 0
-		use_power = 1
+		update_use_power(USE_POWER_IDLE)
 
 
-/obj/machinery/computer/HolodeckControl/proc/loadProgram(var/datum/holodeck_program/HP, var/check_delay = 1)
+/obj/machinery/computer/HolodeckControl/proc/loadProgram(var/prog, var/check_delay = 1)
+	if(!prog)
+		return
+
+	var/datum/holodeck_program/HP
+	if(prog in supported_programs)
+		HP = supported_programs[prog]
+	else if(prog in restricted_programs)
+		HP = restricted_programs[prog]
 	if(!HP)
 		return
+
 	var/area/A = locate(HP.target)
 	if(!A)
 		return
@@ -248,20 +293,20 @@
 	if(check_delay)
 		if(world.time < (last_change + 25))
 			if(world.time < (last_change + 15))//To prevent super-spam clicking, reduced process size and annoyance -Sieve
-				return
+				return 0
 			for(var/mob/M in range(3,src))
-				M.show_message("\b ERROR. Recalibrating projection apparatus.")
+				M.show_message("<b>ERROR. Recalibrating projection apparatus.</b>")
 				last_change = world.time
-				return
+				return 0
 
 	last_change = world.time
 	active = 1
-	use_power = 2
+	update_use_power(USE_POWER_ACTIVE)
 
 	for(var/item in holographic_objs)
 		derez(item)
 
-	for(var/mob/living/simple_animal/hostile/carp/holodeck/C in holographic_mobs)
+	for(var/mob/living/simple_mob/animal/space/carp/holodeck/C in holographic_mobs)
 		holographic_mobs -= C
 		C.derez()
 
@@ -295,13 +340,15 @@
 						T.temperature = 5000
 						T.hotspot_expose(50000,50000,1)
 			if(L.name=="Holocarp Spawn")
-				holographic_mobs += new /mob/living/simple_animal/hostile/carp/holodeck(L.loc)
+				holographic_mobs += new /mob/living/simple_mob/animal/space/carp/holodeck(L.loc)
 
 			if(L.name=="Holocarp Spawn Random")
 				if (prob(4)) //With 4 spawn points, carp should only appear 15% of the time.
-					holographic_mobs += new /mob/living/simple_animal/hostile/carp/holodeck(L.loc)
+					holographic_mobs += new /mob/living/simple_mob/animal/space/carp/holodeck(L.loc)
 
 		update_projections()
+
+	return 1
 
 
 /obj/machinery/computer/HolodeckControl/proc/toggleGravity(var/area/A)
@@ -309,25 +356,25 @@
 		if(world.time < (last_gravity_change + 15))//To prevent super-spam clicking
 			return
 		for(var/mob/M in range(3,src))
-			M.show_message("\b ERROR. Recalibrating gravity field.")
+			M.show_message("<b>ERROR. Recalibrating gravity field.</b>")
 			last_change = world.time
 			return
 
 	last_gravity_change = world.time
 	active = 1
-	use_power = 1
+	update_use_power(USE_POWER_IDLE)
 
 	if(A.has_gravity)
-		A.gravitychange(0,A)
+		A.gravitychange(0)
 	else
-		A.gravitychange(1,A)
+		A.gravitychange(1)
 
 /obj/machinery/computer/HolodeckControl/proc/emergencyShutdown()
 	//Turn it back to the regular non-holographic room
-	loadProgram(holodeck_programs["turnoff"], 0)
+	loadProgram(powerdown_program, 0)
 
 	if(!linkedholodeck.has_gravity)
-		linkedholodeck.gravitychange(1,linkedholodeck)
+		linkedholodeck.gravitychange(1)
 
 	active = 0
-	use_power = 1
+	update_use_power(USE_POWER_IDLE)

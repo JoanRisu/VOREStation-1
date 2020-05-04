@@ -7,13 +7,11 @@
 	organ_tag = O_EYES
 	parent_organ = BP_HEAD
 	var/list/eye_colour = list(0,0,0)
+	var/innate_flash_protection = FLASH_PROTECTION_NONE
 
 /obj/item/organ/internal/eyes/robotize()
 	..()
 	name = "optical sensor"
-	icon = 'icons/obj/robot_component.dmi'
-	icon_state = "camera"
-	dead_icon = "camera_broken"
 	verbs |= /obj/item/organ/internal/eyes/proc/change_eye_color
 
 /obj/item/organ/internal/eyes/robot
@@ -22,6 +20,17 @@
 /obj/item/organ/internal/eyes/robot/New()
 	..()
 	robotize()
+
+/obj/item/organ/internal/eyes/grey
+	icon_state = "eyes_grey"
+
+/obj/item/organ/internal/eyes/grey/colormatch/New()
+	..()
+	var/mob/living/carbon/human/H = null
+	spawn(15)
+		if(ishuman(owner))
+			H = owner
+			color = H.species.blood_color
 
 /obj/item/organ/internal/eyes/proc/change_eye_color()
 	set name = "Change Eye Color"
@@ -41,7 +50,7 @@
 		// Now sync the organ's eye_colour list.
 		update_colour()
 		// Finally, update the eye icon on the mob.
-		owner.update_eyes()
+		owner.regenerate_icons()
 
 /obj/item/organ/internal/eyes/replaced(var/mob/living/carbon/human/target)
 
@@ -66,13 +75,38 @@
 	var/oldbroken = is_broken()
 	..()
 	if(is_broken() && !oldbroken && owner && !owner.stat)
-		owner << "<span class='danger'>You go blind!</span>"
+		to_chat(owner, "<span class='danger'>You go blind!</span>")
 
 /obj/item/organ/internal/eyes/process() //Eye damage replaces the old eye_stat var.
 	..()
-	if(!owner)
-		return
+	if(!owner) return
+
 	if(is_bruised())
 		owner.eye_blurry = 20
 	if(is_broken())
-		owner.eye_blind = 20
+		owner.Blind(20)
+
+/obj/item/organ/internal/eyes/handle_germ_effects()
+	. = ..() //Up should return an infection level as an integer
+	if(!.) return
+
+	//Conjunctivitis
+	if (. >= 1)
+		if(prob(1))
+			owner.custom_pain("The corners of your eyes itch! It's quite frustrating.",0)
+	if (. >= 2)
+		if(prob(1))
+			owner.custom_pain("Your eyes are watering, making it harder to see clearly for a moment.",1)
+			owner.eye_blurry += 10
+
+/obj/item/organ/internal/eyes/proc/get_total_protection(var/flash_protection = FLASH_PROTECTION_NONE)
+	return (flash_protection + innate_flash_protection)
+
+/obj/item/organ/internal/eyes/proc/additional_flash_effects(var/intensity)
+	return -1
+
+/obj/item/organ/internal/eyes/emp_act(severity)
+	// ..()	//Returns if the organ isn't robotic // VOREStation Edit - Don't take damage
+	if(robotic >= ORGAN_ASSISTED)
+		return
+	owner.eye_blurry += (4/severity)

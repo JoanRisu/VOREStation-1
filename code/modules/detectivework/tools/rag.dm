@@ -16,7 +16,7 @@
 /obj/item/weapon/reagent_containers/glass/rag
 	name = "rag"
 	desc = "For cleaning up messes, you suppose."
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 	icon = 'icons/obj/toy.dmi'
 	icon_state = "rag"
 	amount_per_transfer_from_this = 5
@@ -25,17 +25,18 @@
 	can_be_placed_into = null
 	flags = OPENCONTAINER | NOBLUDGEON
 	unacidable = 0
+	drop_sound = 'sound/items/drop/clothing.ogg'
 
 	var/on_fire = 0
 	var/burn_time = 20 //if the rag burns for too long it turns to ashes
 
-/obj/item/weapon/reagent_containers/glass/rag/New()
-	..()
+/obj/item/weapon/reagent_containers/glass/rag/Initialize()
+	. = ..()
 	update_name()
 
 /obj/item/weapon/reagent_containers/glass/rag/Destroy()
-	processing_objects -= src //so we don't continue turning to ash while gc'd
-	..()
+	STOP_PROCESSING(SSobj, src) //so we don't continue turning to ash while gc'd
+	return ..()
 
 /obj/item/weapon/reagent_containers/glass/rag/attack_self(mob/user as mob)
 	if(on_fire)
@@ -53,7 +54,7 @@
 			if(on_fire)
 				visible_message("<span class='warning'>\The [user] lights [src] with [W].</span>")
 			else
-				user << "<span class='warning'>You manage to singe [src], but fail to light it.</span>"
+				to_chat(user, "<span class='warning'>You manage to singe [src], but fail to light it.</span>")
 
 	. = ..()
 	update_name()
@@ -94,7 +95,7 @@
 
 /obj/item/weapon/reagent_containers/glass/rag/proc/wipe_down(atom/A, mob/user)
 	if(!reagents.total_volume)
-		user << "<span class='warning'>The [initial(name)] is dry!</span>"
+		to_chat(user, "<span class='warning'>The [initial(name)] is dry!</span>")
 	else
 		user.visible_message("\The [user] starts to wipe down [A] with [src]!")
 		//reagents.splash(A, 1) //get a small amount of liquid on the thing we're wiping.
@@ -102,6 +103,10 @@
 		if(do_after(user,30))
 			user.visible_message("\The [user] finishes wiping off the [A]!")
 			A.clean_blood()
+			if(istype(A, /turf) || istype(A, /obj/effect/decal/cleanable) || istype(A, /obj/effect/overlay) || istype(A, /obj/effect/rune))  //VOREStation Edit - "Allows rags to clean dirt from turfs"
+				var/turf/T = get_turf(A)
+				if(T)
+					T.clean(src, user) //VOREStation Edit End
 
 /obj/item/weapon/reagent_containers/glass/rag/attack(atom/target as obj|turf|area, mob/user as mob , flag)
 	if(isliving(target))
@@ -132,9 +137,9 @@
 	if(!proximity)
 		return
 
-	if(istype(A, /obj/structure/reagent_dispensers))
+	if(istype(A, /obj/structure/reagent_dispensers) || istype(A, /obj/item/weapon/reagent_containers/glass/bucket) || istype(A, /obj/structure/mopbucket))  //VOREStation Edit - "Allows rags to be used on buckets and mopbuckets"
 		if(!reagents.get_free_space())
-			user << "<span class='warning'>\The [src] is already soaked.</span>"
+			to_chat(user, "<span class='warning'>\The [src] is already soaked.</span>")
 			return
 
 		if(A.reagents && A.reagents.trans_to_obj(src, reagents.maximum_volume))
@@ -183,14 +188,14 @@
 		qdel(src)
 		return
 
-	processing_objects += src
+	START_PROCESSING(SSobj, src)
 	set_light(2, null, "#E38F46")
 	on_fire = 1
 	update_name()
 	update_icon()
 
 /obj/item/weapon/reagent_containers/glass/rag/proc/extinguish()
-	processing_objects -= src
+	STOP_PROCESSING(SSobj, src)
 	set_light(0)
 	on_fire = 0
 
@@ -217,7 +222,7 @@
 		location.hotspot_expose(700, 5)
 
 	if(burn_time <= 0)
-		processing_objects -= src
+		STOP_PROCESSING(SSobj, src)
 		new /obj/effect/decal/cleanable/ash(location)
 		qdel(src)
 		return

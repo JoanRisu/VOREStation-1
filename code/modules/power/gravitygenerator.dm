@@ -1,9 +1,8 @@
 // It.. uses a lot of power.  Everything under power is engineering stuff, at least.
 
 /obj/machinery/computer/gravity_control_computer
-	name = "Gravity Generator Control"
+	name = "gravity generator control"
 	desc = "A computer to control a local gravity generator.  Qualified personnel only."
-	icon = 'icons/obj/computer.dmi'
 	icon_state = "airtunnel0e"
 	anchored = 1
 	density = 1
@@ -11,13 +10,13 @@
 
 
 /obj/machinery/gravity_generator/
-	name = "Gravitational Generator"
+	name = "gravitational generator"
 	desc = "A device which produces a gravaton field when set up."
 	icon = 'icons/obj/singularity.dmi'
 	icon_state = "TheSingGen"
 	anchored = 1
 	density = 1
-	use_power = 1
+	use_power = USE_POWER_IDLE
 	idle_power_usage = 200
 	active_power_usage = 1000
 	var/on = 1
@@ -25,26 +24,16 @@
 	var/effectiverange = 25
 
 	// Borrows code from cloning computer
-/obj/machinery/computer/gravity_control_computer/New()
-	..()
-	spawn(5)
-		updatemodules()
-		return
-	return
+/obj/machinery/computer/gravity_control_computer/Initialize()
+	. = ..()
+	updatemodules()
 
-/obj/machinery/gravity_generator/New()
-	..()
-	spawn(5)
-		locatelocalareas()
-		return
-	return
-
-
-
+/obj/machinery/gravity_generator/Initialize()
+	. = ..()
+	locatelocalareas()
+	
 /obj/machinery/computer/gravity_control_computer/proc/updatemodules()
 	src.gravity_generator = findgenerator()
-
-
 
 /obj/machinery/gravity_generator/proc/locatelocalareas()
 	for(var/area/A in range(src,effectiverange))
@@ -56,10 +45,10 @@
 /obj/machinery/computer/gravity_control_computer/proc/findgenerator()
 	var/obj/machinery/gravity_generator/foundgenerator = null
 	for(dir in list(NORTH,EAST,SOUTH,WEST))
-		//world << "SEARCHING IN [dir]"
+		//to_world("SEARCHING IN [dir]")
 		foundgenerator = locate(/obj/machinery/gravity_generator/, get_step(src, dir))
 		if (!isnull(foundgenerator))
-			//world << "FOUND"
+			//to_world("FOUND")
 			break
 	return foundgenerator
 
@@ -95,7 +84,7 @@
 			else
 				dat += "<tt><font color=red>[A]</tt></font><br>"
 
-		dat += "<br><tt>Maintainence Functions:</tt><br>"
+		dat += "<br><tt>Maintenance Functions:</tt><br>"
 		if(gravity_generator:on)
 			dat += "<a href='byond://?src=\ref[src];gentoggle=1'><font color=red> TURN GRAVITY GENERATOR OFF. </font></a>"
 		else
@@ -128,13 +117,13 @@
 					if((A in G.localareas) && (G.on))
 						break
 				if(!G)
-					A.gravitychange(0,A)
+					A.gravitychange(0)
 
 
 		else
 			for(var/area/A in gravity_generator:localareas)
 				gravity_generator:on = 1
-				A.gravitychange(1,A)
+				A.gravitychange(1)
 
 		src.updateUsrDialog()
 		return

@@ -18,9 +18,9 @@ Used In File(s): \code\game\machinery\adv_med.dm
 		<div class="itemLabelNarrow">
 			Health:
 		</div>
-		{{:helper.displayBar(data.occupant.health, 0, 100, (data.occupant.health >= 50) ? 'good' : (data.occupant.health >= 25) ? 'average' : 'bad')}}
+		{{:helper.displayBar(data.occupant.health, 0, data.occupant.maxHealth, (data.occupant.health >= 50) ? 'good' : (data.occupant.health >= 25) ? 'average' : 'bad')}}
 			<div class="itemContent" style="width: 60px">
-				{{:helper.round(data.occupant.health*10)/10}}%
+				{{:helper.round(data.occupant.health / data.occupant.maxHealth)*100}}%
 			</div>
 	<div class="item">
 		<div class="itemLabelNarrow">
@@ -119,7 +119,7 @@ Used In File(s): \code\game\machinery\adv_med.dm
 			<td class='itemContent' style='width: 10%;'>{{:data.occupant.blood.percent}}%</td>
 		</tr>
 	</table>
-	<h4>Reagents</h4>
+	<h4>Blood Reagents</h4>
 	{{if data.occupant.reagents}}
 		<table class='item'>
 			{{for data.occupant.reagents}}
@@ -130,7 +130,20 @@ Used In File(s): \code\game\machinery\adv_med.dm
 			{{/for}}
 		</table>
 	{{else}}
-		<div class='item'>No reagents detected.</div>
+		<div class='item'>No blood reagents detected.</div>
+	{{/if}}
+	<h4>Stomach Reagents</h4>
+	{{if data.occupant.ingested}}
+		<table class='item'>
+			{{for data.occupant.ingested}}
+				<tr>
+					<td class='itemLabel' style='width: 20%;'>{{:value.name}}:</td>
+					<td class='itemContent' style='width: 10%;'>{{:value.amount}}</td>
+				</tr>
+			{{/for}}
+		</table>
+	{{else}}
+		<div class='item'>No stomach reagents detected.</div>
 	{{/if}}
 	<h4><b>External Organs</b></h4>
 	<div class="itemGroup">
@@ -194,11 +207,19 @@ Used In File(s): \code\game\machinery\adv_med.dm
 							Acute Infection
 						{{else value.germ_level < 800}}
 							Acute Infection+
-						{{else value.germ_level < 900}}
+						{{else value.germ_level < 950}}
 							Acute Infection++
-						{{else value.germ_level >= 900}}
-							Septic
+						{{else value.germ_level >= 950}}
+							Gangrene Detected
 						{{/if}}
+					</div>
+				{{/if}}
+				{{if value.status.dead}}
+					<div class="itemLabelWide">
+						&nbsp;Necrosis
+					</div>
+					<div class="itemContentNarrow">
+						Necrotic Tissue Present
 					</div>
 				{{/if}}
 				{{if value.open}}
@@ -250,10 +271,10 @@ Used In File(s): \code\game\machinery\adv_med.dm
 						Acute Infection
 					{{else value.germ_level < 800}}
 						Acute Infection+
-					{{else value.germ_level < 900}}
+					{{else value.germ_level < 950}}
 						Acute Infection++
-					{{else value.germ_level >= 900}}
-						Septic
+					{{else value.germ_level >= 950}}
+						Necrosis Detected
 					{{/if}}
 				</div>
 			{{/if}}

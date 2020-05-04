@@ -2,7 +2,8 @@
 	var/obj/item/organ/internal/eyes/eyes = internal_organs_by_name[O_EYES]
 	if(eyes)
 		eyes.update_colour()
-		regenerate_icons()
+		update_icons_body() //Body handles eyes
+		update_eyes() //For floating eyes only
 
 /mob/living/carbon/var/list/internal_organs = list()
 /mob/living/carbon/human/var/list/organs = list()
@@ -17,6 +18,8 @@
 	var/damage_this_tick = getToxLoss()
 	for(var/obj/item/organ/external/O in organs)
 		damage_this_tick += O.burn_dam + O.brute_dam
+		if(O.germ_level)
+			damage_this_tick += 1 //Just tap it if we have germs so we can process those
 
 	if(damage_this_tick > last_dam)
 		. = TRUE
@@ -30,7 +33,7 @@
 	if(force_process)
 		bad_external_organs.Cut()
 		for(var/obj/item/organ/external/Ex in organs)
-			bad_external_organs |= Ex
+			bad_external_organs += Ex //VOREStation Edit - Silly and slow to |= this
 
 	//processing internal organs is pretty cheap, do that first.
 	for(var/obj/item/organ/I in internal_organs)
@@ -42,6 +45,7 @@
 	if(!force_process && !bad_external_organs.len)
 		return
 
+	number_wounds = 0 //VOREStation Add - You have to reduce this at some point...
 	for(var/obj/item/organ/external/E in bad_external_organs)
 		if(!E)
 			continue
@@ -54,10 +58,10 @@
 
 			if (!lying && !buckled && world.time - l_move_time < 15)
 			//Moving around with fractured ribs won't do you any good
-				if (E.is_broken() && E.internal_organs && E.internal_organs.len && prob(15))
-					var/obj/item/organ/I = pick(E.internal_organs)
-					custom_pain("You feel broken bones moving in your [E.name]!", 1)
-					I.take_damage(rand(3,5))
+				if (prob(10) && !stat && can_feel_pain() && chem_effects[CE_PAINKILLER] < 50 && E.is_broken() && E.internal_organs.len)
+					custom_pain("Pain jolts through your broken [E.encased ? E.encased : E.name], staggering you!", 50)
+					drop_item(loc)
+					Stun(2)
 
 				//Moving makes open wounds get infected much faster
 				if (E.wounds.len)
@@ -82,7 +86,7 @@
 		var/obj/item/organ/external/E = organs_by_name[limb_tag]
 		if(!E || !E.is_usable())
 			stance_damage += 2 // let it fail even if just foot&leg
-		else if (E.is_malfunctioning())
+		else if (E.is_malfunctioning() && !(lying || resting))
 			//malfunctioning only happens intermittently so treat it as a missing limb when it procs
 			stance_damage += 2
 			if(isturf(loc) && prob(10))
@@ -98,7 +102,7 @@
 		else if (E.is_dislocated())
 			stance_damage += 0.5
 
-		if(E) limb_pain = E.can_feel_pain()
+		if(E) limb_pain = E.organ_can_feel_pain()
 
 	// Canes and crutches help you stand (if the latter is ever added)
 	// One cane mitigates a broken leg+foot, or a missing foot.
@@ -110,7 +114,7 @@
 
 	// standing is poor
 	if(stance_damage >= 4 || (stance_damage >= 2 && prob(5)))
-		if(!(lying || resting) && !isliving(loc))
+		if(!(lying || resting) && !isbelly(loc)) //VOREStation Edit
 			if(limb_pain)
 				emote("scream")
 			custom_emote(1, "collapses!")
@@ -157,7 +161,7 @@
 					drop_from_inventory(r_hand)
 
 			var/emote_scream = pick("screams in pain and ", "lets out a sharp cry and ", "cries out and ")
-			emote("me", 1, "[(E.can_feel_pain()) ? "" : emote_scream ]drops what they were holding in their [E.name]!")
+			emote("me", 1, "[(can_feel_pain()) ? "" : emote_scream ]drops what they were holding in their [E.name]!")
 
 		else if(E.is_malfunctioning())
 			switch(E.body_part)

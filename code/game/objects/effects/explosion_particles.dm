@@ -12,10 +12,6 @@
 		qdel(src)
 	return
 
-/obj/effect/expl_particles/Move()
-	..()
-	return
-
 /datum/effect/system/expl_particles
 	var/number = 10
 	var/turf/location
@@ -68,3 +64,9 @@
 		var/datum/effect/effect/system/smoke_spread/S = new/datum/effect/effect/system/smoke_spread()
 		S.set_up(5,0,location,null)
 		S.start()
+
+/datum/effect/system/explosion/smokeless/start()
+	new/obj/effect/explosion(location)
+	var/datum/effect/system/expl_particles/P = new/datum/effect/system/expl_particles()
+	P.set_up(10,location)
+	P.start()

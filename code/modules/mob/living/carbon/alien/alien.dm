@@ -1,5 +1,4 @@
 /mob/living/carbon/alien
-
 	name = "alien"
 	desc = "What IS that?"
 	icon = 'icons/mob/alien.dmi'
@@ -16,15 +15,20 @@
 	var/time_of_birth
 	var/language
 	var/death_msg = "lets out a waning guttural screech, green blood bubbling from its maw."
+	var/can_namepick_as_adult = 0
+	var/adult_name
+	var/instance_num
 
-/mob/living/carbon/alien/New()
+/mob/living/carbon/alien/Initialize()
+	. = ..()
 
 	time_of_birth = world.time
 
 	verbs += /mob/living/proc/ventcrawl
 	verbs += /mob/living/proc/hide
 
-	name = "[initial(name)] ([rand(1, 1000)])"
+	instance_num = rand(1, 1000)
+	name = "[initial(name)] ([instance_num])"
 	real_name = name
 	regenerate_icons()
 
@@ -32,8 +36,6 @@
 		add_language(language)
 
 	gender = NEUTER
-
-	..()
 
 /mob/living/carbon/alien/u_equip(obj/item/W as obj)
 	return
@@ -50,3 +52,22 @@
 
 /mob/living/carbon/alien/cannot_use_vents()
 	return
+
+/mob/living/carbon/alien/get_default_language()
+	if(default_language)
+		return default_language
+	return GLOB.all_languages["Xenomorph"]
+
+/mob/living/carbon/alien/say_quote(var/message, var/datum/language/speaking = null)
+	var/verb = "hisses"
+	var/ending = copytext(message, length(message))
+
+	if(speaking && (speaking.name != "Galactic Common")) //this is so adminbooze xenos speaking common have their custom verbs,
+		verb = speaking.get_spoken_verb(ending)          //and use normal verbs for their own languages and non-common languages
+	else
+		if(ending == "!")
+			verb = "roars"
+		else if(ending == "?")
+			verb = "hisses curiously"
+	return verb
+

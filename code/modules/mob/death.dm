@@ -1,6 +1,6 @@
 //This is the proc for gibbing a mob. Cannot gib ghosts.
 //added different sort of gibs and animations. N
-/mob/proc/gib(anim="gibbed-m",do_gibs)
+/mob/proc/gib(anim="gibbed-m", do_gibs, gib_file = 'icons/mob/mob.dmi')
 	death(1)
 	transforming = 1
 	canmove = 0
@@ -12,7 +12,7 @@
 	var/atom/movable/overlay/animation = null
 	animation = new(loc)
 	animation.icon_state = "blank"
-	animation.icon = 'icons/mob/mob.dmi'
+	animation.icon = gib_file
 	animation.master = src
 
 	flick(anim, animation)
@@ -70,13 +70,13 @@
 
 	if(stat == DEAD)
 		return 0
-
+	if(src.loc && istype(loc,/obj/belly) || istype(loc,/obj/item/device/dogborg/sleeper)) deathmessage = "no message" //VOREStation Add - Prevents death messages from inside mobs
 	facing_dir = null
 
 	if(!gibbed && deathmessage != "no message") // This is gross, but reliable. Only brains use it.
 		src.visible_message("<b>\The [src.name]</b> [deathmessage]")
 
-	stat = DEAD
+	set_stat(DEAD)
 
 	update_canmove()
 
@@ -103,6 +103,7 @@
 
 	updateicon()
 	handle_regular_hud_updates()
+	handle_vision()
 
 	if(ticker && ticker.mode)
 		ticker.mode.check_win()
