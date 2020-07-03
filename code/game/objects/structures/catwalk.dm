@@ -44,7 +44,6 @@
 			L.update_connections()
 			L.update_icon() //so siding get updated properly
 
-
 /obj/structure/catwalk/update_icon()
 	update_connections()
 	cut_overlays()
@@ -78,13 +77,18 @@
 	new /obj/item/stack/rods(src.loc)
 	new /obj/item/stack/rods(src.loc)
 	//Lattice would delete itself, but let's save ourselves a new obj
-	if(istype(src.loc, /turf/space) || istype(src.loc, /turf/simulated/open))
+	if(isspace(loc) || isopenspace(loc))
 		new /obj/structure/lattice/(src.loc)
 	if(plated_tile)
 		new plated_tile(src.loc)
 	qdel(src)
 
 /obj/structure/catwalk/attackby(obj/item/C as obj, mob/user as mob)
+	if(istype(C, /obj/item/weapon/weldingtool))
+		var/obj/item/weapon/weldingtool/WT = C
+		if(WT.isOn() && WT.remove_fuel(0, user))
+			deconstruct(user)
+			return
 	if(C.is_crowbar() && plated_tile)
 		hatch_open = !hatch_open
 		if(hatch_open)
@@ -119,7 +123,7 @@
 	health -= amount
 	if(health <= 0)
 		visible_message("<span class='warning'>\The [src] breaks down!</span>")
-		playsound(loc, 'sound/effects/grillehit.ogg', 50, 1)
+		playsound(src, 'sound/effects/grillehit.ogg', 50, 1)
 		new /obj/item/stack/rods(get_turf(src))
 		Destroy()
 

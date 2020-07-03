@@ -93,6 +93,7 @@
 	// Wiring! How exciting.
 	var/datum/wires/rig/wires
 	var/datum/effect/effect/system/spark_spread/spark_system
+	var/datum/mini_hud/rig/minihud
 
 /obj/item/weapon/rig/examine()
 	. = ..()
@@ -124,8 +125,6 @@
 	spark_system = new()
 	spark_system.set_up(5, 0, src)
 	spark_system.attach(src)
-
-	START_PROCESSING(SSobj, src)
 
 	if(initial_modules && initial_modules.len)
 		for(var/path in initial_modules)
@@ -183,6 +182,23 @@
 	qdel(spark_system)
 	spark_system = null
 	return ..()
+
+// We only care about processing when we're on a mob
+/obj/item/weapon/rig/Moved(old_loc, direction, forced)
+	if(ismob(loc))
+		START_PROCESSING(SSobj, src)
+	else
+		STOP_PROCESSING(SSobj, src)
+		QDEL_NULL(minihud) // Just in case we get removed some other way
+
+	// If we've lost any parts, grab them back.
+	var/mob/living/M
+	for(var/obj/item/piece in list(gloves,boots,helmet,chest))
+		if(piece.loc != src && !(wearer && piece.loc == wearer))
+			if(istype(piece.loc, /mob/living))
+				M = piece.loc
+				M.unEquip(piece)
+			piece.forceMove(src)
 
 /obj/item/weapon/rig/get_worn_icon_file(var/body_type,var/slot_name,var/default_icon,var/inhands)
 	if(!inhands && (slot_name == slot_back_str || slot_name == slot_belt_str))
@@ -349,6 +365,11 @@
 
 	// Success!
 	canremove = seal_target
+	if(M.hud_used)
+		if(canremove)
+			QDEL_NULL(minihud)
+		else
+			minihud = new (M.hud_used, src)
 	to_chat(M, "<span class='notice'><b>Your entire suit [canremove ? "loosens as the components relax" : "tightens around you as the components lock into place"].</b></span>")
 	M.client.screen -= booting_L
 	qdel(booting_L)
@@ -466,14 +487,13 @@
 		turn_cooling_off(H, 1)
 
 /obj/item/weapon/rig/process()
-	// If we've lost any parts, grab them back.
-	var/mob/living/M
-	for(var/obj/item/piece in list(gloves,boots,helmet,chest))
-		if(piece.loc != src && !(wearer && piece.loc == wearer))
-			if(istype(piece.loc, /mob/living))
-				M = piece.loc
-				M.unEquip(piece)
-			piece.forceMove(src)
+	// Not on a mob...?
+	if(!ismob(loc))
+		if(wearer?.wearing_rig == src)
+			wearer.wearing_rig = null
+		wearer = null
+		return PROCESS_KILL
+	
 	// Run through cooling
 	coolingProcess()
 

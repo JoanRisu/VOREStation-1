@@ -55,6 +55,10 @@ var/global/datum/controller/subsystem/ticker/ticker
 /datum/controller/subsystem/ticker/Initialize()
 	pregame_timeleft = config.pregame_time
 	send2mainirc("Server lobby is loaded and open at byond://[config.serverurl ? config.serverurl : (config.server ? config.server : "[world.address]:[world.port]")]")
+
+	// Set up the global announcer
+	GLOB.autospeaker = new (null, null, null, 1)
+
 	return ..()
 
 /datum/controller/subsystem/ticker/fire(resumed = FALSE)
@@ -167,7 +171,7 @@ var/global/datum/controller/subsystem/ticker/ticker
 	create_characters() //Create player characters and transfer them.
 	collect_minds()
 	equip_characters()
-	//data_core.manifest()	//VOREStation Removal
+//	data_core.manifest()
 
 	callHook("roundstart")
 
@@ -394,21 +398,26 @@ var/global/datum/controller/subsystem/ticker/ticker
 
 /datum/controller/subsystem/ticker/proc/create_characters()
 	for(var/mob/new_player/player in player_list)
-		if(player && player.ready && player.mind)
-			if(player.mind.assigned_role=="AI")
+		if(player && player.ready && player.mind?.assigned_role)
+			var/datum/job/J = SSjob.get_job(player.mind.assigned_role)
+			
+			// Snowflakey AI treatment
+			if(J?.mob_type & JOB_SILICON_AI)
 				player.close_spawn_windows()
-				player.AIize()
-			else if(!player.mind.assigned_role)
+				player.AIize(move = TRUE)
 				continue
-			else
-				//VOREStation Edit Start
-				var/mob/living/carbon/human/new_char = player.create_character()
-				if(new_char)
-					qdel(player)
-				if(istype(new_char) && !(new_char.mind.assigned_role=="Cyborg"))
-					data_core.manifest_inject(new_char)
-				//VOREStation Edit End
+			
+			// Ask their new_player mob to spawn them
+			if(!player.spawn_checks_vr(player.mind.assigned_role)) continue //VOREStation Add
+			var/mob/living/carbon/human/new_char = player.create_character()
+			
+			// Created their playable character, delete their /mob/new_player
+			if(new_char)
+				qdel(player)
 
+			// If they're a carbon, they can get manifested
+			if(J?.mob_type & JOB_CARBON)
+				data_core.manifest_inject(new_char)
 
 /datum/controller/subsystem/ticker/proc/collect_minds()
 	for(var/mob/living/player in player_list)

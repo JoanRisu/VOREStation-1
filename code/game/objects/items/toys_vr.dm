@@ -10,6 +10,9 @@
 	desc = "An adorable stuffed toy that resembles a kobold."
 	icon = 'icons/obj/toy_vr.dmi'
 	icon_state = "kobold"
+	pokephrase = "Wehhh!"
+	drop_sound = 'sound/voice/weh.ogg'
+	attack_verb = list("raided", "kobolded", "weh'd")
 
 /obj/item/toy/plushie/slimeplushie
 	name = "slime plushie"
@@ -51,3 +54,9 @@
 	icon = 'icons/obj/toy_vr.dmi'
 	icon_state = "plushie_nuke"
 	attack_verb = list("shot", "nuked", "detonated")
+
+/obj/item/toy/plushie/otter
+	name = "otter plush"
+	desc = "A perfectly sized snuggable river weasel! Keep away from Clams."
+	icon = 'icons/obj/toy_vr.dmi'
+	icon_state = "plushie_otter"

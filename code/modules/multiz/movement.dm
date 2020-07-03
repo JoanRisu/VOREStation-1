@@ -61,6 +61,11 @@
 		else if(catwalk?.hatch_open)
 			var/pull_up_time = max(5 SECONDS + (src.movement_delay() * 10), 1)
 			to_chat(src, "<span class='notice'>You grab the edge of \the [catwalk] and start pulling yourself upward...</span>")
+			var/old_dest = destination
+			destination = get_step(destination, dir) // mob's dir
+			if(!destination?.Enter(src, old_dest))
+				to_chat(src, "<span class='notice'>There's something in the way up above in that direction, try another.</span>")
+				return 0
 			destination.audible_message("<span class='notice'>You hear something climbing up \the [catwalk].</span>")
 			if(do_after(src, pull_up_time))
 				to_chat(src, "<span class='notice'>You pull yourself up.</span>")
@@ -487,7 +492,7 @@
 				visible_message("<span class='warning'>\The [src] falls from above and slams into \the [landing]!</span>", \
 					"<span class='danger'>You fall off and hit \the [landing]!</span>", \
 					"You hear something slam into \the [landing].")
-			playsound(loc, "punch", 25, 1, -1)
+			playsound(src, "punch", 25, 1, -1)
 
 		// Because wounds heal rather quickly, 10 (the default for this proc) should be enough to discourage jumping off but not be enough to ruin you, at least for the first time.
 		// Hits 10 times, because apparently targeting individual limbs lets certain species survive the fall from atmosphere
@@ -584,7 +589,7 @@
 				visible_message("<span class='warning'>\The [src] falls from above and slams into \the [landing]!</span>", \
 					"<span class='danger'>You fall off and hit \the [landing]!</span>", \
 					"You hear something slam into \the [landing].")
-			playsound(loc, "punch", 25, 1, -1)
+			playsound(src, "punch", 25, 1, -1)
 
 	// And now to hurt the mech.
 	if(!planetary)

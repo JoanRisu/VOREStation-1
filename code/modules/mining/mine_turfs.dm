@@ -154,6 +154,8 @@ turf/simulated/mineral/floor/light_corner
 	if(random_icon)
 		dir = pick(alldirs)
 		. = INITIALIZE_HINT_LATELOAD
+	var/decl/flooring/F = get_flooring_data(/decl/flooring/sand)
+	footstep_sounds = F?.footstep_sounds
 
 /turf/simulated/mineral/LateInitialize()
 	if(density && mineral)
@@ -326,7 +328,7 @@ turf/simulated/mineral/floor/light_corner
 				return
 
 			to_chat(user, "<span class='notice'>You start digging.</span>")
-			playsound(user.loc, 'sound/effects/rustle1.ogg', 50, 1)
+			playsound(user, 'sound/effects/rustle1.ogg', 50, 1)
 
 			if(!do_after(user,40)) return
 

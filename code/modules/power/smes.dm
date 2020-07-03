@@ -1,6 +1,8 @@
 // the SMES
 // stores power
 
+GLOBAL_LIST_EMPTY(smeses)
+
 #define SMESMAXCHARGELEVEL 250000
 #define SMESMAXOUTPUT 250000
 
@@ -65,6 +67,7 @@
 
 /obj/machinery/power/smes/Initialize()
 	. = ..()
+	GLOB.smeses += src
 	for(var/d in GLOB.cardinal)
 		var/turf/T = get_step(src, d)
 		for(var/obj/machinery/power/terminal/term in T)
@@ -85,6 +88,7 @@
 	for(var/obj/machinery/power/terminal/T in terminals)
 		T.master = null
 	terminals = null
+	GLOB.smeses -= src
 	return ..()
 
 /obj/machinery/power/smes/add_avail(var/amount)
@@ -154,7 +158,7 @@
 
 	//inputting
 	if(input_attempt && (!input_pulsed && !input_cut) && !grid_check)
-		target_load = clamp((capacity-charge)/SMESRATE, 0, input_level)	// Amount we will request from the powernet.
+		target_load = CLAMP((capacity-charge)/SMESRATE, 0, input_level)	// Amount we will request from the powernet.
 		var/input_available = FALSE
 		for(var/obj/machinery/power/terminal/term in terminals)
 			if(!term.powernet)
@@ -321,7 +325,7 @@
 				to_chat(user, "<span class='filter_notice'><span class='warning'>You must remove the floor plating first.</span></span>")
 			else
 				to_chat(user, "<span class='filter_notice'><span class='notice'>You begin to cut the cables...</span></span>")
-				playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
+				playsound(src, 'sound/items/Deconstruct.ogg', 50, 1)
 				if(do_after(user, 50 * W.toolspeed))
 					if (prob(50) && electrocute_mob(usr, term.powernet, term))
 						var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
@@ -459,17 +463,17 @@
 	take_damage(250 / severity)
 
 /obj/machinery/power/smes/examine(var/mob/user)
-	..()
-	to_chat(user, "<span class='filter_notice'>The service hatch is [panel_open ? "open" : "closed"].</span>")
+	. = ..()
+	. += "<span class='filter_notice'>The service hatch is [panel_open ? "open" : "closed"].</span>"
 	if(!damage)
 		return
 	var/damage_percentage = round((damage / maxdamage) * 100)
 	switch(damage_percentage)
 		if(75 to INFINITY)
-			to_chat(user, "<span class='filter_notice'><span class='danger'>It's casing is severely damaged, and sparking circuitry may be seen through the holes!</span></span>")
+			. += "<span class='filter_notice'><span class='danger'>It's casing is severely damaged, and sparking circuitry may be seen through the holes!</span></span>"
 		if(50 to 74)
-			to_chat(user, "<span class='filter_notice'><span class='notice'>It's casing is considerably damaged, and some of the internal circuits appear to be exposed!</span></span>")
+			. += "<span class='filter_notice'><span class='notice'>It's casing is considerably damaged, and some of the internal circuits appear to be exposed!</span></span>"
 		if(25 to 49)
-			to_chat(user, "<span class='filter_notice'><span class='notice'>It's casing is quite seriously damaged.</span></span>")
+			. += "<span class='filter_notice'><span class='notice'>It's casing is quite seriously damaged.</span></span>"
 		if(0 to 24)
-			to_chat(user, "<span class='filter_notice'>It's casing has some minor damage.</span>")
+			. += "<span class='filter_notice'>It's casing has some minor damage.</span>"

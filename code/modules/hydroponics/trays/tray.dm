@@ -44,6 +44,12 @@
 	// Seed details/line data.
 	var/datum/seed/seed = null // The currently planted seed
 
+	var/image/ov_lowhealth
+	var/image/ov_lowwater
+	var/image/ov_lownutri
+	var/image/ov_harvest
+	var/image/ov_frozen
+	var/image/ov_alert3
 
 	// Reagent information for process(), consider moving this to a controller along
 	// with cycle information under 'mechanical concerns' at some point.
@@ -126,9 +132,11 @@
 		"mutagen" = 15
 		)
 
-/obj/machinery/portable_atmospherics/hydroponics/AltClick()
-	if(mechanical && !usr.incapacitated() && Adjacent(usr))
-		close_lid(usr)
+/obj/machinery/portable_atmospherics/hydroponics/AltClick(var/mob/living/user)
+	if(!istype(user))
+		return
+	if(mechanical && !user.incapacitated() && Adjacent(user))
+		close_lid(user)
 		return 1
 	return ..()
 
@@ -168,6 +176,8 @@
 
 /obj/machinery/portable_atmospherics/hydroponics/Initialize()
 	. = ..()
+	if(!ov_lowhealth)
+		setup_overlays()
 	temp_chem_holder = new()
 	temp_chem_holder.create_reagents(10)
 	create_reagents(200)
@@ -556,7 +566,7 @@
 		pestlevel -= spray.pest_kill_str
 		weedlevel -= spray.weed_kill_str
 		to_chat(user, "You spray [src] with [O].")
-		playsound(loc, 'sound/effects/spray3.ogg', 50, 1, -6)
+		playsound(src, 'sound/effects/spray3.ogg', 50, 1, -6)
 		qdel(O)
 		check_health()
 
@@ -566,7 +576,7 @@
 		if(locate(/obj/machinery/atmospherics/portables_connector/) in loc)
 			return ..()
 
-		playsound(loc, O.usesound, 50, 1)
+		playsound(src, O.usesound, 50, 1)
 		anchored = !anchored
 		to_chat(user, "You [anchored ? "wrench" : "unwrench"] \the [src].")
 

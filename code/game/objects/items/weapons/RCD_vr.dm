@@ -9,9 +9,9 @@
 	var/ammostate
 	var/list/effects = list()
 
-	var/static/image/radial_image_airlock = image(icon = 'icons/mob/radial.dmi', icon_state = "airlock"),
-	var/static/image/radial_image_decon = image(icon= 'icons/mob/radial.dmi', icon_state = "delete"),
-	var/static/image/radial_image_grillewind = image(icon = 'icons/mob/radial.dmi', icon_state = "grillewindow"),
+	var/static/image/radial_image_airlock = image(icon = 'icons/mob/radial.dmi', icon_state = "airlock")
+	var/static/image/radial_image_decon = image(icon= 'icons/mob/radial.dmi', icon_state = "delete")
+	var/static/image/radial_image_grillewind = image(icon = 'icons/mob/radial.dmi', icon_state = "grillewindow")
 	var/static/image/radial_image_floorwall = image(icon = 'icons/mob/radial.dmi', icon_state = "wallfloor")
 
 // Ammo for the (non-electric) RCDs.
@@ -77,7 +77,7 @@
 			to_chat(user, span("warning", "\The [cartridge] dissolves as it empties of compressed matter."))
 			user.drop_from_inventory(W)
 			qdel(W)
-		playsound(src.loc, 'sound/machines/click.ogg', 50, 1)
+		playsound(src, 'sound/machines/click.ogg', 50, 1)
 		to_chat(user, span("notice", "The RCD now holds [stored_matter]/[max_stored_matter] matter-units."))
 		update_icon()
 		return TRUE
@@ -88,6 +88,22 @@
 		return FALSE
 	if(user.incapacitated() || !user.Adjacent(src))
 		return FALSE
+	return TRUE
+
+// Mounted one is more complex
+/obj/item/weapon/rcd/electric/mounted/rig/check_menu(mob/living/user)
+	if(!istype(user))
+		world.log << "One"
+		return FALSE
+	if(user.incapacitated())
+		world.log << "Two"
+		return FALSE
+	
+	var/obj/item/rig_module/device/D = loc
+	if(!istype(D) || !D?.holder?.wearer == user)
+		world.log << "Three"
+		return FALSE
+	
 	return TRUE
 
 /obj/item/weapon/rcd/attack_self(mob/living/user)
@@ -118,7 +134,7 @@
 			"Change Window Type" = image(icon = 'icons/mob/radial.dmi', icon_state = "windowtype")
 		)
 	*/
-	var/choice = show_radial_menu(user, src, choices, custom_check = CALLBACK(src, .proc/check_menu, user), require_near = TRUE, tooltips = TRUE)
+	var/choice = show_radial_menu(user, user, choices, custom_check = CALLBACK(src, .proc/check_menu, user), tooltips = TRUE)
 	if(!check_menu(user))
 		return
 	switch(choice)

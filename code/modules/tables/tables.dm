@@ -30,6 +30,9 @@ var/list/table_icon_cache = list()
 
 	var/item_place = 1 //allows items to be placed on the table, but not on benches.
 
+/obj/structure/table/examine_icon()
+	return icon(icon=initial(icon), icon_state=initial(icon_state)) //Basically the map preview version
+
 /obj/structure/table/proc/update_material()
 	var/old_maxhealth = maxhealth
 	if(!material)
@@ -260,7 +263,7 @@ var/list/table_icon_cache = list()
 	user.visible_message("<span class='notice'>\The [user] begins removing the [type_holding] holding \the [src]'s [M.display_name] [what] in place.</span>",
 	                              "<span class='notice'>You begin removing the [type_holding] holding \the [src]'s [M.display_name] [what] in place.</span>")
 	if(sound)
-		playsound(src.loc, sound, 50, 1)
+		playsound(src, sound, 50, 1)
 	if(!do_after(user, delay))
 		manipulating = 0
 		return M

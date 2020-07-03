@@ -150,6 +150,7 @@
 #include "aerostat/surface.dmm"
 #include "space/debrisfield.dmm"
 #include "space/fueldepot.dmm"
+#include "space/guttersite.dmm"
 #endif
 
 #include "beach/_beach.dm"
@@ -162,6 +163,7 @@
 /datum/map_z_level/tether_lateload/away_beach
 	name = "Away Mission - Desert Beach"
 	z = Z_LEVEL_BEACH
+	base_turf = /turf/simulated/floor/outdoors/rocks/caves
 
 /datum/map_template/tether_lateload/away_beach_cave
 	name = "Desert Planet - Z2 Cave"
@@ -181,6 +183,7 @@
 /datum/map_z_level/tether_lateload/away_beach_cave
 	name = "Away Mission - Desert Cave"
 	z = Z_LEVEL_BEACH_CAVE
+	base_turf = /turf/simulated/floor/outdoors/rocks/caves
 
 /obj/effect/step_trigger/zlevel_fall/beach
 	var/static/target_z
@@ -207,6 +210,7 @@
 /datum/map_z_level/tether_lateload/away_aerostat
 	name = "Away Mission - Aerostat"
 	z = Z_LEVEL_AEROSTAT
+	base_turf = /turf/unsimulated/floor/sky/virgo2_sky
 
 /datum/map_template/tether_lateload/away_aerostat_surface
 	name = "Remmi Aerostat - Z2 Surface"
@@ -223,12 +227,14 @@
 /datum/map_z_level/tether_lateload/away_aerostat_surface
 	name = "Away Mission - Aerostat Surface"
 	z = Z_LEVEL_AEROSTAT_SURFACE
+	base_turf = /turf/simulated/mineral/floor/ignore_mapgen/virgo2
 
 
 #include "space/_debrisfield.dm"
 #include "space/_fueldepot.dm"
 #include "space/pois/_templates.dm"
 #include "space/pois/debrisfield_things.dm"
+#include "space/_guttersite.dm"
 /datum/map_template/tether_lateload/away_debrisfield
 	name = "Debris Field - Z1 Space"
 	desc = "The Virgo 3 Debris Field away mission."
@@ -253,6 +259,16 @@
 /datum/map_z_level/tether_lateload/away_fueldepot
 	name = "Away Mission - Fuel Depot"
 	z = Z_LEVEL_FUELDEPOT
+
+/datum/map_template/tether_lateload/away_guttersite
+	name = "Gutter Site - Z1 Space"
+	desc = "The Virgo Erigone Space Away Site."
+	mappath = 'space/guttersite.dmm'
+	associated_map_datum = /datum/map_z_level/tether_lateload/away_guttersite
+
+/datum/map_z_level/tether_lateload/away_guttersite
+	name = "Away Mission - Gutter Site"
+	z = Z_LEVEL_GUTTERSITE
 
 
 //////////////////////////////////////////////////////////////////////////////////////

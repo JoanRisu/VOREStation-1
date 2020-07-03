@@ -757,7 +757,7 @@
 		var/datum/gender/T = gender_datums[get_visible_gender()]
 		visible_message("<font color='red'>\The [src] begins playing [T.his] ribcage like a xylophone. It's quite spooky.</font>","<font color='blue'>You begin to play a spooky refrain on your ribcage.</font>","<font color='red'>You hear a spooky xylophone melody.</font>")
 		var/song = pick('sound/effects/xylophone1.ogg','sound/effects/xylophone2.ogg','sound/effects/xylophone3.ogg')
-		playsound(loc, song, 50, 1, -1)
+		playsound(src, song, 50, 1, -1)
 		xylophone = 1
 		spawn(1200)
 			xylophone=0
@@ -1596,6 +1596,13 @@
 		else
 			layer = HIDING_LAYER
 
+/mob/living/carbon/human/examine_icon()
+	var/icon/I = get_cached_examine_icon(src)
+	if(!I)
+		I = getFlatIcon(src, defdir = SOUTH, no_anim = TRUE)
+		set_cached_examine_icon(src, I, 50 SECONDS)
+	return I
+
 /mob/living/carbon/human/proc/get_display_species()
 	//Shows species in tooltip
 	if(src.custom_species) //VOREStation Add
@@ -1645,20 +1652,26 @@
 	msg += get_display_species()
 	return msg
 
+/mob/living/carbon/human/reduce_cuff_time()
+	if(istype(gloves, /obj/item/clothing/gloves/gauntlets/rig))
+		return 2
+	return ..()
+
 /mob/living/carbon/human/pull_damage()
 	if(((health - halloss) <= config.health_threshold_softcrit))
 		for(var/name in organs_by_name)
 			var/obj/item/organ/external/e = organs_by_name[name]
 			if(!e)
 				continue
-			if((e.status & ORGAN_BROKEN && (!e.splinted || (e.splinted && e.splinted in e.contents && prob(30))) || e.status & ORGAN_BLEEDING) && (getBruteLoss() + getFireLoss() >= 100))
+			if((e.status & ORGAN_BROKEN && (!e.splinted || (e.splinted in e.contents && prob(30))) || e.status & ORGAN_BLEEDING) && (getBruteLoss() + getFireLoss() >= 100))
 				return 1
 	else
 		return ..()
 
 // Drag damage is handled in a parent
 /mob/living/carbon/human/dragged(var/mob/living/dragger, var/oldloc)
-	if(prob(getBruteLoss() * 200 / maxHealth))
+	var/area/A = get_area(src)
+	if(lying && !buckled && A.has_gravity() && prob(getBruteLoss() * 200 / maxHealth))
 		var/bloodtrail = 1
 		if(species?.flags & NO_BLOOD)
 			bloodtrail = 0
@@ -1673,3 +1686,8 @@
 				var/turf/T = loc
 				T.add_blood(src)
 	. = ..()
+
+/mob/living/carbon/human/reduce_cuff_time()
+	if(istype(gloves, /obj/item/clothing/gloves/gauntlets/rig))
+		return 2
+	return ..()

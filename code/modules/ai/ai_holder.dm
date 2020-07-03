@@ -20,11 +20,21 @@
 		if(istype(src, /mob/living/carbon/human))
 			var/mob/living/carbon/human/H = src
 			H.hud_used = new /datum/hud(H)
-			H.instantiate_hud(H.hud_used)
+			H.create_mob_hud(H.hud_used)
 	return ..()
 
 /mob/living/Destroy()
 	QDEL_NULL(ai_holder)
+	return ..()
+
+/mob/living/Login()
+	if(!stat && ai_holder)
+		ai_holder.manage_processing(AI_NO_PROCESS)
+	return ..()
+
+/mob/living/Logout()
+	if(!stat && !key && ai_holder)
+		ai_holder.manage_processing(AI_PROCESSING)
 	return ..()
 
 /datum/ai_holder
@@ -145,11 +155,15 @@
 
 // 'Tactical' processes such as moving a step, meleeing an enemy, firing a projectile, and other fairly cheap actions that need to happen quickly.
 /datum/ai_holder/proc/handle_tactics()
+	if(holder.key && !autopilot)
+		return
 	handle_special_tactic()
 	handle_stance_tactical()
 
 // 'Strategical' processes that are more expensive on the CPU and so don't get run as often as the above proc, such as A* pathfinding or robust targeting.
 /datum/ai_holder/proc/handle_strategicals()
+	if(holder.key && !autopilot)
+		return
 	handle_special_strategical()
 	handle_stance_strategical()
 
@@ -160,6 +174,8 @@
 
 // For setting the stance WITHOUT processing it
 /datum/ai_holder/proc/set_stance(var/new_stance)
+	if(holder?.key && !autopilot)
+		return
 	if(stance == new_stance)
 		ai_log("set_stance() : Ignoring change stance to same stance request.", AI_LOG_INFO)
 		return
@@ -277,11 +293,11 @@
 		if(STANCE_IDLE)
 			if(speak_chance) // In the long loop since otherwise it wont shut up.
 				handle_idle_speaking()
-			
+
 			if(hostile)
 				ai_log("handle_stance_strategical() : STANCE_IDLE, going to find_target().", AI_LOG_TRACE)
 				find_target()
-			
+
 			if(should_go_home())
 				ai_log("handle_stance_tactical() : STANCE_IDLE, going to go home.", AI_LOG_TRACE)
 				go_home()
@@ -302,9 +318,11 @@
 		if(STANCE_MOVE)
 			if(hostile && find_target()) // This will switch its stance.
 				ai_log("handle_stance_strategical() : STANCE_MOVE, found target and was inturrupted.", AI_LOG_TRACE)
+				return
 		if(STANCE_FOLLOW)
 			if(hostile && find_target()) // This will switch its stance.
 				ai_log("handle_stance_strategical() : STANCE_FOLLOW, found target and was inturrupted.", AI_LOG_TRACE)
+				return
 			else if(leader)
 				ai_log("handle_stance_strategical() : STANCE_FOLLOW, going to calculate_path([leader]).", AI_LOG_TRACE)
 				calculate_path(leader)
@@ -343,5 +361,6 @@
 	if(ai_holder)
 		ai_holder.receive_taunt(taunter, force_target_switch)
 
+#undef AI_NO_PROCESS
 #undef AI_PROCESSING
 #undef AI_FASTPROCESSING

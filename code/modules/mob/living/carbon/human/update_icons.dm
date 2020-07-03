@@ -155,7 +155,7 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 		layer = MOB_LAYER -0.01 // Fix for a byond bug where turf entry order no longer matters
 	else
 		M.Scale(desired_scale_x, desired_scale_y)
-		M.Translate(0, 16*(desired_scale_y-1))
+		M.Translate(0, (vis_height/2)*(desired_scale_y-1)) //VOREStation edit
 		layer = MOB_LAYER // Fix for a byond bug where turf entry order no longer matters
 
 	animate(src, transform = M, time = anim_time)
@@ -321,7 +321,7 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 				base_icon.MapColors(rgb(tone[1],0,0),rgb(0,tone[2],0),rgb(0,0,tone[3]))
 
 		//Handle husk overlay.
-		if(husk && ("overlay_husk" in icon_states(species.icobase)))
+		if(husk && ("overlay_husk" in cached_icon_states(species.icobase)))
 			var/icon/mask = new(base_icon)
 			var/icon/husk_over = new(species.icobase,"overlay_husk")
 			mask.MapColors(0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,1, 0,0,0,0)
@@ -430,11 +430,18 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 				hair_style = hair_styles_list["Short Hair"]
 
 		if(hair_style && (src.species.get_bodytype(src) in hair_style.species_allowed))
+			var/icon/grad_s = null
 			var/icon/hair_s = new/icon("icon" = hair_style.icon, "icon_state" = "[hair_style.icon_state]_s")
 			var/icon/hair_s_add = new/icon("icon" = hair_style.icon_add, "icon_state" = "[hair_style.icon_state]_s")
 			if(hair_style.do_colouration)
+				if(grad_style)
+					grad_s = new/icon("icon" = 'icons/mob/hair_gradients.dmi', "icon_state" = GLOB.hair_gradients[grad_style])
+					grad_s.Blend(hair_s, ICON_AND)
+					grad_s.Blend(rgb(r_grad, g_grad, b_grad), ICON_MULTIPLY)
 				hair_s.Blend(rgb(r_hair, g_hair, b_hair), ICON_MULTIPLY)
 				hair_s.Blend(hair_s_add, ICON_ADD)
+				if(!isnull(grad_s))
+					hair_s.Blend(grad_s, ICON_OVERLAY)
 
 			face_standing.Blend(hair_s, ICON_OVERLAY)
 
@@ -591,11 +598,11 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 
 	//Build a uniform sprite
 	//VOREStation Edit start.
-	var/icon/c_mask = null
-	if(tail_style && tail_style.clip_mask_icon && tail_style.clip_mask_state)
+	var/icon/c_mask = tail_style?.clip_mask
+	if(c_mask)
 		var/obj/item/clothing/suit/S = wear_suit
-		if(!(wear_suit && ((wear_suit.flags_inv & HIDETAIL) || (istype(S) && S.taurized)))) //Clip the lower half of the uniform off using the tail's clip mask.
-			c_mask = new /icon(tail_style.clip_mask_icon, tail_style.clip_mask_state)
+		if((wear_suit?.flags_inv & HIDETAIL) || (istype(S) && S.taurized)) // Reasons to not mask: 1. If you're wearing a suit that hides the tail or if you're wearing a taurized suit.
+			c_mask = null
 	overlays_standing[UNIFORM_LAYER] = w_uniform.make_worn_icon(body_type = species.get_bodytype(src), slot_name = slot_w_uniform_str, default_icon = uniform_sprite, default_layer = UNIFORM_LAYER, clip_mask = c_mask)
 	//VOREStation Edit end.
 	apply_layer(UNIFORM_LAYER)
@@ -769,7 +776,7 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 	var/obj/item/clothing/suit/suit = wear_suit
 	var/suit_sprite
 
-	if(suit.index)
+	if(istype(suit) && suit.index)
 		suit_sprite = "[INV_SUIT_DEF_ICON]_[suit.index].dmi"
 	else if(istype(suit, /obj/item/clothing) && !isnull(suit.update_icon_define))
 		suit_sprite = suit.update_icon_define
@@ -779,10 +786,10 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 	//VOREStation Edit start.
 	var/icon/c_mask = null
 	var/tail_is_rendered = (overlays_standing[TAIL_LAYER] || overlays_standing[TAIL_LAYER_ALT])
-	var/valid_clip_mask = (tail_style && tail_style.clip_mask_icon && tail_style.clip_mask_state)
+	var/valid_clip_mask = tail_style?.clip_mask
 
-	if(tail_is_rendered && valid_clip_mask && !(suit && istype(suit) && suit.taurized)) //Clip the lower half of the suit off using the tail's clip mask for taurs since taur bodies aren't hidden.
-		c_mask = new /icon(tail_style.clip_mask_icon, tail_style.clip_mask_state)
+	if(tail_is_rendered && valid_clip_mask && !(istype(suit) && suit.taurized)) //Clip the lower half of the suit off using the tail's clip mask for taurs since taur bodies aren't hidden.
+		c_mask = valid_clip_mask
 	overlays_standing[SUIT_LAYER] = wear_suit.make_worn_icon(body_type = species.get_bodytype(src), slot_name = slot_wear_suit_str, default_icon = suit_sprite, default_layer = SUIT_LAYER, clip_mask = c_mask)
 
 	//VOREStation Edit end.
@@ -855,10 +862,13 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 	if(QDESTROYING(src))
 		return
 
+	clear_alert("legcuffed")
 	remove_layer(LEGCUFF_LAYER)
 
 	if(!legcuffed)
 		return //Not legcuffed, why bother.
+
+	throw_alert("legcuffed", /obj/screen/alert/restrained/legcuffed, new_master = legcuffed)
 
 	overlays_standing[LEGCUFF_LAYER] = legcuffed.make_worn_icon(body_type = species.get_bodytype(src), slot_name = slot_legcuffed_str, default_icon = INV_LCUFF_DEF_ICON, default_layer = LEGCUFF_LAYER)
 
@@ -1057,7 +1067,10 @@ var/global/list/damage_icon_parts = list() //see UpdateDamageIcon()
 	if(!depth || lying)
 		return
 
-	overlays_standing[WATER_LAYER] = image(icon = 'icons/mob/submerged.dmi', icon_state = "human_swimming_[depth]", layer = BODY_LAYER+WATER_LAYER) //TODO: Improve
+	var/atom/A = loc // We'd better be swimming and on a turf
+	var/image/I = image(icon = 'icons/mob/submerged.dmi', icon_state = "human_swimming_[depth]", layer = BODY_LAYER+WATER_LAYER) //TODO: Improve
+	I.color = A.color
+	overlays_standing[WATER_LAYER] = I
 
 	apply_layer(WATER_LAYER)
 

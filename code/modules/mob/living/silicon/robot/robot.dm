@@ -34,7 +34,6 @@
 
 //Hud stuff
 
-	var/obj/screen/cells = null
 	var/obj/screen/inv1 = null
 	var/obj/screen/inv2 = null
 	var/obj/screen/inv3 = null
@@ -702,12 +701,12 @@
 					attack_generic(H, rand(30,50), "slashed")
 					return
 				else
-					playsound(src.loc, 'sound/effects/bang.ogg', 10, 1)
+					playsound(src, 'sound/effects/bang.ogg', 10, 1)
 					visible_message("<span class='warning'>[H] punches [src], but doesn't leave a dent.</span>")
 					return
 			if(I_DISARM)
 				H.do_attack_animation(src)
-				playsound(src.loc, 'sound/effects/clang1.ogg', 10, 1)
+				playsound(src, 'sound/effects/clang1.ogg', 10, 1)
 				visible_message("<span class='warning'>[H] taps [src].</span>")
 				return
 		//VOREStation Edit: Addition of borg petting end
@@ -935,6 +934,10 @@
 	// They stay locked down if their wire is cut.
 	if(wires.LockedCut())
 		state = 1
+	if(state)
+		throw_alert("locked", /obj/screen/alert/locked)
+	else
+		clear_alert("locked")
 	lockdown = state
 	lockcharge = state
 	update_canmove()

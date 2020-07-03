@@ -75,7 +75,7 @@
 	character_name = list("Aronai Sieyes")
 
 /datum/gear/fluff/aronai_ccmedjacket
-	path = /obj/item/clothing/suit/storage/service/sifguard/medical/command
+	path = /obj/item/clothing/suit/storage/solgov/service/sifguard/medical/command
 	display_name  = "centcom medical jacket"
 	description = "A medical jacket straight from Central Command."
 	slot = slot_wear_suit
@@ -92,7 +92,7 @@
 /datum/gear/fluff/aurora
 	path = /obj/item/clothing/accessory/solgov/department/security/aurora
 	display_name = "Aurora's keepsake"
-	description = "An old solgov sec insignia given to Aurora"
+	description = "An old solcom sec insignia given to Aurora"
 	ckeywhitelist = list("storesund97")
 	character_name = list("Aurora")
 
@@ -147,27 +147,6 @@
 /datum/gear/fluff/tasald_box
 	path = /obj/item/weapon/storage/box/fluff/tasald
 	display_name = "Tasald's Box"
-	ckeywhitelist = list("bwoincognito")
-	character_name = list("Tasald Corlethian")
-
-/datum/gear/fluff/tasald_cartographer_jumpsuit
-	path = /obj/item/clothing/under/solgov/utility/sifguard/officer/exploration
-	display_name = "Tasald's Cartographer's uniform - jumpsuit"
-	slot = slot_w_uniform
-	ckeywhitelist = list("bwoincognito")
-	character_name = list("Tasald Corlethian")
-
-/datum/gear/fluff/tasald_cartographer_jacket
-	path = /obj/item/clothing/suit/storage/service/sifguard/command
-	display_name = "Tasald's Cartographer's uniform - jacket"
-	slot = slot_wear_suit
-	ckeywhitelist = list("bwoincognito")
-	character_name = list("Tasald Corlethian")
-
-/datum/gear/fluff/tasald_cartographer_beret
-	path = /obj/item/clothing/head/beret/sol/expedition/command
-	display_name = "Tasald's Cartographer's uniform - beret"
-	slot = slot_head
 	ckeywhitelist = list("bwoincognito")
 	character_name = list("Tasald Corlethian")
 
@@ -682,6 +661,12 @@
 	ckeywhitelist = list("nickcrazy")
 	character_name = list("Damon Bones Xrim")
 
+/datum/gear/fluff/NDF_Medical_jacket
+	path = /obj/item/clothing/under/solgov/utility/sifguard/medical
+	display_name = "Ridge's Medical Jacket"
+	ckeywhitelist = list("nickcrazy")
+	character_name = list("Ridge")
+
 /datum/gear/fluff/damon_jacket
 	path = /obj/item/clothing/suit/storage/toggle/bomber/bombersec
 	display_name = "Damon's Bomber Jacket"
@@ -1135,6 +1120,19 @@
 	display_name = "Ali's Unity Medal"
 	ckeywhitelist = list("xonkon")
 	character_name = list("Ali")
+
+/datum/gear/fluff/zena_suit
+	path = /obj/item/clothing/suit/space/void/engineering/zena
+	display_name = "Zena's Shroud Suit"
+	ckeywhitelist = list("xonkon")
+	character_name = list("Zena Aviv")
+
+/datum/gear/fluff/zena_helmet
+	path = /obj/item/clothing/head/helmet/space/void/engineering/zena
+	display_name = "Zena's Shroud Helmet"
+	ckeywhitelist = list("xonkon")
+	character_name = list("Zena Aviv")
+
 
 //  Y CKEYS
 

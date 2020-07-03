@@ -73,6 +73,7 @@
 	//VOREStation Add End
 
 	post_buckle_mob(M)
+	M.throw_alert("buckled", /obj/screen/alert/restrained/buckled, new_master = src)
 	return TRUE
 
 /atom/movable/proc/unbuckle_mob(mob/living/buckled_mob, force = FALSE)
@@ -88,6 +89,7 @@
 		buckled_mob.anchored = initial(buckled_mob.anchored)
 		buckled_mob.update_canmove()
 		buckled_mob.update_floating( buckled_mob.Check_Dense_Object() )
+		buckled_mob.clear_alert("buckled")
 	//	buckled_mob = null
 		buckled_mobs -= buckled_mob
 
@@ -133,7 +135,7 @@
 	//		step_towards(M, src)
 
 	. = buckle_mob(M, forced)
-	playsound(src.loc, 'sound/effects/seatbelt.ogg', 50, 1)
+	playsound(src, 'sound/effects/seatbelt.ogg', 50, 1)
 	if(.)
 		var/reveal_message = list("buckled_mob" = null, "buckled_to" = null) //VORE EDIT: This being a list and messages existing for the buckle target atom.
 		if(!silent)
@@ -161,7 +163,7 @@
 
 /atom/movable/proc/user_unbuckle_mob(mob/living/buckled_mob, mob/user)
 	var/mob/living/M = unbuckle_mob(buckled_mob)
-	playsound(src.loc, 'sound/effects/seatbelt.ogg', 50, 1)
+	playsound(src, 'sound/effects/seatbelt.ogg', 50, 1)
 	if(M)
 		if(M != user)
 			M.visible_message(\
@@ -183,9 +185,11 @@
 			L.forceMove(loc, direct, movetime)
 			L.last_move = last_move
 			L.inertia_dir = last_move
-		
+
 		if(!buckle_dir)
 			L.set_dir(dir)
+		else
+			L.set_dir(buckle_dir)
 
 /atom/movable/proc/can_buckle_check(mob/living/M, forced = FALSE)
 	if(!buckled_mobs)

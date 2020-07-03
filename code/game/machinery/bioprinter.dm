@@ -77,14 +77,10 @@
 		add_overlay("bioprinter_working")
 	//VOREStation Edit End
 
-/obj/machinery/organ_printer/New()
-	..()
-
-	component_parts = list()
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	RefreshParts()
-
+/obj/machinery/organ_printer/Initialize()
+	. = ..()
+	default_apply_parts()
+	
 /obj/machinery/organ_printer/examine(var/mob/user)
 	. = ..()
 	var/biomass = get_biomass_volume()
@@ -274,7 +270,7 @@
 	icon_state = "bioprinter"
 	circuit = /obj/item/weapon/circuitboard/bioprinter
 
-/obj/machinery/organ_printer/flesh/full/New()
+/obj/machinery/organ_printer/flesh/full/Initialize()
 	. = ..()
 	container = new /obj/item/weapon/reagent_containers/glass/bottle/biomass(src)
 
@@ -289,7 +285,7 @@
 /obj/machinery/organ_printer/flesh/print_organ(var/choice)
 	var/obj/item/organ/O = ..()
 
-	playsound(src.loc, 'sound/machines/ding.ogg', 50, 1)
+	playsound(src, 'sound/machines/ding.ogg', 50, 1)
 	visible_message("<span class='info'>\The [src] dings, then spits out \a [O].</span>")
 	return O
 
@@ -354,7 +350,7 @@
 	var/obj/item/organ/O = ..()
 	O.robotize()
 	O.status |= ORGAN_CUT_AWAY  // robotize() resets status to 0
-	playsound(src.loc, 'sound/machines/ding.ogg', 50, 1)
+	playsound(src, 'sound/machines/ding.ogg', 50, 1)
 	audible_message("<span class='info'>\The [src] dings, then spits out \a [O].</span>")
 	return O
 

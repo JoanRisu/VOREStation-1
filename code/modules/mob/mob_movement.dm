@@ -6,6 +6,20 @@
 		return FALSE // Need to wait more.
 	return TRUE
 
+/mob/proc/movement_delay(oldloc, direct)
+	. = 0
+	if(locate(/obj/item/weapon/grab) in src)
+		. += 5
+
+	// Movespeed delay based on movement mode
+	switch(m_intent)
+		if("run")
+			if(drowsyness > 0)
+				. += 6
+			. += config.run_speed
+		if("walk")
+			. += config.walk_speed
+
 /client/proc/client_dir(input, direction=-1)
 	return turn(input, direction*dir2angle(dir))
 
@@ -37,6 +51,9 @@
 			if(isliving(usr))
 				var/mob/living/carbon/C = usr
 				if(!C.get_active_hand())
+					if(C.pulling)
+						C.stop_pulling()
+						return
 					to_chat(usr, "<font color='red'>You have nothing to drop in your hand.</font>")
 					return
 				drop_item()
@@ -219,12 +236,13 @@
 				return
 		return my_mob.buckled.relaymove(my_mob,direct)
 
+	var/total_delay = my_mob.movement_delay(n, direct)
+
 	if(my_mob.pulledby || my_mob.buckled) // Wheelchair driving!
 		if(isspace(loc))
 			return // No wheelchair driving in space
 		if(istype(my_mob.pulledby, /obj/structure/bed/chair/wheelchair))
-			my_mob.setMoveCooldown(3)
-			return my_mob.pulledby.relaymove(my_mob, direct)
+			total_delay += 3
 		else if(istype(my_mob.buckled, /obj/structure/bed/chair/wheelchair))
 			if(ishuman(my_mob))
 				var/mob/living/carbon/human/driver = my_mob
@@ -241,30 +259,11 @@
 					if("walk")
 						if(prob(25))
 							direct = turn(direct, pick(90, -90))
-			my_mob.setMoveCooldown(3)
-			return my_mob.buckled.relaymove(my_mob,direct)
+			total_delay += 3
 
 	// We are now going to move
 	moving = 1
-	var/total_delay = 0
 	var/pre_move_loc = loc
-
-	// Start tally'ing when we can next move
-	// Grabs slow you down
-	if(locate(/obj/item/weapon/grab) in my_mob)
-		total_delay += 7
-	
-	// Movespeed delay based on movement mode
-	switch(my_mob.m_intent)
-		if("run")
-			if(my_mob.drowsyness > 0)
-				total_delay += 6
-			total_delay += config.run_speed
-		if("walk")
-			total_delay += config.walk_speed
-	
-	// A billion other things can slow you down, ask the mob
-	total_delay += my_mob.movement_delay(n, direct)
 
 	// Confused direction randomization
 	if(my_mob.confused)
@@ -277,28 +276,34 @@
 				if(prob(25))
 					direct = turn(direct, pick(90, -90))
 					n = get_step(my_mob, direct)
-	
-	total_delay = TICKS2DS(-round(-(DS2TICKS(total_delay)))) //Rounded to the next tick in equivalent ds
+
+	total_delay = DS2NEARESTTICK(total_delay) //Rounded to the next tick in equivalent ds
 	my_mob.setMoveCooldown(total_delay)
-	. = my_mob.SelfMove(n, direct, total_delay)
+
+	if(istype(my_mob.pulledby, /obj/structure/bed/chair/wheelchair))
+		. = my_mob.pulledby.relaymove(my_mob, direct)
+	else if(istype(my_mob.buckled, /obj/structure/bed/chair/wheelchair))
+		. = my_mob.buckled.relaymove(my_mob,direct)
+	else
+		. = my_mob.SelfMove(n, direct, total_delay)
 
 	// If we have a grab
 	var/list/grablist = my_mob.ret_grab()
 	if(grablist.len)
 		grablist -= my_mob // Just in case we're in a circular grab chain
-		
+
 		// It's just us and another person
 		if(grablist.len == 1)
 			var/mob/M = grablist[1]
 			if(!my_mob.Adjacent(M)) //Oh no, we moved away
 				M.Move(pre_move_loc, get_dir(M, pre_move_loc), total_delay) //Have them step towards where we were
-		
+
 		// It's a grab chain
 		else
 			for(var/mob/M in grablist)
 				my_mob.other_mobs = 1
 				M.other_mobs = 1 //Has something to do with people being able or unable to pass a chain of mobs
-				
+
 				//Ugly!
 				spawn(0) //Step
 					M.Move(pre_move_loc, get_dir(M, pre_move_loc), total_delay)
@@ -314,7 +319,7 @@
 		G.adjust_position()
 	for (var/obj/item/weapon/grab/G in my_mob.grabbed_by)
 		G.adjust_position()
-	
+
 	// We're not in the middle of a move anymore
 	moving = 0
 
@@ -405,9 +410,9 @@
 
 	//Check to see if we slipped
 	if(prob(Process_Spaceslipping(5)) && !buckled)
-		to_chat(src, "<font color='blue'><B>You slipped!</B></font>")
-		src.inertia_dir = src.last_move
-		step(src, src.inertia_dir)
+		to_chat(src, "<span class='notice'><B>You slipped!</B></span>")
+		inertia_dir = last_move
+		step(src, src.inertia_dir) // Not using Move for smooth glide here because this is a 'slip' so should be sudden.
 		return 0
 	//If not then we can reset inertia and move
 	inertia_dir = 0
@@ -419,7 +424,7 @@
 	var/shoegrip
 
 	for(var/turf/turf in oview(1,src))
-		if(istype(turf,/turf/space))
+		if(isspace(turf))
 			continue
 
 		if(istype(turf,/turf/simulated/floor)) // Floors don't count if they don't have gravity
@@ -470,21 +475,6 @@
 
 /mob/proc/update_gravity()
 	return
-
-// Called when a mob successfully moves.
-// Would've been an /atom/movable proc but it caused issues.
-/mob/Moved(atom/oldloc)
-	. = ..()
-	for(var/obj/O in contents)
-		O.on_loc_moved(oldloc)
-
-// Received from Moved(), useful for items that need to know that their loc just moved.
-/obj/proc/on_loc_moved(atom/oldloc)
-	return
-
-/obj/item/weapon/storage/on_loc_moved(atom/oldloc)
-	for(var/obj/O in contents)
-		O.on_loc_moved(oldloc)
 
 /client/verb/moveup()
 	set name = ".moveup"

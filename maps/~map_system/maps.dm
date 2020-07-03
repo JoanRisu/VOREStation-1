@@ -38,7 +38,7 @@ var/list/all_maps = list()
 
 	// Z-levels available to various consoles, such as the crew monitor. Defaults to station_levels if unset.
 	var/list/map_levels
-	
+
 	// E-mail TLDs to use for NTnet modular computer e-mail addresses
 	var/list/usable_email_tlds = list("freemail.nt")
 
@@ -78,6 +78,7 @@ var/list/all_maps = list()
 	var/station_name  = "BAD Station"
 	var/station_short = "Baddy"
 	var/dock_name     = "THE PirateBay"
+	var/dock_type     = "station"	//VOREStation Edit - for a list of valid types see the switch block in air_traffic.dm at line 148
 	var/boss_name     = "Captain Roger"
 	var/boss_short    = "Cap'"
 	var/company_name  = "BadMan"
@@ -88,6 +89,7 @@ var/list/all_maps = list()
 	var/shuttle_leaving_dock
 	var/shuttle_called_message
 	var/shuttle_recall_message
+	var/shuttle_name  = "NAS |Hawking|"	//VS ADD
 	var/emergency_shuttle_docked_message
 	var/emergency_shuttle_leaving_dock
 	var/emergency_shuttle_called_message
@@ -146,15 +148,14 @@ var/list/all_maps = list()
 /datum/map/proc/get_zlevel_time(var/z)
 	if(!z)
 		z = 1
-	var/datum/planet/P = SSplanets.z_to_planet[z]
+	var/datum/planet/P = z <= SSplanets.z_to_planet.len ? SSplanets.z_to_planet[z] : null
 	// We found a planet tied to that zlevel, give them the time
-	if(istype(P))
+	if(P?.current_time)
 		return P.current_time
 
 	// We have to invent a time
 	else
-		var/seconds_stationtime = round(station_time_in_ticks*0.1) //Not actually ticks......
-		var/datum/time/T = new(seconds_stationtime)
+		var/datum/time/T = new (station_time_in_ds)
 		return T
 
 // Returns a boolean for if it's night or not on a particular zlevel
@@ -162,8 +163,7 @@ var/list/all_maps = list()
 	if(!z)
 		z = 1
 	var/datum/time/now = get_zlevel_time(z)
-	var/percent = now.seconds_stored / now.seconds_in_day
-	testing("get_night is [percent] through the day on [z]")
+	var/percent = now.seconds_stored / now.seconds_in_day //practically all of these are in DS
 
 	// First quarter, last quarter
 	if(percent < 0.25 || percent > 0.75)

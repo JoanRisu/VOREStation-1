@@ -1885,7 +1885,7 @@ Departamental Swimsuits, for general use
 
 	species_restricted = list("exclude", SPECIES_TESHARI)
 
-/obj/item/clothing/under/fluff/slime_skeleton/mob_can_equip(M as mob, slot)
+/obj/item/clothing/under/fluff/slime_skeleton/mob_can_equip(M as mob, slot, disable_warning = FALSE)
 	if(!..())
 		return 0
 
@@ -1963,3 +1963,28 @@ Departamental Swimsuits, for general use
 
 	icon_override = 'icons/vore/custom_onmob_vr.dmi'
 	icon_state = "azuracollar"
+
+
+//Xonkon: Zena Aviv
+/obj/item/clothing/head/helmet/space/void/engineering/zena
+	name = "custom shroud helmet"
+	desc = "A black and orange engineering shroud helmet. Orange plated and specially crafted and augmented for a variety of activites."
+	icon = 'icons/vore/custom_clothes_vr.dmi'
+	icon_state = "zenahelmet"
+
+	icon_override = 'icons/vore/custom_clothes_vr.dmi'
+	item_state = "zenahelmet_mob"
+
+	species_restricted = null
+
+
+/obj/item/clothing/suit/space/void/engineering/zena
+	name = "custom shroud suit"
+	desc = "A black and orange engineering shroud helmet. Skintight and specially crafted and augmented for a variety of activites."
+	icon = 'icons/vore/custom_clothes_vr.dmi'
+	icon_state = "zenasuit"
+
+	icon_override = 'icons/vore/custom_clothes_vr.dmi'
+	item_state = "zenasuit_mob"
+
+	species_restricted = null

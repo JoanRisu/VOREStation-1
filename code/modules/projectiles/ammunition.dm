@@ -134,7 +134,7 @@
 		AC.loc = src
 		stored_ammo.Insert(1, AC) //add it to the head of our magazine's list
 		L.update_icon()
-	playsound(user.loc, 'sound/weapons/flipblade.ogg', 50, 1)
+	playsound(src, 'sound/weapons/flipblade.ogg', 50, 1)
 	update_icon()
 
 // This dumps all the bullets right on the floor
@@ -144,11 +144,11 @@
 			to_chat(user, "<span class='notice'>[src] is already empty!</span>")
 			return
 		to_chat(user, "<span class='notice'>You empty [src].</span>")
-		playsound(user.loc, "casing_sound", 50, 1)
+		playsound(src, "casing_sound", 50, 1)
 		spawn(7)
-			playsound(user.loc, "casing_sound", 50, 1)
+			playsound(src, "casing_sound", 50, 1)
 		spawn(10)
-			playsound(user.loc, "casing_sound", 50, 1)
+			playsound(src, "casing_sound", 50, 1)
 		for(var/obj/item/ammo_casing/C in stored_ammo)
 			C.loc = user.loc
 			C.set_dir(pick(cardinal))
@@ -201,7 +201,7 @@
 /proc/magazine_icondata_cache_add(var/obj/item/ammo_magazine/M)
 	var/list/icon_keys = list()
 	var/list/ammo_states = list()
-	var/list/states = icon_states(M.icon)
+	var/list/states = cached_icon_states(M.icon)
 	for(var/i = 0, i <= M.max_ammo, i++)
 		var/ammo_state = "[M.icon_state]-[i]"
 		if(ammo_state in states)

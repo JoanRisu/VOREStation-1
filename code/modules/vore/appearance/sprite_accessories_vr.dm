@@ -331,6 +331,14 @@
 	color_blend_mode = ICON_MULTIPLY
 	extra_overlay = "otie-inner"
 
+/datum/sprite_accessory/ears/donkey
+	name = "donkey, colorable"
+	desc = ""
+	icon_state = "donkey"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
+	extra_overlay = "otie-inner"
+
 /datum/sprite_accessory/ears/zears
 	name = "jagged ears"
 	desc = ""
@@ -484,6 +492,8 @@
 	name = "tritail kitsune ears (Rosey)"
 	desc = ""
 	icon_state = "rosey"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
 	ckeys_allowed = list("joey4298")
 
 /datum/sprite_accessory/ears/aronai
@@ -727,13 +737,6 @@
 	desc = ""
 	icon_state = "snag-backplate"
 
-/datum/sprite_accessory/wing/nevrean
-	name = "nevrean wings/fantail"
-	desc = ""
-	icon_state = "nevrean_s"
-	do_colouration = 1
-	color_blend_mode = ICON_MULTIPLY
-
 /datum/sprite_accessory/wing/sepulchre_c_yw
 	name = "demon wings (colorable)"
 	desc = ""
@@ -781,6 +784,12 @@
 	var/list/hide_body_parts = list() //Uses organ tag defines. Bodyparts in this list do not have their icons rendered, allowing for more spriter freedom when doing taur/digitigrade stuff.
 	var/icon/clip_mask_icon = null //Icon file used for clip mask.
 	var/clip_mask_state = null //Icon state to generate clip mask. Clip mask is used to 'clip' off the lower part of clothing such as jumpsuits & full suits.
+	var/icon/clip_mask = null //Instantiated clip mask of given icon and state
+
+/datum/sprite_accessory/tail/New()
+	. = ..()
+	if(clip_mask_icon && clip_mask_state)
+		clip_mask = icon(icon = clip_mask_icon, icon_state = clip_mask_state)
 
 // Species-unique tails
 
@@ -943,6 +952,30 @@
 	do_colouration = 1
 	color_blend_mode = ICON_MULTIPLY
 
+/datum/sprite_accessory/tail/nevreandc
+	name = "nevrean tail, dual-color"
+	desc = ""
+	icon_state = "nevreantail_dc"
+	extra_overlay = "nevreantail_dc_tail"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
+
+/datum/sprite_accessory/tail/nevreanwagdc
+	name = "nevrean wagtail, dual-color"
+	desc = ""
+	icon_state = "wagtail"
+	extra_overlay = "wagtail_dc_tail"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
+
+/datum/sprite_accessory/tail/nevreanwagdc_alt
+	name = "nevrean wagtail, marked, dual-color"
+	desc = ""
+	icon_state = "wagtail2_dc"
+	extra_overlay = "wagtail2_dc_mark"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
+
 /datum/sprite_accessory/tail/crossfox
 	name = "cross fox"
 	desc = ""
@@ -1030,6 +1063,8 @@
 	name = "pentatail kitsune tails (Rosey)" //I predict seven tails next. ~CK
 	desc = ""
 	icon_state = "rosey_five"
+	do_colouration = 1
+	color_blend_mode = ICON_MULTIPLY
 	ckeys_allowed = list("joey4298")
 
 /datum/sprite_accessory/tail/scree
@@ -1395,7 +1430,7 @@
 	do_colouration = 1
 
 /datum/sprite_accessory/tail/special/monkeyhc
-	name = "monkey tail, colorable, colorable"
+	name = "monkey tail, colorable"
 	desc = ""
 	icon_state = "chimptail_hc_s"
 	do_colouration = 1
